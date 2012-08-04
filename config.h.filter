@@ -1,0 +1,21 @@
+#!/usr/bin/perl
+# convert our private config.h to a public form.
+# unlike libtool/automake's config.h our vars are prefixed
+# so that they do not conflict with anyone else's config.h
+print "#ifndef ISP_UTILS_CONFIG_H\n";
+print "#define ISP_UTILS_CONFIG_H\n";
+while (my $line = <STDIN>) {
+	chomp $line;
+	next unless $line =~ s/^\#define +//;
+	next unless $line =~ m/^(ISP|ENABLE|HAVE|STATIC)/;
+	print "#define ISP_UTILS_$line\n";
+}
+if (open(T,"<","config.h.installed-prologue")) {
+	while (my $line = <T>) {
+		chomp $line;
+		print "$line\n";
+	}
+	close(T);
+}
+print "#endif\n";
+

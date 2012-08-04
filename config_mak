@@ -1,0 +1,12 @@
+#!/usr/bin/perl
+open(T,"<config.h") || die;
+print "# Auto-generated from config.h do not modify\n";
+while (my $line = <T>) {
+	chomp $line;
+	next unless $line =~ s/^#define +//;
+	next unless $line =~ m/^(HAVE|ENABLE|STATIC)_/;
+	$line =~ s/ /=/;
+	print "$line\n";
+}
+close(T);
+
