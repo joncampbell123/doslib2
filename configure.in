@@ -15,7 +15,12 @@ AC_PROG_CC
 AC_PROG_CXX
 AM_PROG_CC_C_O
 AC_PATH_PROG([PERL],[perl])
-AX_PROG_PERL_VERSION([5.10.0],[true],[AC_MSG_ERROR([Perl is required to build this source code])])
+
+# We need Perl
+AC_CHECK_PROGS(MAKE,$PERL perl,error)
+if test x"$PERL" = x"error"; then
+	AC_MSG_ERROR([Perl is required to build this source code])
+fi
 
 # Checks for header files.
 AC_HEADER_STDC
