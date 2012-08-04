@@ -54,7 +54,9 @@ Form: dos16r/<N>86<M>[...]
  dos16r/086cox ................... 8086/8088 ONLY, Compact memory model, functions call into TSR
  <and so on>
 
- #define TARGET_MSDOS_BITS   16
+ #define TARGET_BITS         16
+ #define TARGET_MSDOS        1
+ #define TARGET_REALMODE     1
 
 DOS, 32-bit protected mode
 --------------------------
@@ -103,7 +105,9 @@ Form: dos32p/<EX><N>86<M>[...]
  dos32p/4g486f ...................... 486 or higher, flat memory model, DOS4G/W
  <and so on>
 
- #define TARGET_MSDOS_BITS    32
+ #define TARGET_BITS          32
+ #define TARGET_MSDOS         1
+ #define TARGET_PROTMODE      1
 
 16-bit Windows (Windows 1.x-3.1/9x/ME and NTVDM.EXE under NT/2000/XP/Vista/7)
 -----------------------------------------------------------------------------
@@ -168,7 +172,11 @@ Form: win16<W>/<V>_<N>86<M>[...]
  win16b/30_386l ........................ Windows 3.0 real/standard/enhanced mode, 386 or higher, large memory model
  <and so on>
 
- #define TARGET_WINDOWS_BITS   16
+ #define TARGET_BITS           16
+ #define TARGET_WINDOWS        1
+ #define TARGET_PROTMODE       1         /* if protected mode only */
+ #define TARGET_REALMODE       1         /* if real mode only */
+ #define TARGET_AUTOMODE       1         /* if prot or real mode build aka 'b' */
 
 32-bit Windows, Watcom Win386 (Windows 3.0/3.1/9x/ME and NTVDM.EXE under NT/2000/XP/Vista/7)
 --------------------------------------------------------------------------------------------
@@ -226,6 +234,122 @@ Form: winwa386/<V>_<N>86<M>[...]
  winwa386/31_386fo .................. 386 only, Windows 3.1 or higher
  <and so on>
 
- #define TARGET_WINDOWS_BITS    32
+ #define TARGET_BITS            32
+ #define TARGET_WINDOWS         1
  #define TARGET_WINDOWS_WIN386  1
+ #define TARGET_PROTMODE        1
+
+32-bit Windows, Microsoft Win32s (Windows 3.1/9x/ME and NTVDM.EXE under NT/2000/XP/Vista/7)
+-------------------------------------------------------------------------------------------
+
+Form: win32s/<V>_<N>86<M>[...]
+
+   N = Minimum or specific CPU level.
+
+      3 = 386
+      4 = 486
+      5 = Pentium (586)
+      6 = Pentium Pro (686)
+
+   V = Windows version
+
+      31 = Windows 3.1 or higher
+      95 = Windows 95 or higher
+      98 = Windows 98 or higher
+      me = Windows ME or higher
+      nt = Windows NT only
+
+   M = Memory model
+
+      f = Flat
+
+   Additional suffixes related to build:
+
+      o = Build contains code ONLY for that revision of the CPU.
+          Otherwise, code contains support for that CPU and higher.
+
+          Certain retro programming projects might wish to keep
+          EXE size down by targeting only the old hardware they're
+          written for, instead of increasing EXE size to accomodate
+          newer hardware.
+
+      x = Library functions are not compiled into the EXE, but call
+          out to external TSRs that provide the functions. This
+          allows the use of advanced and complex libraries without
+          massively increasing the EXE size, and avoids startup
+          delays by eliminating the need to auto-detect the
+          environment every time the program is started.
+
+ win32s/31_386f ................... 386 or higher, Windows 3.1 or higher
+ <and so on>
+
+ #define TARGET_BITS            32
+ #define TARGET_WINDOWS         1
+ #define TARGET_WINDOWS_WIN32s  1
+ #define TARGET_PROTMODE        1
+
+32-bit Windows (Windows 9x/ME and NTVDM.EXE under NT/2000/XP/Vista/7)
+---------------------------------------------------------------------
+
+Form: win32/<V>_<N>86<M>[...]
+
+   N = Minimum or specific CPU level.
+
+      3 = 386
+      4 = 486
+      5 = Pentium (586)
+      6 = Pentium Pro (686)
+
+   V = Windows version
+
+      95 = Windows 95 or higher
+      98 = Windows 98 or higher
+      me = Windows ME or higher
+      nt = Windows NT only
+
+   M = Memory model
+
+      f = Flat
+
+   Additional suffixes related to build:
+
+      o = Build contains code ONLY for that revision of the CPU.
+          Otherwise, code contains support for that CPU and higher.
+
+          Certain retro programming projects might wish to keep
+          EXE size down by targeting only the old hardware they're
+          written for, instead of increasing EXE size to accomodate
+          newer hardware.
+
+      x = Library functions are not compiled into the EXE, but call
+          out to external TSRs that provide the functions. This
+          allows the use of advanced and complex libraries without
+          massively increasing the EXE size, and avoids startup
+          delays by eliminating the need to auto-detect the
+          environment every time the program is started.
+
+ #define TARGET_BITS            32
+ #define TARGET_WINDOWS         1
+ #define TARGET_WINDOWS_WIN32   1
+ #define TARGET_PROTMODE        1
+
+Linux (the host this is compiled on)
+------------------------------------
+
+Form: linux/host[...]
+
+   Additional suffixes related to build:
+
+      o = Build contains code ONLY for that revision of the CPU.
+          Otherwise, code contains support for that CPU and higher.
+
+          Certain retro programming projects might wish to keep
+          EXE size down by targeting only the old hardware they're
+          written for, instead of increasing EXE size to accomodate
+          newer hardware.
+
+ #define TARGET_BITS            32        /* if host is 32-bit */
+ #define TARGET_BITS            64        /* if host is 64-bit */
+ #define TARGET_LINUX           1
+ #define TARGET_PROTMODE        1
 
