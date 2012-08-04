@@ -1,0 +1,21 @@
+#!/bin/bash
+#
+# Clean up the tree
+for x in \*~ .libs autom4te.cache configure config.log config.status configure.scan autoscan.log; do find -name $x -exec rm -Rfv {} + ; done
+find -name \*.deps -exec rm -Rfv {} +
+find -name \*.so -exec rm -fv {} +
+find -name \*.lo -exec rm -fv {} +
+find -name \*~ -exec rm -fv {} +
+#find -name \*.la -exec rm -fv {} +
+find -name \*.a -exec rm -fv {} +
+find -name \*.o -exec rm -fv {} +
+rm -f config.mak test.errors test.errors.valgrind test.results test.results.valgrind
+rm -f config.h.in config.h
+rm -Rfv m4 doc
+rm -f aclocal.m4
+rm -f NEWS AUTHORS ChangeLog COPYING INSTALL Makefile.in libtool stamp-h1 config.{guess,sub} install-sh
+find -name \*.la -exec rm -fv {} +
+find -name \*.loT -exec rm -fv {} +
+find -name Makefile.in -exec rm -fv {} +
+rm -f isp-utils isp-utils-v4
+
