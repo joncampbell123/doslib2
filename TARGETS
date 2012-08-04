@@ -1,10 +1,6 @@
 
 Targets and their corresponding build directories.
 
-Objects will be placed under <target>/OBJ and the final executables under <target>.
-In some cases, the executable's runtime files may be placed in the same directory with
-the exe. Library files will be places under <target>/LIB.
-
 DOS, 16-bit real mode
 ---------------------
 
