@@ -1,6 +1,26 @@
 
 Targets and their corresponding build directories.
 
+   SUFFIXES:
+      o = Build contains code ONLY for that revision of the CPU.
+          Otherwise, code contains support for that CPU and higher.
+
+          Certain retro programming projects might wish to keep
+          EXE size down by targeting only the old hardware they're
+          written for, instead of increasing EXE size to accomodate
+          newer hardware.
+
+      x = Library functions are not compiled into the EXE, but call
+          out to external TSRs that provide the functions. This
+          allows the use of advanced and complex libraries without
+          massively increasing the EXE size, and avoids startup
+          delays by eliminating the need to auto-detect the
+          environment every time the program is started.
+
+      d = Debug information is enabled. Debug commands in the code are
+          active and written to STDERR. Obviously debug statements eat
+          up space in the EXE, so the builds are separate.
+
 DOS, 16-bit real mode
 ---------------------
 
@@ -23,22 +43,7 @@ Form: dos16r/<N>86<M>[...]
       l = Large               | Far  | Far  |
       h = Huge                | Far  | Huge |
 
-   Additional suffixes related to build:
-
-      o = Build contains code ONLY for that revision of the CPU.
-          Otherwise, code contains support for that CPU and higher.
-
-          Certain retro programming projects might wish to keep
-          EXE size down by targeting only the old hardware they're
-          written for, instead of increasing EXE size to accomodate
-          newer hardware.
-
-      x = Library functions are not compiled into the EXE, but call
-          out to external TSRs that provide the functions. This
-          allows the use of advanced and complex libraries without
-          massively increasing the EXE size, and avoids startup
-          delays by eliminating the need to auto-detect the
-          environment every time the program is started.
+   Additional suffixes related to build, see "SUFFIXES"
 
  dos16r/086c ..................... 8086/8088 or higher, Compact memory model
  dos16r/086s ..................... 8086/8088 or higher, Small memory model
@@ -77,23 +82,6 @@ Form: dos32p/<EX><N>86<M>[...]
       cw = Causeway
       ph = Phar Lap 386
       pm = PMODE/W
-
-   Additional suffixes related to build:
-
-      o = Build contains code ONLY for that revision of the CPU.
-          Otherwise, code contains support for that CPU and higher.
-
-          Certain retro programming projects might wish to keep
-          EXE size down by targeting only the old hardware they're
-          written for, instead of increasing EXE size to accomodate
-          newer hardware.
-
-      x = Library functions are not compiled into the EXE, but call
-          out to external TSRs that provide the functions. This
-          allows the use of advanced and complex libraries without
-          massively increasing the EXE size, and avoids startup
-          delays by eliminating the need to auto-detect the
-          environment every time the program is started.
 
  dos32p/4g386f ...................... 386 or higher, flat memory model, DOS4G/W
  dos32p/4g386fo ..................... 386 only, flat memory model, DOS4G/W
@@ -147,23 +135,6 @@ Form: win16<W>/<V>_<N>86<M>[...]
       [*] Memory model only applies to code within the EXE itself.
           The external Windows environment demands the use of far pointers.
 
-   Additional suffixes related to build:
-
-      o = Build contains code ONLY for that revision of the CPU.
-          Otherwise, code contains support for that CPU and higher.
-
-          Certain retro programming projects might wish to keep
-          EXE size down by targeting only the old hardware they're
-          written for, instead of increasing EXE size to accomodate
-          newer hardware.
-
-      x = Library functions are not compiled into the EXE, but call
-          out to external TSRs that provide the functions. This
-          allows the use of advanced and complex libraries without
-          massively increasing the EXE size, and avoids startup
-          delays by eliminating the need to auto-detect the
-          environment every time the program is started.
-
  win16r/30_086c ........................ Windows 3.0 real mode only, 8086/8088 or higher, compact memory model
  win16p/30_286c ........................ Windows 3.0 standard or enhanced mode only, 286 or higher, compact memory model
  win16b/30_386l ........................ Windows 3.0 real/standard/enhanced mode, 386 or higher, large memory model
@@ -199,23 +170,6 @@ Form: winwa386/<V>_<N>86<M>[...]
    M = Memory model
 
       f = Flat
-
-   Additional suffixes related to build:
-
-      o = Build contains code ONLY for that revision of the CPU.
-          Otherwise, code contains support for that CPU and higher.
-
-          Certain retro programming projects might wish to keep
-          EXE size down by targeting only the old hardware they're
-          written for, instead of increasing EXE size to accomodate
-          newer hardware.
-
-      x = Library functions are not compiled into the EXE, but call
-          out to external TSRs that provide the functions. This
-          allows the use of advanced and complex libraries without
-          massively increasing the EXE size, and avoids startup
-          delays by eliminating the need to auto-detect the
-          environment every time the program is started.
 
  NOTE: In this target scenario, the code and data are 32-bit flat memory,
        but it is made possible by Watcom's Win386 extender NOT by the OS.
@@ -260,23 +214,6 @@ Form: win32s/<V>_<N>86<M>[...]
 
       f = Flat
 
-   Additional suffixes related to build:
-
-      o = Build contains code ONLY for that revision of the CPU.
-          Otherwise, code contains support for that CPU and higher.
-
-          Certain retro programming projects might wish to keep
-          EXE size down by targeting only the old hardware they're
-          written for, instead of increasing EXE size to accomodate
-          newer hardware.
-
-      x = Library functions are not compiled into the EXE, but call
-          out to external TSRs that provide the functions. This
-          allows the use of advanced and complex libraries without
-          massively increasing the EXE size, and avoids startup
-          delays by eliminating the need to auto-detect the
-          environment every time the program is started.
-
  win32s/31_386f ................... 386 or higher, Windows 3.1 or higher
  <and so on>
 
@@ -308,23 +245,6 @@ Form: win32/<V>_<N>86<M>[...]
 
       f = Flat
 
-   Additional suffixes related to build:
-
-      o = Build contains code ONLY for that revision of the CPU.
-          Otherwise, code contains support for that CPU and higher.
-
-          Certain retro programming projects might wish to keep
-          EXE size down by targeting only the old hardware they're
-          written for, instead of increasing EXE size to accomodate
-          newer hardware.
-
-      x = Library functions are not compiled into the EXE, but call
-          out to external TSRs that provide the functions. This
-          allows the use of advanced and complex libraries without
-          massively increasing the EXE size, and avoids startup
-          delays by eliminating the need to auto-detect the
-          environment every time the program is started.
-
  #define TARGET_BITS            32
  #define TARGET_WINDOWS         1
  #define TARGET_WINDOWS_WIN32   1
@@ -334,16 +254,6 @@ Linux (the host this is compiled on)
 ------------------------------------
 
 Form: linux/host[...]
-
-   Additional suffixes related to build:
-
-      o = Build contains code ONLY for that revision of the CPU.
-          Otherwise, code contains support for that CPU and higher.
-
-          Certain retro programming projects might wish to keep
-          EXE size down by targeting only the old hardware they're
-          written for, instead of increasing EXE size to accomodate
-          newer hardware.
 
  #define TARGET_BITS            32        /* if host is 32-bit */
  #define TARGET_BITS            64        /* if host is 64-bit */
