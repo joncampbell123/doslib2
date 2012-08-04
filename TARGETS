@@ -73,6 +73,7 @@ Form: dos32p/<EX><N>86<M>[...]
    EX = DOS extender
 
       4g = DOS 4G/W
+      4n = DOS 4G/W non-zero base
       cw = Causeway
       ph = Phar Lap 386
       pm = PMODE/W
