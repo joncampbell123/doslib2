@@ -8,7 +8,7 @@ the exe. Library files will be places under <target>/LIB.
 DOS, 16-bit real mode
 ---------------------
 
-Form: dosr<N><M>[...]
+Form: dos16r/<N>86<M>[...]
 
    N = Minimum or specific CPU level.
 
@@ -44,20 +44,22 @@ Form: dosr<N><M>[...]
           delays by eliminating the need to auto-detect the
           environment every time the program is started.
 
- dosr0c ..................... 8086/8088 or higher, Compact memory model
- dosr0s ..................... 8086/8088 or higher, Small memory model
- dosr0m ..................... 8086/8088 or higher, Medium memory model
- dosr0l ..................... 8086/8088 or higher, Large memory model
- dosr0h ..................... 8086/8088 or higher, Huge memory model
- dosr0cx .................... 8086/8088 or higher, Compact memory model lib. functions call into TSR
- dosr0co .................... 8086/8088 ONLY, Compact memory model
- dosr0cox ................... 8086/8088 ONLY, Compact memory model, functions call into TSR
+ dos16r/086c ..................... 8086/8088 or higher, Compact memory model
+ dos16r/086s ..................... 8086/8088 or higher, Small memory model
+ dos16r/086m ..................... 8086/8088 or higher, Medium memory model
+ dos16r/086l ..................... 8086/8088 or higher, Large memory model
+ dos16r/086h ..................... 8086/8088 or higher, Huge memory model
+ dos16r/086cx .................... 8086/8088 or higher, Compact memory model lib. functions call into TSR
+ dos16r/086co .................... 8086/8088 ONLY, Compact memory model
+ dos16r/086cox ................... 8086/8088 ONLY, Compact memory model, functions call into TSR
  <and so on>
+
+ #define TARGET_MSDOS_BITS   16
 
 DOS, 32-bit protected mode
 --------------------------
 
-Form: d<EX><N><M>[...]
+Form: dos32p/<EX><N>86<M>[...]
 
    N = Minimum or specific CPU level.
 
@@ -94,10 +96,136 @@ Form: d<EX><N><M>[...]
           delays by eliminating the need to auto-detect the
           environment every time the program is started.
 
- d4g3f ...................... 386 or higher, flat memory model, DOS4G/W
- d4g3fo ..................... 386 only, flat memory model, DOS4G/W
- d4g3fx ..................... 386 or higher, flat memory model, library functions in TSR, DOS4G/W
- d4g3fxo .................... 386 only, flat memory model, library functions in TSR, DOS4G/W
- d4g4f ...................... 486 or higher, flat memory model, DOS4G/W
+ dos32p/4g386f ...................... 386 or higher, flat memory model, DOS4G/W
+ dos32p/4g386fo ..................... 386 only, flat memory model, DOS4G/W
+ dos32p/4g386fx ..................... 386 or higher, flat memory model, library functions in TSR, DOS4G/W
+ dos32p/4g386fxo .................... 386 only, flat memory model, library functions in TSR, DOS4G/W
+ dos32p/4g486f ...................... 486 or higher, flat memory model, DOS4G/W
  <and so on>
+
+ #define TARGET_MSDOS_BITS    32
+
+16-bit Windows (Windows 1.x-3.1/9x/ME and NTVDM.EXE under NT/2000/XP/Vista/7)
+-----------------------------------------------------------------------------
+
+Form: win16<W>/<V>_<N>86<M>[...]
+
+   W = Windows mode
+
+      r = Real mode only
+      p = Protected mode only
+      b = Real or protected mode
+
+   V = Windows version
+
+      10 = Windows 1.0 or higher
+      20 = Windows 2.0 or higher
+      30 = Windows 3.0 or higher
+      31 = Windows 3.1 or higher
+      95 = Windows 95 or higher
+      98 = Windows 98 or higher
+      me = Windows ME or higher
+      nt = Windows NT only
+
+   N = Minimum or specific CPU level.
+
+      0 = 8088/8086
+      2 = 80286
+      3 = 386
+      4 = 486
+      5 = Pentium (586)
+      6 = Pentium Pro (686)
+
+   M = Memory model           | Code | Data |
+                              +------+------+
+      c = Compact             | Near | Far  |
+      s = Small               | Near | Near |
+      m = Medium              | Far  | Near |
+      l = Large               | Far  | Far  |
+
+      [*] Memory model only applies to code within the EXE itself.
+          The external Windows environment demands the use of far pointers.
+
+   Additional suffixes related to build:
+
+      o = Build contains code ONLY for that revision of the CPU.
+          Otherwise, code contains support for that CPU and higher.
+
+          Certain retro programming projects might wish to keep
+          EXE size down by targeting only the old hardware they're
+          written for, instead of increasing EXE size to accomodate
+          newer hardware.
+
+      x = Library functions are not compiled into the EXE, but call
+          out to external TSRs that provide the functions. This
+          allows the use of advanced and complex libraries without
+          massively increasing the EXE size, and avoids startup
+          delays by eliminating the need to auto-detect the
+          environment every time the program is started.
+
+ win16r/30_086c ........................ Windows 3.0 real mode only, 8086/8088 or higher, compact memory model
+ win16p/30_286c ........................ Windows 3.0 standard or enhanced mode only, 286 or higher, compact memory model
+ win16b/30_386l ........................ Windows 3.0 real/standard/enhanced mode, 386 or higher, large memory model
+ <and so on>
+
+ #define TARGET_WINDOWS_BITS   16
+
+32-bit Windows, Watcom Win386 (Windows 3.0/3.1/9x/ME and NTVDM.EXE under NT/2000/XP/Vista/7)
+--------------------------------------------------------------------------------------------
+
+Form: winwa386/<V>_<N>86<M>[...]
+
+   N = Minimum or specific CPU level.
+
+      3 = 386
+      4 = 486
+      5 = Pentium (586)
+      6 = Pentium Pro (686)
+
+   V = Windows version
+
+      30 = Windows 3.0 or higher
+      31 = Windows 3.1 or higher
+      95 = Windows 95 or higher
+      98 = Windows 98 or higher
+      me = Windows ME or higher
+      nt = Windows NT only
+
+   M = Memory model
+
+      f = Flat
+
+   Additional suffixes related to build:
+
+      o = Build contains code ONLY for that revision of the CPU.
+          Otherwise, code contains support for that CPU and higher.
+
+          Certain retro programming projects might wish to keep
+          EXE size down by targeting only the old hardware they're
+          written for, instead of increasing EXE size to accomodate
+          newer hardware.
+
+      x = Library functions are not compiled into the EXE, but call
+          out to external TSRs that provide the functions. This
+          allows the use of advanced and complex libraries without
+          massively increasing the EXE size, and avoids startup
+          delays by eliminating the need to auto-detect the
+          environment every time the program is started.
+
+ NOTE: In this target scenario, the code and data are 32-bit flat memory,
+       but it is made possible by Watcom's Win386 extender NOT by the OS.
+       Furthermore, unlike 32-bit DOS the code and data segments do NOT
+       originate at offset 0. You also have to code keeping in mind that
+       the external OS and environment is running in 16-bit protected
+       mode and that when far pointers are involved, Watcom's extender
+       will NOT translate them for you especially WM_* messages.
+
+ winwa386/30_386f ................... 386 or higher, Windows 3.0 or higher
+ winwa386/31_386f ................... 386 or higher, Windows 3.1 or higher
+ winwa386/31_486f ................... 486 or higher, Windows 3.1 or higher
+ winwa386/31_386fo .................. 386 only, Windows 3.1 or higher
+ <and so on>
+
+ #define TARGET_WINDOWS_BITS    32
+ #define TARGET_WINDOWS_WIN386  1
 
