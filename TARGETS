@@ -1,0 +1,103 @@
+
+Targets and their corresponding build directories.
+
+Objects will be placed under <target>/OBJ and the final executables under <target>.
+In some cases, the executable's runtime files may be placed in the same directory with
+the exe. Library files will be places under <target>/LIB.
+
+DOS, 16-bit real mode
+---------------------
+
+Form: dosr<N><M>[...]
+
+   N = Minimum or specific CPU level.
+
+      0 = 8086/8088
+      2 = 286
+      3 = 386
+      4 = 486
+      5 = Pentium (586)
+      6 = Pentium Pro (686)
+
+   M = Memory model           | Code | Data |
+                              +------+------+
+      c = Compact             | Near | Far  |
+      s = Small               | Near | Near |
+      m = Medium              | Far  | Near |
+      l = Large               | Far  | Far  |
+      h = Huge                | Far  | Huge |
+
+   Additional suffixes related to build:
+
+      o = Build contains code ONLY for that revision of the CPU.
+          Otherwise, code contains support for that CPU and higher.
+
+          Certain retro programming projects might wish to keep
+          EXE size down by targeting only the old hardware they're
+          written for, instead of increasing EXE size to accomodate
+          newer hardware.
+
+      x = Library functions are not compiled into the EXE, but call
+          out to external TSRs that provide the functions. This
+          allows the use of advanced and complex libraries without
+          massively increasing the EXE size, and avoids startup
+          delays by eliminating the need to auto-detect the
+          environment every time the program is started.
+
+ dosr0c ..................... 8086/8088 or higher, Compact memory model
+ dosr0s ..................... 8086/8088 or higher, Small memory model
+ dosr0m ..................... 8086/8088 or higher, Medium memory model
+ dosr0l ..................... 8086/8088 or higher, Large memory model
+ dosr0h ..................... 8086/8088 or higher, Huge memory model
+ dosr0cx .................... 8086/8088 or higher, Compact memory model lib. functions call into TSR
+ dosr0co .................... 8086/8088 ONLY, Compact memory model
+ dosr0cox ................... 8086/8088 ONLY, Compact memory model, functions call into TSR
+ <and so on>
+
+DOS, 32-bit protected mode
+--------------------------
+
+Form: d<EX><N><M>[...]
+
+   N = Minimum or specific CPU level.
+
+      3 = 386
+      4 = 486
+      5 = Pentium (586)
+      6 = Pentium Pro (686)
+
+   M = Memory model
+
+      f = Flat
+
+   EX = DOS extender
+
+      4g = DOS 4G/W
+      cw = Causeway
+      ph = Phar Lap 386
+      pm = PMODE/W
+
+   Additional suffixes related to build:
+
+      o = Build contains code ONLY for that revision of the CPU.
+          Otherwise, code contains support for that CPU and higher.
+
+          Certain retro programming projects might wish to keep
+          EXE size down by targeting only the old hardware they're
+          written for, instead of increasing EXE size to accomodate
+          newer hardware.
+
+      x = Library functions are not compiled into the EXE, but call
+          out to external TSRs that provide the functions. This
+          allows the use of advanced and complex libraries without
+          massively increasing the EXE size, and avoids startup
+          delays by eliminating the need to auto-detect the
+          environment every time the program is started.
+
+ d4g3f ...................... 386 or higher, flat memory model, DOS4G/W
+ d4g3fo ..................... 386 only, flat memory model, DOS4G/W
+ d4g3fx ..................... 386 or higher, flat memory model, library functions in TSR, DOS4G/W
+ d4g3fxo .................... 386 only, flat memory model, library functions in TSR, DOS4G/W
+ d4g4f ...................... 486 or higher, flat memory model, DOS4G/W
+ <and so on>
+
