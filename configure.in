@@ -14,12 +14,17 @@ AC_PROG_LIBTOOL
 AC_PROG_CC
 AC_PROG_CXX
 AM_PROG_CC_C_O
-AC_PATH_PROG([PERL],[perl])
 
 # We need Perl
 AC_CHECK_PROGS(MAKE,$PERL perl,error)
 if test x"$PERL" = x"error"; then
 	AC_MSG_ERROR([Perl is required to build this source code])
+fi
+
+# We need NASM
+AC_CHECK_PROGS(NASM,$NASM nasm,error)
+if test x"$NASM" = x"error"; then
+	AC_MSG_ERROR([NASM (Netwide assembler) is required to build this source code])
 fi
 
 # Checks for header files.
@@ -85,7 +90,7 @@ AC_CONFIG_FILES(Makefile)
 
 AC_OUTPUT
 
-cat config.h.installed-prologue >>config.h
+echo -n >>config.h
 cat >>config.h <<_EOF
 _EOF
 ./config_mak >config.mak
