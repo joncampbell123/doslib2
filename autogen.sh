@@ -1,7 +1,6 @@
 #!/bin/bash
 ./cleantree
 echo >NEWS
-echo >README
 echo >AUTHORS
 echo >ChangeLog
 (aclocal && autoheader && libtoolize && automake --add-missing && autoconf) || exit 1
