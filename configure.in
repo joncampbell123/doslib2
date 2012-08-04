@@ -27,6 +27,48 @@ if test x"$NASM" = x"error"; then
 	AC_MSG_ERROR([NASM (Netwide assembler) is required to build this source code])
 fi
 
+# We need Watcom C (16-bit)
+AC_CHECK_PROGS(OWCC,$OWCC $OPENWATCOM/binl/wcc,error)
+if test x"$OWCC" = x"error"; then
+	AC_MSG_ERROR([Open Watcom C compiler wcc is required to build this source code])
+fi
+
+# We need Watcom C (32-bit)
+AC_CHECK_PROGS(OWCC386,$OWCC386 $OPENWATCOM/binl/wcc386,error)
+if test x"$OWCC386" = x"error"; then
+	AC_MSG_ERROR([Open Watcom C compiler wcc386 is required to build this source code])
+fi
+
+# We need Watcom C strip utility
+AC_CHECK_PROGS(OWSTRIP,$OWSTRIP $OPENWATCOM/binl/wstrip,error)
+if test x"$OWSTRIP" = x"error"; then
+	AC_MSG_ERROR([Open Watcom wstrip is required to build this source code])
+fi
+
+# We need Watcom C resource compiler
+AC_CHECK_PROGS(OWRC,$OWRC $OPENWATCOM/binl/wrc,error)
+if test x"$OWRC" = x"error"; then
+	AC_MSG_ERROR([Open Watcom resource compiler (wrc) is required to build this source code])
+fi
+
+# We need Watcom C bind utility (for Win386 builds)
+AC_CHECK_PROGS(OWBIND,$OWBIND $OPENWATCOM/binl/wbind,error)
+if test x"$OWBIND" = x"error"; then
+	AC_MSG_ERROR([Open Watcom win386 bind utility (wbind) is required to build this source code])
+fi
+
+# We need Watcom C lib utility
+AC_CHECK_PROGS(OWLIB,$OWLIB $OPENWATCOM/binl/wlib,error)
+if test x"$OWLIB" = x"error"; then
+	AC_MSG_ERROR([Open Watcom wlib is required to build this source code])
+fi
+
+# We need Watcom C linker
+AC_CHECK_PROGS(OWLINK,$OWLINK $OPENWATCOM/binl/wlink,error)
+if test x"$OWLINK" = x"error"; then
+	AC_MSG_ERROR([Open Watcom wlink is required to build this source code])
+fi
+
 # Checks for header files.
 AC_HEADER_STDC
 AC_CHECK_HEADERS([fcntl.h stdint.h stdlib.h string.h sys/socket.h unistd.h])
