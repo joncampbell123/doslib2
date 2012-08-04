@@ -13,7 +13,7 @@ rm -f config.mak test.errors test.errors.valgrind test.results test.results.valg
 rm -f config.h.in config.h
 rm -Rfv m4 doc
 rm -f aclocal.m4
-rm -f NEWS AUTHORS ChangeLog COPYING INSTALL Makefile.in libtool stamp-h1 config.{guess,sub} install-sh compile
+rm -f NEWS AUTHORS ChangeLog COPYING INSTALL Makefile.in libtool stamp-h1 config.{guess,sub} install-sh compile ltmain.sh missing
 find -name \*.la -exec rm -fv {} +
 find -name \*.loT -exec rm -fv {} +
 find -name Makefile.in -exec rm -fv {} +
