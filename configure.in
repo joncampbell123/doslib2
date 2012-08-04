@@ -9,11 +9,14 @@ AC_CONFIG_HEADER([config.h])
 AC_CONFIG_MACRO_DIR([m4])
 AC_PREFIX_DEFAULT(/usr)
 AC_PROG_LIBTOOL
+AX_WITH_PERL
 
 # Checks for programs.
 AC_PROG_CC
 AC_PROG_CXX
 AM_PROG_CC_C_O
+AC_PATH_PROG([PERL],[perl])
+AX_PROG_PERL_VERSION([5.10.0],[],[])
 
 # Checks for header files.
 AC_HEADER_STDC
