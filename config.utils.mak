@@ -125,22 +125,21 @@ ifeq ($(ENABLE_dos16r),1)
     endif
 
     # Use the shell. GNU make foreach sucks
-    dexo="-"
+    _dos16r_dexo="-"
     ifeq ($(BUILD_dos16r_debug),1)
-      dexo="{-,d}"
+      _dos16r_dexo="{-,d}"
     endif
-    cpuo="-"
+    _dos16r_cpuo="-"
     ifeq ($(BUILD_dos16r_cpuonly),1)
-      cpuo="{-,o}"
+      _dos16r_cpuo="{-,o}"
     endif
-    exto="-"
+    _dos16r_exto="-"
     ifeq ($(BUILD_dos16r_extlib),1)
-      exto="{-,x}"
+      _dos16r_exto="{-,x}"
     endif
 
-    a=$(shell echo $(dexo)$(cpuo)$(exto))
-    _d16r_t=$(a)
-    BUILD_targets += $(foreach ex,$(a),$(foreach m,$(BUILD_dos16r_mm_char_final),$(foreach c,$(BUILD_dos16r_cpus_final),dos16r/$(c)86$(m)$(subst -,,$(ex)))))
+    _dos16r_a=$(shell echo $(_dos16r_dexo)$(_dos16r_cpuo)$(_dos16r_exto))
+    BUILD_targets += $(foreach ex,$(_dos16r_a),$(foreach m,$(BUILD_dos16r_mm_char_final),$(foreach c,$(BUILD_dos16r_cpus_final),dos16r/$(c)86$(m)$(subst -,,$(ex)))))
   endif
 endif
 
@@ -189,42 +188,26 @@ ifeq ($(ENABLE_dos32p),1)
     BUILD_dos32p_mm_final=$(filter $(BUILD_enabled_mm),$(BUILD_dos32p_mm))
 
     BUILD_dos32p_mm_char_final=
-    ifneq ($(findstring compact,$(BUILD_dos32p_mm_final)),)
-      BUILD_dos32p_mm_char_final += c
-    endif
-    ifneq ($(findstring small,$(BUILD_dos32p_mm_final)),)
-      BUILD_dos32p_mm_char_final += s
-    endif
-    ifneq ($(findstring medium,$(BUILD_dos32p_mm_final)),)
-      BUILD_dos32p_mm_char_final += m
-    endif
-    ifneq ($(findstring large,$(BUILD_dos32p_mm_final)),)
-      BUILD_dos32p_mm_char_final += l
-    endif
-    ifneq ($(findstring huge,$(BUILD_dos32p_mm_final)),)
-      BUILD_dos32p_mm_char_final += h
-    endif
     ifneq ($(findstring flat,$(BUILD_dos32p_mm_final)),)
       BUILD_dos32p_mm_char_final += f
     endif
 
-    dexo=""
+    # Use the shell. GNU make foreach sucks
+    _dos32p_dexo="-"
     ifeq ($(BUILD_dos32p_debug),1)
-      dexo="" d
+      _dos32p_dexo="{-,d}"
     endif
-    cpuo=""
+    _dos32p_cpuo="-"
     ifeq ($(BUILD_dos32p_cpuonly),1)
-      cpuo="" o
+      _dos32p_cpuo="{-,o}"
     endif
-    exto=""
+    _dos32p_exto="-"
     ifeq ($(BUILD_dos32p_extlib),1)
-      exto="" x
+      _dos32p_exto="{-,x}"
     endif
 
-    a=$(foreach x,$(dexo),$(x))
-    b=$(foreach x,$(cpuo),$(a)$(x))
-    c=$(foreach x,$(exto),$(b)$(x))
-    BUILD_targets += $(foreach ex,$(c),$(foreach m,$(BUILD_dos32p_mm_char_final),$(foreach c,$(BUILD_dos32p_cpus_final),dos32p/$(c)86$(m)$(ex))))
+    _dos32p_a=$(shell echo $(_dos32p_dexo)$(_dos32p_cpuo)$(_dos32p_exto))
+    BUILD_targets += $(foreach ex,$(_dos32p_a),$(foreach m,$(BUILD_dos32p_mm_char_final),$(foreach c,$(BUILD_dos32p_cpus_final),dos32p/$(c)86$(m)$(subst -,,$(ex)))))
   endif
 endif
 

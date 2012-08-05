@@ -83,8 +83,14 @@ if test x"$OWCL" = x"error"; then
 	AC_MSG_ERROR([Open Watcom wcl is required to build this source code])
 fi
 
+# We need Watcom C linker
+AC_CHECK_PROGS(OWCL386,$OWCL386 $OPENWATCOM/binl/wcl386,error,[$PATH /])
+if test x"$OWCL386" = x"error"; then
+	AC_MSG_ERROR([Open Watcom wcl386 is required to build this source code])
+fi
+
 # define Watcom environment block
-WATENV="\"PATH=$OPENWATCOM/binl:$PATH\" \"WATCOM=$OPENWATCOM\" \"EDPATH=$OPENWATCOM/eddat\" \"INCLUDE=$OPENWATCOM/h/nt;$OPENWATCOM/h/nt/directx;$OPENWATCOM/h/nt/ddk;$OPENWATCOM/h\""
+WATENV="\"PATH=$OPENWATCOM/binl:$OPENWATCOM/binw:$PATH\" \"WATCOM=$OPENWATCOM\" \"EDPATH=$OPENWATCOM/eddat\" \"INCLUDE=$OPENWATCOM/h/nt;$OPENWATCOM/h/nt/directx;$OPENWATCOM/h/nt/ddk;$OPENWATCOM/h\""
 
 # Checks for header files.
 AC_HEADER_STDC

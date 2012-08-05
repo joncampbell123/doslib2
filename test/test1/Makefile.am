@@ -1,6 +1,6 @@
 
 BUILD_dos16r=1
-#BUILD_dos32p=1
+BUILD_dos32p=1
 
 -include ../../config.mak
 -include Makefile.wcc

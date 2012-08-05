@@ -8,6 +8,7 @@ all-programs: $(abs_exe_dir)/test1$(exe_suffix)
 $(abs_exe_dir)/test1$(exe_suffix): $(abs_obj_dir)/test1$(obj_suffix)
 	@echo option quiet system $(WLINK_SYSTEM) $(WLINKFLAGS) $(foreach x,$^,file "$(x)") option map=$(abs_obj_dir)/test1.map name $@ >$(abs_obj_dir)/test1.cmd
 	$(WLINK) @$(abs_obj_dir)/test1.cmd
+	rm -f $(abs_obj_dir)/test1.cmd
 
 $(abs_obj_dir)/test1$(obj_suffix): test1.c
 	$(WCC) $(WCCFLAGS) -fo=$(abs_obj_dir)/.obj -i=.. -i=../.. $^
