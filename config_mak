@@ -12,7 +12,7 @@ close(T);
 
 # then we need these macros to control the build directory
 print "rel_srcdir=\$(subst \$(abs_top_srcdir)/,,\$(abs_srcdir))\n";
-print "ifdef \$(target_subdir)\n";
+print "ifneq (\$(target_subdir),)\n";
 print "abs_exe_dir=\$(abs_top_builddir)/build/\$(rel_srcdir)/\$(target_subdir)/exe\n";
 print "abs_obj_dir=\$(abs_top_builddir)/build/\$(rel_srcdir)/\$(target_subdir)/obj\n";
 print "abs_lib_dir=\$(abs_top_builddir)/build/\$(rel_srcdir)/\$(target_subdir)/lib\n";
