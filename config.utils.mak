@@ -124,23 +124,23 @@ ifeq ($(ENABLE_dos16r),1)
       BUILD_dos16r_mm_char_final += f
     endif
 
-    dexo=""
+    # Use the shell. GNU make foreach sucks
+    dexo="-"
     ifeq ($(BUILD_dos16r_debug),1)
-      dexo="" d
+      dexo="{-,d}"
     endif
-    cpuo=""
+    cpuo="-"
     ifeq ($(BUILD_dos16r_cpuonly),1)
-      cpuo="" o
+      cpuo="{-,o}"
     endif
-    exto=""
+    exto="-"
     ifeq ($(BUILD_dos16r_extlib),1)
-      exto="" x
+      exto="{-,x}"
     endif
 
-    a=$(foreach x,$(dexo),$(x))
-    b=$(foreach x,$(cpuo),$(a)$(x))
-    c=$(foreach x,$(exto),$(b)$(x))
-    BUILD_targets += $(foreach ex,$(c),$(foreach m,$(BUILD_dos16r_mm_char_final),$(foreach c,$(BUILD_dos16r_cpus_final),dos16r/$(c)86$(m)$(ex))))
+    a=$(shell echo $(dexo)$(cpuo)$(exto))
+    _d16r_t=$(a)
+    BUILD_targets += $(foreach ex,$(a),$(foreach m,$(BUILD_dos16r_mm_char_final),$(foreach c,$(BUILD_dos16r_cpus_final),dos16r/$(c)86$(m)$(subst -,,$(ex)))))
   endif
 endif
 
