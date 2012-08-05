@@ -9,9 +9,9 @@ $(abs_exe_dir)/test1$(exe_suffix): $(abs_obj_dir)/test1$(obj_suffix)
 ifeq ($(target_subdir),linux/host)
 	$(CC) $(LDFLAGS) -o $@ $^
 else
-	@echo option quiet system $(WLINK_SYSTEM) $(WLINKFLAGS) $(foreach x,$^,file "$(x)") option map=$(abs_obj_dir)/test1.map name $@ >$(abs_obj_dir)/test1.cmd
+	@echo option quiet system $(WLINK_SYSTEM) $(WLINKFLAGS) $(WLINK_SEGMENTS) $(foreach x,$^,file "$(x)") option map=$(abs_obj_dir)/test1.map name $@ >$(abs_obj_dir)/test1.cmd
 	$(WLINK) @$(abs_obj_dir)/test1.cmd
-	rm -f $(abs_obj_dir)/test1.cmd
+	@rm -f $(abs_obj_dir)/test1.cmd
  ifneq ($(WIN16_NE_SETVER),)
 	$(WIN16_NE_SETVER) $@
  endif
