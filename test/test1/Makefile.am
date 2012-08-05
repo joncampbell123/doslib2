@@ -32,6 +32,20 @@ clean:
 disk:
 	dd if=/dev/zero of=test.dsk bs=512 count=2880
 	mkfs.vfat test.dsk
-	mcopy -i test.dsk ../../build/test/test1/win16r/20_086l/exe/test1.exe ::20_086l.exe
-	mcopy -i test.dsk ../../build/test/test1/win16r/20_086c/exe/test1.exe ::20_086c.exe
+	mcopy -i test.dsk ../../build/test/test1/win16r/20_086l/exe/test1.exe ::r20_086l.exe
+	mcopy -i test.dsk ../../build/test/test1/win16r/20_086c/exe/test1.exe ::r20_086c.exe
+	mcopy -i test.dsk ../../build/test/test1/win16r/30_086l/exe/test1.exe ::r30_086l.exe
+	mcopy -i test.dsk ../../build/test/test1/win16r/30_086c/exe/test1.exe ::r30_086c.exe
+	mcopy -i test.dsk ../../build/test/test1/win16r/31_086l/exe/test1.exe ::r31_086l.exe
+	mcopy -i test.dsk ../../build/test/test1/win16r/31_086c/exe/test1.exe ::r31_086c.exe
+	mcopy -i test.dsk ../../build/test/test1/win16p/30_386l/exe/test1.exe ::p30_386l.exe
+	mcopy -i test.dsk ../../build/test/test1/win16p/30_386c/exe/test1.exe ::p30_386c.exe
+	mcopy -i test.dsk ../../build/test/test1/win16p/31_386l/exe/test1.exe ::p31_386l.exe
+	mcopy -i test.dsk ../../build/test/test1/win16p/31_386c/exe/test1.exe ::p31_386c.exe
+	mcopy -i test.dsk ../../build/test/test1/win16b/20_386l/exe/test1.exe ::b20_386l.exe
+	mcopy -i test.dsk ../../build/test/test1/win16b/20_386c/exe/test1.exe ::b20_386c.exe
+	mcopy -i test.dsk ../../build/test/test1/win16b/30_386l/exe/test1.exe ::b30_386l.exe
+	mcopy -i test.dsk ../../build/test/test1/win16b/30_386c/exe/test1.exe ::b30_386c.exe
+	mcopy -i test.dsk ../../build/test/test1/win16b/31_386l/exe/test1.exe ::b31_386l.exe
+	mcopy -i test.dsk ../../build/test/test1/win16b/31_386c/exe/test1.exe ::b31_386c.exe
 
