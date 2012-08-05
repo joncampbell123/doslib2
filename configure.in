@@ -1,5 +1,6 @@
 #                                               -*- Autoconf -*-
 # Process this file with autoconf to produce a configure script.
+topdir=`pwd`
 
 AC_PREREQ(2.60)
 AC_INIT(doslib2, 2.0, jonathan@impactstudiopro.com)
@@ -148,4 +149,8 @@ cat >>config.h <<_EOF
 _EOF
 ./config_mak >config.mak
 ./config.h.filter <config.h >config_public.h
+
+mkdir -p "$topdir/build/exe" || exit 1
+mkdir -p "$topdir/build/obj" || exit 1
+mkdir -p "$topdir/build/lib" || exit 1
 
