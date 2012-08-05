@@ -79,7 +79,7 @@ while (@ARGV && $ARGV[0] =~ m/^-+/) {
 
 my $version_str = shift @ARGV;
 my $ne_file = shift @ARGV;
-die unless -f $ne_file;
+die "$ne_file does not exist" unless -f $ne_file;
 ($vmaj,$vmin) = split(/\./,$version_str);
 $vmaj = $vmaj + 0;
 $vmin = $vmin + 0;
