@@ -138,6 +138,7 @@ ISP_AUTO_OPTION_ENABLED([cpu-486],          [cpu_486],          [486 level build
 ISP_AUTO_OPTION_ENABLED([cpu-586],          [cpu_586],          [586 level builds])
 ISP_AUTO_OPTION_ENABLED([cpu-686],          [cpu_686],          [686 level builds])
 
+AC_CONFIG_FILES(test/test1/Makefile)
 AC_CONFIG_FILES(test/Makefile)
 AC_CONFIG_FILES(Makefile)
 
@@ -148,8 +149,4 @@ cat >>config.h <<_EOF
 _EOF
 ./config_mak >config.mak
 ./config.h.filter <config.h >config_public.h
-
-mkdir -p "build/exe" || exit 1
-mkdir -p "build/obj" || exit 1
-mkdir -p "build/lib" || exit 1
 
