@@ -1,0 +1,9 @@
+#!/bin/bash
+./cleantree
+./autogen.sh
+x=`uname -m`
+LIB=
+
+if [ x"$x" == x"x86_64" ]; then LIB="--libdir=/usr/lib64"; fi
+./configure --prefix=/usr $LIB || exit 1
+
