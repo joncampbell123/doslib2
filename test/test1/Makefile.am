@@ -9,7 +9,12 @@ debugme:
 	@echo suffixes "$(suffixes)"
 
 -include ../../config.mak
+-include Makefile.wcc
 
-bin_PROGRAMS =
-noinst_PROGRAMS = 
+all:
+	@for i in "" $(BUILD_targets); do\
+		if [ x"$$i" != x ]; then \
+			$(MAKE) --no-print-directory -$(MAKEFLAGS) all-targets target_subdir=$$i;\
+		fi;\
+	done
 

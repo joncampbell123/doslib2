@@ -4,6 +4,15 @@ ifneq ($(target_subdir),)
 abs_exe_dir=$(abs_top_builddir)/build/$(rel_srcdir)/$(target_subdir)/exe
 abs_obj_dir=$(abs_top_builddir)/build/$(rel_srcdir)/$(target_subdir)/obj
 abs_lib_dir=$(abs_top_builddir)/build/$(rel_srcdir)/$(target_subdir)/lib
+
+$(abs_exe_dir):
+	@mkdir -p $@
+
+$(abs_lib_dir):
+	@mkdir -p $@
+
+$(abs_obj_dir):
+	@mkdir -p $@
 endif
 
 # what CPUs were asked to be built?
