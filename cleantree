@@ -19,4 +19,5 @@ find -name \*.loT -exec rm -fv {} +
 find -name Makefile.in -exec rm -fv {} +
 rm -f isp-utils isp-utils-v4
 rm -Rf build
-
+find -name nul.err -delete
+find -name \*.cmd -delete
