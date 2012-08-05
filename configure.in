@@ -159,7 +159,7 @@ _EOF
 
 # emit other vars to config.mak
 echo OPENWATCOM=$OPENWATCOM >>config.mak
-echo WATENV=\'$WATENV\' >>config.mak
+echo WATENV=$WATENV >>config.mak
 
 echo '-include $(abs_top_srcdir)/config.utils.mak' >>config.mak
 

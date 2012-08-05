@@ -1,6 +1,6 @@
 
 BUILD_dos16r=1
-BUILD_dos32p=1
+#BUILD_dos32p=1
 
 -include ../../config.mak
 -include Makefile.wcc
@@ -21,6 +21,13 @@ all:
 	@for i in "" $(BUILD_targets); do\
 		if [ x"$$i" != x ]; then \
 			$(MAKE) --no-print-directory -$(MAKEFLAGS) all-targets target_subdir=$$i;\
+		fi;\
+	done
+
+clean:
+	@for i in "" $(BUILD_targets); do\
+		if [ x"$$i" != x ]; then \
+			$(MAKE) --no-print-directory -$(MAKEFLAGS) clean-targets target_subdir=$$i;\
 		fi;\
 	done
 

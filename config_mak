@@ -9,5 +9,4 @@ while (my $line = <T>) {
 	print "$line\n";
 }
 close(T);
-print "-include \$(abs_top_srcdir)/config.utils.mak\n";
 
