@@ -10,6 +10,8 @@ exe_suffix=.exe
 obj_suffix=.obj
 lib_suffix=.lib
 
+WATENV += "INCLUDE=$(OPENWATCOM)/h"
+
 # make flags
 TARGET_MSDOS=1
 TARGET_BITS=16

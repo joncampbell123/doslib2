@@ -90,7 +90,7 @@ if test x"$OWCL386" = x"error"; then
 fi
 
 # define Watcom environment block
-WATENV="\"PATH=$OPENWATCOM/binl:$OPENWATCOM/binw:$PATH\" \"WATCOM=$OPENWATCOM\" \"EDPATH=$OPENWATCOM/eddat\" \"INCLUDE=$OPENWATCOM/h/nt;$OPENWATCOM/h/nt/directx;$OPENWATCOM/h/nt/ddk;$OPENWATCOM/h\""
+WATENV="\"PATH=$OPENWATCOM/binl:$OPENWATCOM/binw:$PATH\" \"WATCOM=$OPENWATCOM\" \"EDPATH=$OPENWATCOM/eddat\""
 
 # Checks for header files.
 AC_HEADER_STDC
@@ -126,9 +126,9 @@ m4_define([ISP_AUTO_OPTION_ENABLED_DEF],[
 m4_define([ISP_AUTO_OPTION_ENABLED],[ISP_AUTO_OPTION_ENABLED_DEF([$1],[$2],[$3],[yes],[disable])])
 m4_define([ISP_AUTO_OPTION_DISABLED],[ISP_AUTO_OPTION_ENABLED_DEF([$1],[$2],[$3],[no],[enable])])
 
-ISP_AUTO_OPTION_ENABLED([debug],            [debug],            [debug builds])
-ISP_AUTO_OPTION_ENABLED([cpuonly],          [cpuonly],          [cpu-specific builds])
-ISP_AUTO_OPTION_ENABLED([extlib],           [extlib],           [builds that call external memory-resident library functions])
+ISP_AUTO_OPTION_DISABLED([debug],            [debug],            [debug builds])
+ISP_AUTO_OPTION_DISABLED([cpuonly],          [cpuonly],          [cpu-specific builds])
+ISP_AUTO_OPTION_DISABLED([extlib],           [extlib],           [builds that call external memory-resident library functions])
 ISP_AUTO_OPTION_ENABLED([mm-compact],       [mm_compact],       [16-bit compact memory model builds])
 ISP_AUTO_OPTION_ENABLED([mm-small],         [mm_small],         [16-bit small memory model builds])
 ISP_AUTO_OPTION_ENABLED([mm-medium],        [mm_medium],        [16-bit medium memory model builds])
@@ -145,11 +145,11 @@ ISP_AUTO_OPTION_ENABLED([win32s],           [win32s],           [32-bit Win32s p
 ISP_AUTO_OPTION_ENABLED([win32],            [win32],            [32-bit Win32 programs (designed for Windows 9x/ME and NT/2000/XP/Vista/7/etc])
 ISP_AUTO_OPTION_ENABLED([linux-host],       [linux_host],       [programs for your host Linux. Note that they are compiled anyway if needed for the build])
 ISP_AUTO_OPTION_ENABLED([cpu-8086],         [cpu_8086],         [8086 level builds])
-ISP_AUTO_OPTION_ENABLED([cpu-286],          [cpu_286],          [286 level builds])
+ISP_AUTO_OPTION_DISABLED([cpu-286],          [cpu_286],          [286 level builds])
 ISP_AUTO_OPTION_ENABLED([cpu-386],          [cpu_386],          [386 level builds])
-ISP_AUTO_OPTION_ENABLED([cpu-486],          [cpu_486],          [486 level builds])
-ISP_AUTO_OPTION_ENABLED([cpu-586],          [cpu_586],          [586 level builds])
-ISP_AUTO_OPTION_ENABLED([cpu-686],          [cpu_686],          [686 level builds])
+ISP_AUTO_OPTION_DISABLED([cpu-486],          [cpu_486],          [486 level builds])
+ISP_AUTO_OPTION_DISABLED([cpu-586],          [cpu_586],          [586 level builds])
+ISP_AUTO_OPTION_DISABLED([cpu-686],          [cpu_686],          [686 level builds])
 
 AC_CONFIG_FILES(test/test1/Makefile)
 AC_CONFIG_FILES(test/Makefile)
