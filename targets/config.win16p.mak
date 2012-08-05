@@ -161,6 +161,6 @@ ifeq ($(TARGET_WINDOWS_VERSION),20)
 WIN16_NE_SETVER=$(abs_top_builddir)/util/chgnever.pl -progflag +protonly $(WIN16_NE_SETVER_CPU) 2.0
 endif
 ifeq ($(TARGET_WINDOWS_VERSION),10)
-WIN16_NE_SETVER=$(abs_top_builddir)/util/chgnever.pl -progflag +protonly $(WIN16_NE_SETVER_CPU) 1.0
+WIN16_NE_SETVER=$(abs_top_builddir)/util/chgnever.pl -progflag +protonly $(WIN16_NE_SETVER_CPU) 2.0
 endif
 
