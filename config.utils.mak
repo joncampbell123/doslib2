@@ -57,11 +57,6 @@ ifeq ($(ENABLE_mm_flat),1)
  BUILD_enabled_mm += flat
 endif
 
-# forced eval
-define force_eval
-  penis
-endef
-
 # list target subdirs
 BUILD_targets=
 
@@ -93,58 +88,60 @@ ifeq ($(ENABLE_dos16r),1)
     ifeq ($(BUILD_dos16r_cpuonly),)
       BUILD_dos16r_cpuonly=1
     endif
-  endif
 
-  ifneq ($(ENABLE_debug),1)
-    BUILD_dos16r_debug=0
-  endif
-  ifneq ($(ENABLE_cpuonly),1)
-    BUILD_dos16r_cpuonly=0
-  endif
-  ifneq ($(ENABLE_extlib),1)
-    BUILD_dos16r_extlib=0
-  endif
+    ifneq ($(ENABLE_debug),1)
+      BUILD_dos16r_debug=0
+    endif
 
-  BUILD_dos16r_cpus_final=$(filter $(BUILD_enabled_cpus),$(BUILD_dos16r_cpus))
-  BUILD_dos16r_mm_final=$(filter $(BUILD_enabled_mm),$(BUILD_dos16r_mm))
+    ifneq ($(ENABLE_cpuonly),1)
+      BUILD_dos16r_cpuonly=0
+    endif
+  
+    ifneq ($(ENABLE_extlib),1)
+      BUILD_dos16r_extlib=0
+    endif
 
-  BUILD_dos16r_mm_char_final=
-  ifneq ($(findstring compact,$(BUILD_dos16r_mm_final)),)
-    BUILD_dos16r_mm_char_final += c
-  endif
-  ifneq ($(findstring small,$(BUILD_dos16r_mm_final)),)
-    BUILD_dos16r_mm_char_final += s
-  endif
-  ifneq ($(findstring medium,$(BUILD_dos16r_mm_final)),)
-    BUILD_dos16r_mm_char_final += m
-  endif
-  ifneq ($(findstring large,$(BUILD_dos16r_mm_final)),)
-    BUILD_dos16r_mm_char_final += l
-  endif
-  ifneq ($(findstring huge,$(BUILD_dos16r_mm_final)),)
-    BUILD_dos16r_mm_char_final += h
-  endif
-  ifneq ($(findstring flat,$(BUILD_dos16r_mm_final)),)
-    BUILD_dos16r_mm_char_final += f
-  endif
+    BUILD_dos16r_cpus_final=$(filter $(BUILD_enabled_cpus),$(BUILD_dos16r_cpus))
+    BUILD_dos16r_mm_final=$(filter $(BUILD_enabled_mm),$(BUILD_dos16r_mm))
 
-  dexo=""
-  ifeq ($(BUILD_dos16r_debug),1)
-    dexo="" d
-  endif
-  cpuo=""
-  ifeq ($(BUILD_dos16r_cpuonly),1)
-    cpuo="" o
-  endif
-  exto=""
-  ifeq ($(BUILD_dos16r_extlib),1)
-    exto="" x
-  endif
+    BUILD_dos16r_mm_char_final=
+    ifneq ($(findstring compact,$(BUILD_dos16r_mm_final)),)
+      BUILD_dos16r_mm_char_final += c
+    endif
+    ifneq ($(findstring small,$(BUILD_dos16r_mm_final)),)
+      BUILD_dos16r_mm_char_final += s
+    endif
+    ifneq ($(findstring medium,$(BUILD_dos16r_mm_final)),)
+      BUILD_dos16r_mm_char_final += m
+    endif
+    ifneq ($(findstring large,$(BUILD_dos16r_mm_final)),)
+      BUILD_dos16r_mm_char_final += l
+    endif
+    ifneq ($(findstring huge,$(BUILD_dos16r_mm_final)),)
+      BUILD_dos16r_mm_char_final += h
+    endif
+    ifneq ($(findstring flat,$(BUILD_dos16r_mm_final)),)
+      BUILD_dos16r_mm_char_final += f
+    endif
 
-  a=$(foreach x,$(dexo),$(x))
-  b=$(foreach x,$(cpuo),$(a)$(x))
-  c=$(foreach x,$(exto),$(b)$(x))
-  BUILD_targets += $(foreach ex,$(c),$(foreach m,$(BUILD_dos16r_mm_char_final),$(foreach c,$(BUILD_dos16r_cpus_final),dos16r/$(c)86$(m)$(ex))))
+    dexo=""
+    ifeq ($(BUILD_dos16r_debug),1)
+      dexo="" d
+    endif
+    cpuo=""
+    ifeq ($(BUILD_dos16r_cpuonly),1)
+      cpuo="" o
+    endif
+    exto=""
+    ifeq ($(BUILD_dos16r_extlib),1)
+      exto="" x
+    endif
+
+    a=$(foreach x,$(dexo),$(x))
+    b=$(foreach x,$(cpuo),$(a)$(x))
+    c=$(foreach x,$(exto),$(b)$(x))
+    BUILD_targets += $(foreach ex,$(c),$(foreach m,$(BUILD_dos16r_mm_char_final),$(foreach c,$(BUILD_dos16r_cpus_final),dos16r/$(c)86$(m)$(ex))))
+  endif
 endif
 
 # dos32p
@@ -175,57 +172,64 @@ ifeq ($(ENABLE_dos32p),1)
     ifeq ($(BUILD_dos32p_cpuonly),)
       BUILD_dos32p_cpuonly=1
     endif
-  endif
 
-  ifneq ($(ENABLE_debug),1)
-    BUILD_dos32p_debug=0
-  endif
-  ifneq ($(ENABLE_cpuonly),1)
-    BUILD_dos32p_cpuonly=0
-  endif
-  ifneq ($(ENABLE_extlib),1)
-    BUILD_dos32p_extlib=0
-  endif
+    ifneq ($(ENABLE_debug),1)
+      BUILD_dos32p_debug=0
+    endif
 
-  BUILD_dos32p_cpus_final=$(filter $(BUILD_enabled_cpus),$(BUILD_dos32p_cpus))
-  BUILD_dos32p_mm_final=$(filter $(BUILD_enabled_mm),$(BUILD_dos32p_mm))
+    ifneq ($(ENABLE_cpuonly),1)
+      BUILD_dos32p_cpuonly=0
+    endif
 
-  BUILD_dos32p_mm_char_final=
-  ifneq ($(findstring compact,$(BUILD_dos32p_mm_final)),)
-    BUILD_dos32p_mm_char_final += c
-  endif
-  ifneq ($(findstring small,$(BUILD_dos32p_mm_final)),)
-    BUILD_dos32p_mm_char_final += s
-  endif
-  ifneq ($(findstring medium,$(BUILD_dos32p_mm_final)),)
-    BUILD_dos32p_mm_char_final += m
-  endif
-  ifneq ($(findstring large,$(BUILD_dos32p_mm_final)),)
-    BUILD_dos32p_mm_char_final += l
-  endif
-  ifneq ($(findstring huge,$(BUILD_dos32p_mm_final)),)
-    BUILD_dos32p_mm_char_final += h
-  endif
-  ifneq ($(findstring flat,$(BUILD_dos32p_mm_final)),)
-    BUILD_dos32p_mm_char_final += f
-  endif
+    ifneq ($(ENABLE_extlib),1)
+      BUILD_dos32p_extlib=0
+    endif
 
-  dexo=""
-  ifeq ($(BUILD_dos32p_debug),1)
-    dexo="" d
-  endif
-  cpuo=""
-  ifeq ($(BUILD_dos32p_cpuonly),1)
-    cpuo="" o
-  endif
-  exto=""
-  ifeq ($(BUILD_dos32p_extlib),1)
-    exto="" x
-  endif
+    BUILD_dos32p_cpus_final=$(filter $(BUILD_enabled_cpus),$(BUILD_dos32p_cpus))
+    BUILD_dos32p_mm_final=$(filter $(BUILD_enabled_mm),$(BUILD_dos32p_mm))
 
-  a=$(foreach x,$(dexo),$(x))
-  b=$(foreach x,$(cpuo),$(a)$(x))
-  c=$(foreach x,$(exto),$(b)$(x))
-  BUILD_targets += $(foreach ex,$(c),$(foreach m,$(BUILD_dos32p_mm_char_final),$(foreach c,$(BUILD_dos32p_cpus_final),dos32p/$(c)86$(m)$(ex))))
+    BUILD_dos32p_mm_char_final=
+    ifneq ($(findstring compact,$(BUILD_dos32p_mm_final)),)
+      BUILD_dos32p_mm_char_final += c
+    endif
+    ifneq ($(findstring small,$(BUILD_dos32p_mm_final)),)
+      BUILD_dos32p_mm_char_final += s
+    endif
+    ifneq ($(findstring medium,$(BUILD_dos32p_mm_final)),)
+      BUILD_dos32p_mm_char_final += m
+    endif
+    ifneq ($(findstring large,$(BUILD_dos32p_mm_final)),)
+      BUILD_dos32p_mm_char_final += l
+    endif
+    ifneq ($(findstring huge,$(BUILD_dos32p_mm_final)),)
+      BUILD_dos32p_mm_char_final += h
+    endif
+    ifneq ($(findstring flat,$(BUILD_dos32p_mm_final)),)
+      BUILD_dos32p_mm_char_final += f
+    endif
+
+    dexo=""
+    ifeq ($(BUILD_dos32p_debug),1)
+      dexo="" d
+    endif
+    cpuo=""
+    ifeq ($(BUILD_dos32p_cpuonly),1)
+      cpuo="" o
+    endif
+    exto=""
+    ifeq ($(BUILD_dos32p_extlib),1)
+      exto="" x
+    endif
+
+    a=$(foreach x,$(dexo),$(x))
+    b=$(foreach x,$(cpuo),$(a)$(x))
+    c=$(foreach x,$(exto),$(b)$(x))
+    BUILD_targets += $(foreach ex,$(c),$(foreach m,$(BUILD_dos32p_mm_char_final),$(foreach c,$(BUILD_dos32p_cpus_final),dos32p/$(c)86$(m)$(ex))))
+  endif
+endif
+
+ifneq ($(target_subdir),)
+# Yes, I'm aware $(target_subdir) usually takes the form dos16r/086c
+include $(abs_top_builddir)/targets/config.$(patsubst %/,%,$(dir $(target_subdir))).mak
 endif
 

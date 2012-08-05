@@ -1,0 +1,2 @@
+test1.c(9): Error! E1055: Unable to open 'stdio.h'
+test1.c(10): Error! E1147: Too many errors: compilation aborted

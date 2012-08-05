@@ -3,7 +3,15 @@ ifdef target_subdir
 
 all-targets-abs-dirs: $(abs_exe_dir) $(abs_lib_dir) $(abs_obj_dir)
 
-all-targets: all-targets-abs-dirs
+all-programs: $(abs_exe_dir)/test1$(exe_suffix)
+
+$(abs_exe_dir)/test1$(exe_suffix): $(abs_obj_dir)/test1$(obj_suffix)
+
+$(abs_obj_dir)/test1$(obj_suffix): test1.c
+	$(WCC) $(WCCFLAGS) -fo=$(abs_obj_dir)/.obj -i=.. -i=../.. $^
+
+all-targets: all-targets-abs-dirs all-programs
+	true
 
 endif
 
