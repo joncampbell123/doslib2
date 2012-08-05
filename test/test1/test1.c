@@ -26,6 +26,9 @@ void do_desc() {
 #ifdef TARGET_MSDOS
 	p += sprintf(p,"TARGET_MSDOS=%d\n",TARGET_MSDOS);
 #endif
+#ifdef TARGET_LINUX
+	p += sprintf(p,"TARGET_LINUX=%d\n",TARGET_LINUX);
+#endif
 #ifdef TARGET_WINDOWS
 	p += sprintf(p,"TARGET_WINDOWS=%d\n",TARGET_WINDOWS);
 #endif

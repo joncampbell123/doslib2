@@ -4,6 +4,7 @@ BUILD_dos32p=1
 BUILD_win16r=1
 BUILD_win16p=1
 BUILD_win16b=1
+BUILD_linux_host=1
 
 -include ../../config.mak
 -include Makefile.wcc
@@ -27,4 +28,10 @@ clean:
 			$(MAKE) --no-print-directory -$(MAKEFLAGS) clean-targets target_subdir=$$i;\
 		fi;\
 	done
+
+disk:
+	dd if=/dev/zero of=test.dsk bs=512 count=2880
+	mkfs.vfat test.dsk
+	mcopy -i test.dsk ../../build/test/test1/win16r/20_086l/exe/test1.exe ::20_086l.exe
+	mcopy -i test.dsk ../../build/test/test1/win16r/20_086c/exe/test1.exe ::20_086c.exe
 

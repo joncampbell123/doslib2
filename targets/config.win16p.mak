@@ -1,4 +1,4 @@
-# DOS 16-bit real mode target
+# Windows 16-bit protected mode target
 
 WCC=env $(WATENV) $(OWCC)
 WCL=env $(WATENV) $(OWCL)
@@ -32,16 +32,16 @@ W_DEBUG=-d0 -s
 _win16p_t1=$(subst 86,,$(patsubst win16p/%,%,$(target_subdir)))
 _win16p_t=$(subst 31_,,$(subst 30_,,$(subst 20_,,$(subst 10_,,$(_win16p_t1)))))
 
-ifeq ($(findstring 0,$(_win16p_t1)),10)
+ifeq ($(findstring 10,$(_win16p_t1)),10)
   TARGET_WINDOWS_VERSION=10
 endif
-ifeq ($(findstring 2,$(_win16p_t1)),20)
+ifeq ($(findstring 20,$(_win16p_t1)),20)
   TARGET_WINDOWS_VERSION=20
 endif
-ifeq ($(findstring 3,$(_win16p_t1)),30)
+ifeq ($(findstring 30,$(_win16p_t1)),30)
   TARGET_WINDOWS_VERSION=30
 endif
-ifeq ($(findstring 4,$(_win16p_t1)),31)
+ifeq ($(findstring 31,$(_win16p_t1)),31)
   TARGET_WINDOWS_VERSION=31
 endif
 
@@ -112,11 +112,16 @@ _win16p_defs += -dTARGET_WINDOWS_VERSION=$(TARGET_WINDOWS_VERSION)
 endif
 
 WLINKFLAGS=
+ifeq ($(TARGET_WINDOWS_VERSION),31)
 WRCFLAGS=-q -r -31 
+else
+WRCFLAGS=-q -r -30
+endif
 WCCFLAGS=-e=2 -zq -m$(W_MMODE) $(W_DEBUG) -bt=windows -oilrtfm -wx -$(W_CPULEVEL) $(_win16p_defs) -q -fr=nul
 WASMFLAGS=-e=2 -zq -m$(W_MMODE) $(W_DEBUG) -bt=windows -wx -$(W_CPULEVEL) $(_win16p_defs) -q
 NASMFLAGS=-DTARGET_WINDOWS=1 -DTARGET_WINDOWS_GUI=1 -DTARGET_WINDOWS_WIN16=1 -DTARGET_BITS=16 -DTARGET_PROTMODE=1 -DMMODE=$(W_MMODE) -DCPUONLY=$(TARGET_CPUONLY) -DEXTLIB=$(TARGET_EXTLIB) -DDEBUG=$(TARGET_DEBUG) -DTARGET_CPU=$(W_CPULEVEL) -DTARGET_WINDOWS_VERSION=$(TARGET_WINDOWS_VERSION)
 WLINK_SYSTEM=windows
+WLINKFLAGS=option stack=4096 option heapsize=1024
 
 # DOS *IS* a console OS, flags are the same (TODO: Copy params above)
 WCCFLAGS_CONSOLE=$(WCCFLAGS)
@@ -124,4 +129,37 @@ WASMFLAGS_CONSOLE=$(WASMFLAGS)
 NASMFLAGS_CONSOLE=$(NASMFLAGS)
 WLINKFLAGS_CONSOLE=$(WLINKFLAGS)
 WLINK_SYSTEM_CONSOLE=$(WLINK_SYSTEM)
+
+# UTILITY TO SET WIN16 NE IMAGE VERSION
+ifeq ($(W_CPULEVEL),0)
+WIN16_NE_SETVER_CPU=-progflag +8086
+endif
+ifeq ($(W_CPULEVEL),2)
+WIN16_NE_SETVER_CPU=-progflag +286
+endif
+ifeq ($(W_CPULEVEL),3)
+WIN16_NE_SETVER_CPU=-progflag +386
+endif
+ifeq ($(W_CPULEVEL),4)
+WIN16_NE_SETVER_CPU=-progflag +486
+endif
+ifeq ($(W_CPULEVEL),5)
+WIN16_NE_SETVER_CPU=-progflag +486
+endif
+ifeq ($(W_CPULEVEL),6)
+WIN16_NE_SETVER_CPU=-progflag +486
+endif
+
+ifeq ($(TARGET_WINDOWS_VERSION),31)
+WIN16_NE_SETVER=$(abs_top_builddir)/util/chgnever.pl -progflag +protonly $(WIN16_NE_SETVER_CPU) 3.1
+endif
+ifeq ($(TARGET_WINDOWS_VERSION),30)
+WIN16_NE_SETVER=$(abs_top_builddir)/util/chgnever.pl -progflag +protonly $(WIN16_NE_SETVER_CPU) 3.0
+endif
+ifeq ($(TARGET_WINDOWS_VERSION),20)
+WIN16_NE_SETVER=$(abs_top_builddir)/util/chgnever.pl -progflag +protonly $(WIN16_NE_SETVER_CPU) 2.0
+endif
+ifeq ($(TARGET_WINDOWS_VERSION),10)
+WIN16_NE_SETVER=$(abs_top_builddir)/util/chgnever.pl -progflag +protonly $(WIN16_NE_SETVER_CPU) 1.0
+endif
 

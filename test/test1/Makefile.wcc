@@ -6,12 +6,23 @@ all-targets-abs-dirs: $(abs_exe_dir) $(abs_lib_dir) $(abs_obj_dir)
 all-programs: $(abs_exe_dir)/test1$(exe_suffix)
 
 $(abs_exe_dir)/test1$(exe_suffix): $(abs_obj_dir)/test1$(obj_suffix)
+ifeq ($(target_subdir),linux/host)
+	$(CC) $(LDFLAGS) -o $@ $^
+else
 	@echo option quiet system $(WLINK_SYSTEM) $(WLINKFLAGS) $(foreach x,$^,file "$(x)") option map=$(abs_obj_dir)/test1.map name $@ >$(abs_obj_dir)/test1.cmd
 	$(WLINK) @$(abs_obj_dir)/test1.cmd
 	rm -f $(abs_obj_dir)/test1.cmd
+ ifneq ($(WIN16_NE_SETVER),)
+	$(WIN16_NE_SETVER) $@
+ endif
+endif
 
 $(abs_obj_dir)/test1$(obj_suffix): test1.c
+ifeq ($(target_subdir),linux/host)
+	$(CC) $(CFLAGS) -c -o $@ $^
+else
 	$(WCC) $(WCCFLAGS) -fo=$(abs_obj_dir)/.obj -i=.. -i=../.. $^
+endif
 
 all-targets: all-targets-abs-dirs all-programs
 	@true
