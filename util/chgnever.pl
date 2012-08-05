@@ -18,10 +18,20 @@ if (@ARGV < 2) {
 	print STDERR "       1 = Full screen\n";
 	print STDERR "       2 = Compatible with Windows/PM API\n";
 	print STDERR "       3 = Uses Windows/PM API\n";
+	print STDERR "  --exetype <n>\n";
+	print STDERR "       0 = unknown\n";
+	print STDERR "       1 = OS/2\n";
+	print STDERR "       2 = Windows\n";
+	print STDERR "       3 = European MS-DOS 4.x\n";
+	print STDERR "       4 = Windows 386\n";
+	print STDERR "       5 = BOSS (Borland Operating System Services)\n";
+	print STDERR "  --zero-checksum\n";
 	exit 1;
 }
 
+my $zerochk = 0;
 my $vmaj,$vmin;
+my $exetype = undef;
 my $link_ver = undef;
 my $pflags_mask = 0xFFFF,$pflags_or = 0;
 
@@ -29,12 +39,18 @@ while (@ARGV && $ARGV[0] =~ m/^-+/) {
 	my $sw = shift @ARGV;
 	$sw =~ s/^-+//;
 
-	if ($sw eq "apptype") {
+	if ($sw eq "zero-checksum") {
+		$zerochk = 1;
+	}
+	elsif ($sw eq "apptype") {
 		my $typ = (shift @ARGV)+0;
 		$typ &= 3;
 
 		$pflags_mask = ~(7 << 8);
 		$pflags_or |= ($typ << 8);
+	}
+	elsif ($sw eq "exetype") {
+		$exetype = (shift @ARGV)+0;
 	}
 	elsif ($sw eq "linkver") {
 		$link_ver = shift @ARGV;
@@ -142,6 +158,16 @@ if (defined($link_ver) && $link_ver ne '') {
 
 	seek(NE,$ne_offset+0x02,0);
 	print NE pack("CC",$major,$minor);
+}
+
+if (defined($exetype) && $exetype ne '') {
+	seek(NE,$ne_offset+0x36,0);
+	print NE pack("C",$exetype);
+}
+
+if ($zerochk) {
+	seek(NE,$ne_offset+0x08,0);
+	print NE pack("V",0);
 }
 
 close(NE);
