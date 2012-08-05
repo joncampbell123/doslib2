@@ -142,6 +142,7 @@ Form: win16<W>/<V>_<N>86<M>[...]
 
  #define TARGET_BITS           16
  #define TARGET_WINDOWS        1
+ #define TARGET_WINDOWS_WIN16  1
  #define TARGET_PROTMODE       1         /* if protected mode only */
  #define TARGET_REALMODE       1         /* if real mode only */
  #define TARGET_AUTOMODE       1         /* if prot or real mode build aka 'b' */
