@@ -18,5 +18,5 @@ find -name \*.la -exec rm -fv {} +
 find -name \*.loT -exec rm -fv {} +
 find -name Makefile.in -exec rm -fv {} +
 rm -f isp-utils isp-utils-v4
-rm -Rfv build
+rm -Rf build
 
