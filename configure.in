@@ -33,8 +33,6 @@ if test x"$OPENWATCOM" = x; then if [[ -d /usr/watcom-1.8 ]]; then OPENWATCOM=/u
 if test x"$OPENWATCOM" = x; then if [[ -d /usr/watcom     ]]; then OPENWATCOM=/usr/watcom    ; fi; fi
 if test x"$OPENWATCOM" = x; then
 	AC_MSG_ERROR([Open Watcom is required to build this source code])
-else
-	AC_DEFINE([OPENWATCOM],[$OPENWATCOM],[OpenWatcom install location])
 fi
 
 # We need Watcom C (16-bit)
@@ -87,7 +85,6 @@ fi
 
 # define Watcom environment block
 WATENV="\"PATH=$OPENWATCOM/binl:$PATH\" \"WATCOM=$OPENWATCOM\" \"EDPATH=$OPENWATCOM/eddat\" \"INCLUDE=$OPENWATCOM/h/nt;$OPENWATCOM/h/nt/directx;$OPENWATCOM/h/nt/ddk;$OPENWATCOM/h\""
-AC_DEFINE([WATENV],[$WATENV],Open Watcom environment block)
 
 # Checks for header files.
 AC_HEADER_STDC
@@ -159,4 +156,10 @@ cat >>config.h <<_EOF
 _EOF
 ./config_mak >config.mak
 ./config.h.filter <config.h >config_public.h
+
+# emit other vars to config.mak
+echo OPENWATCOM=$OPENWATCOM >>config.mak
+echo WATENV=\'$WATENV\' >>config.mak
+
+echo '-include $(abs_top_srcdir)/config.utils.mak' >>config.mak
 
