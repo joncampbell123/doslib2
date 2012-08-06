@@ -25,6 +25,7 @@
 #define ISP_UTILS_ENABLE_windows_98 1
 #define ISP_UTILS_ENABLE_windows_me 1
 #define ISP_UTILS_ENABLE_windows_nt 1
+#define ISP_UTILS_HAVE_DLFCN_H 1
 #define ISP_UTILS_HAVE_FCNTL_H 1
 #define ISP_UTILS_HAVE_INTTYPES_H 1
 #define ISP_UTILS_HAVE_MALLOC 1
