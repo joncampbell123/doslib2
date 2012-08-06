@@ -1,4 +1,4 @@
-SUBDIRS = test windows
+SUBDIRS = test windows hw
 ACLOCAL_AMFLAGS = -I m4 -I m4fixed
 
 library_includedir = $(includedir)/doslib2

@@ -16,6 +16,7 @@ WATENV += "INCLUDE=$(OPENWATCOM)/h;$(OPENWATCOM)/h/win"
 # make flags
 TARGET_WINDOWS=1
 TARGET_WINDOWS_WIN16=1
+TARGET_WINDOWS_GUI=1
 TARGET_BITS=16
 TARGET_PROTMODE=1
 
@@ -117,12 +118,14 @@ WRCFLAGS=-q -r -31
 else
 WRCFLAGS=-q -r -30
 endif
-WCCFLAGS=-e=2 -zq -m$(W_MMODE) $(W_DEBUG) -bt=windows -oilrtfm -wx -$(W_CPULEVEL) $(_win16p_defs) -q -fr=nul
-WASMFLAGS=-e=2 -zq -m$(W_MMODE) $(W_DEBUG) -bt=windows -wx -$(W_CPULEVEL) $(_win16p_defs) -q
+# NTS: When targeting Win16, if you want to avoid crashing especially with complex code,
+#      you MUST use -zw and -zu switches. Or else.
+WCCFLAGS=-e=2 -zq -zw -zu -m$(W_MMODE) $(W_DEBUG) -bt=windows -oilrtfm -wx -$(W_CPULEVEL) $(_win16p_defs) -q -fr=nul
+WASMFLAGS=-e=2 -zq -zw -zu -m$(W_MMODE) $(W_DEBUG) -bt=windows -wx -$(W_CPULEVEL) $(_win16p_defs) -q
 NASMFLAGS=-DTARGET_WINDOWS=1 -DTARGET_WINDOWS_GUI=1 -DTARGET_WINDOWS_WIN16=1 -DTARGET_BITS=16 -DTARGET_PROTMODE=1 -DMMODE=$(W_MMODE) -DCPUONLY=$(TARGET_CPUONLY) -DEXTLIB=$(TARGET_EXTLIB) -DDEBUG=$(TARGET_DEBUG) -DTARGET_CPU=$(W_CPULEVEL) -DTARGET_WINDOWS_VERSION=$(TARGET_WINDOWS_VERSION)
 WLINK_SYSTEM=windows
-WLINKFLAGS=option stack=4096 option heapsize=1024
-WLINK_SEGMENTS=segment TYPE CODE FIXED PRELOAD DISCARDABLE SHARED segment TYPE DATA MOVEABLE PRELOAD
+WLINKFLAGS=option stack=8192 option heapsize=4096
+WLINK_SEGMENTS=segment TYPE CODE FIXED PRELOAD SHARED DISCARDABLE segment TYPE DATA MOVEABLE PRELOAD
 
 # DOS *IS* a console OS, flags are the same (TODO: Copy params above)
 WCCFLAGS_CONSOLE=$(WCCFLAGS)

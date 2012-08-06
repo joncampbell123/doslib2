@@ -1,7 +1,12 @@
-#if defined(TARGET_WINDOWS) && defined(TARGET_WINDOWS_GUI)
+#if defined(TARGET_WINDOWS)
 # include <windows.h>
 # include <windows/w32imphk/compat.h>
 # include <windows/apihelp.h>
+# if defined(TARGET_WINDOWS_GUI) && !defined(TARGET_WINDOWS_CONSOLE)
+#  define WINFCON_ENABLE 1
+#  define WINFCON_STOCK_WIN_MAIN 1
+#  include "hw/cpu/winfcon.h" /* FIXME move to own library */
+# endif
 #endif
 
 #include <stdio.h>
@@ -88,17 +93,23 @@ void do_desc() {
 #endif
 }
 
-#if defined(TARGET_WINDOWS) && defined(TARGET_WINDOWS_GUI)
-int WINMAINPROC WinMain(HINSTANCE hInstance,HINSTANCE hPrevInstance,LPSTR lpCmdLine,int nCmdShow) {
-	do_desc();
-	MessageBox(NULL,desc,"",MB_OK);
-	return 0;
-}
-#else
 int main() {
 	do_desc();
 	printf("%s",desc);
+
+#ifdef WIN_STDOUT_CONSOLE
+	{
+		int c;
+
+		do {
+			c = getch();
+			if (c == 27) break;
+			if (c == 13 || c == 10) printf("\n");
+			else printf("%c",c);
+		} while (1);
+	}
+#endif
+
 	return 0;
 }
-#endif
 
