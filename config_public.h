@@ -17,15 +17,10 @@
 #define ISP_UTILS_ENABLE_win32 1
 #define ISP_UTILS_ENABLE_win32s 1
 #define ISP_UTILS_ENABLE_win386 1
-#define ISP_UTILS_ENABLE_windows_10 1
-#define ISP_UTILS_ENABLE_windows_20 1
 #define ISP_UTILS_ENABLE_windows_30 1
 #define ISP_UTILS_ENABLE_windows_31 1
 #define ISP_UTILS_ENABLE_windows_95 1
-#define ISP_UTILS_ENABLE_windows_98 1
-#define ISP_UTILS_ENABLE_windows_me 1
 #define ISP_UTILS_ENABLE_windows_nt 1
-#define ISP_UTILS_HAVE_DLFCN_H 1
 #define ISP_UTILS_HAVE_FCNTL_H 1
 #define ISP_UTILS_HAVE_INTTYPES_H 1
 #define ISP_UTILS_HAVE_MALLOC 1

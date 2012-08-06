@@ -1,0 +1,12 @@
+
+ifneq ($(TARGET_WINDOWS_GUI),)
+lib_windows_winfcon=$(abs_top_srcdir)/build/windows/winfcon/$(target_subdir)/lib/winfcon$(lib_suffix)
+lib_windows_winfcon_wlink=library $(lib_windows_winfcon)
+lib_windows_winfcon_dependencies=
+endif
+
+ifneq ($(lib_windows_winfcon),)
+$(lib_windows_winfcon):
+	$(MAKE) -C $(abs_top_srcdir)/windows/winfcon --no-print-directory -$(MAKEFLAGS) all-targets
+endif
+

@@ -1,0 +1,34 @@
+# This is a separate makefile because GNU automake interferes with GNU make conditionals
+ifdef target_subdir
+
+all-targets-abs-dirs: $(abs_exe_dir) $(abs_lib_dir) $(abs_obj_dir)
+
+lib_windows_winfcon=
+ifneq ($(TARGET_WINDOWS),)
+ ifneq ($(TARGET_WINDOWS_GUI),)
+  lib_windows_winfcon=$(abs_lib_dir)/winfcon$(lib_suffix)
+ endif
+endif
+
+ifneq ($(lib_windows_winfcon),)
+$(lib_windows_winfcon): $(abs_obj_dir)/winfcon$(obj_suffix)
+	$(WLIB) -q -b -c $@ $(foreach x,$^,-+$(x))
+
+$(abs_obj_dir)/winfcon$(obj_suffix): winfcon.c
+ ifeq ($(target_subdir),linux/host)
+	$(CC) $(CFLAGS) -I.. -I../.. -c -o $@ $^
+ else
+	$(WCC) $(WCCFLAGS) -fo=$(abs_obj_dir)/.obj -i=.. -i=../.. $^
+ endif
+endif
+
+all-programs: $(all_programs) $(lib_windows_winfcon)
+
+all-targets: all-targets-abs-dirs all-programs
+	@true
+
+clean-targets:
+	@rm -Rfv $(abs_exe_dir) $(abs_lib_dir) $(abs_obj_dir)
+
+endif
+

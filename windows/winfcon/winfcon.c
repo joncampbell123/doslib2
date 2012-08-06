@@ -22,7 +22,7 @@
 # include <windows.h>
 # include <windows/apihelp.h>
 # include <windows/w32imphk/compat.h>
-# include "hw/cpu/winfcon.h" /* FIXME move to own library */
+# include <windows/winfcon/winfcon.h>
 #else
 # error what
 #endif
@@ -164,7 +164,10 @@ void _win_sigint() {
 	 *       Watcom's setjmp/longjmp in real mode is the whole
 	 *       reason the main routine uses LockCode()/UnlockCode()
 	 *       in the first place. It works... but then Windows memory
-	 *       management has less to work with if it needs more memory. */
+	 *       management has less to work with if it needs more memory.
+	 *
+	 *       UPDATE: Examination of Watcom C code shows it stores the
+	 *               segment register at offset +18 of the jmpbuf. */
 	if (sig == SIG_DFL) longjmp(_this_console.exit_jmp,1);
 }
 
@@ -595,7 +598,7 @@ int WINMAINPROC _win_main_con_entry(HINSTANCE hInstance,HINSTANCE hPrevInstance,
 #if TARGET_BITS == 16
 	/* Windows real mode: Lock our data segment. Real-mode builds typically set CODE and DATA segments
 	 * to moveable because Windows 1.x and 2.x apparently demand it. */
-	if ((GetWinFlags()&(WF_ENHANCED|WF_STANDARD)) == 0) {
+	if (IsWindowsRealMode()) {
 		LockData(); /* Lock data in place, so our FAR PTR remains valid */
 		LockCode(); /* Lock code in place, so that Watcom setjmp/longjmp works properly */
 	}
@@ -714,7 +717,7 @@ int WINMAINPROC _win_main_con_entry(HINSTANCE hInstance,HINSTANCE hPrevInstance,
 
 #if TARGET_BITS == 16
 	/* Real mode: undo our work above */
-	if ((GetWinFlags()&(WF_ENHANCED|WF_STANDARD)) == 0) {
+	if (IsWindowsRealMode()) {
 		UnlockCode();
 		UnlockData();
 	}

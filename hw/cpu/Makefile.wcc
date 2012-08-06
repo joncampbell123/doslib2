@@ -8,20 +8,16 @@ ifeq ($(TARGET_GUI_CONSOLE),1)
 all_programs+=$(abs_exe_dir)/test1c$(exe_suffix)
 endif
 
-obj_winfcon=
-ifneq ($(TARGET_WINDOWS),)
- ifneq ($(TARGET_WINDOWS_GUI),)
-  obj_winfcon=$(abs_obj_dir)/winfcon$(obj_suffix)
- endif
-endif
+# we need: the windows winfcon library
+include $(abs_top_srcdir)/windows/winfcon/Makefile.dpl
 
 all-programs: $(all_programs)
 
-$(abs_exe_dir)/test1$(exe_suffix): $(obj_win32s_compat) $(abs_obj_dir)/test1$(obj_suffix) $(obj_winfcon)
+$(abs_exe_dir)/test1$(exe_suffix): $(obj_win32s_compat) $(abs_obj_dir)/test1$(obj_suffix) $(lib_windows_winfcon) $(lib_windows_winfcon_dependencies)
 ifeq ($(target_subdir),linux/host)
 	$(CC) $(LDFLAGS) -o $@ $^
 else
-	@echo option quiet system $(WLINK_SYSTEM) $(WLINKFLAGS) $(WLINK_SEGMENTS) $(foreach x,$(filter %$(obj_suffix),$^),file "$(x)") option map=$(abs_obj_dir)/test1.map name $@ >$(abs_obj_dir)/test1.cmd
+	@echo option quiet system $(WLINK_SYSTEM) $(WLINKFLAGS) $(WLINK_SEGMENTS) $(foreach x,$(filter %$(obj_suffix),$^),file "$(x)") $(lib_windows_winfcon_wlink) option map=$(abs_obj_dir)/test1.map name $@ >$(abs_obj_dir)/test1.cmd
 	$(WLINK) @$(abs_obj_dir)/test1.cmd
 	#@rm -f $(abs_obj_dir)/test1.cmd
  ifeq ($(TARGET_WINDOWS_WIN386),1)
@@ -38,7 +34,7 @@ $(abs_exe_dir)/test1c$(exe_suffix): $(obj_win32s_compat) $(abs_obj_dir)/test1c$(
  ifeq ($(target_subdir),linux/host)
 	$(CC) $(LDFLAGS_CONSOLE) -o $@ $^
  else
-	@echo option quiet system $(WLINK_SYSTEM_CONSOLE) $(WLINKFLAGS_CONSOLE) $(WLINK_SEGMENTS_CONSOLE) $(foreach x,$(filter %$(obj_suffix),$^),file "$(x)") option map=$(abs_obj_dir)/test1c.map name $@ >$(abs_obj_dir)/test1c.cmd
+	@echo option quiet system $(WLINK_SYSTEM_CONSOLE) $(WLINKFLAGS_CONSOLE) $(WLINK_SEGMENTS_CONSOLE) $(foreach x,$(filter %$(obj_suffix),$^),file "$(x)") $(foreach x,$(filter %$(lib_suffix),$^),library "$(x)") option map=$(abs_obj_dir)/test1c.map name $@ >$(abs_obj_dir)/test1c.cmd
 	$(WLINK) @$(abs_obj_dir)/test1c.cmd
 	#@rm -f $(abs_obj_dir)/test1c.cmd
   ifeq ($(TARGET_WINDOWS_WIN386),1)
@@ -63,15 +59,6 @@ ifeq ($(target_subdir),linux/host)
 	$(CC) $(CFLAGS) -I.. -I../.. -c -o $@ $^
 else
 	$(WCC) $(WCCFLAGS) -fo=$(abs_obj_dir)/.obj -i=.. -i=../.. $^
-endif
-
-ifneq ($(obj_winfcon),)
-$(obj_winfcon): winfcon.c
-ifeq ($(target_subdir),linux/host)
-	$(CC) $(CFLAGS) -I.. -I../.. -c -o $@ $^
-else
-	$(WCC) $(WCCFLAGS) -fo=$(abs_obj_dir)/.obj -i=.. -i=../.. $^
-endif
 endif
 
 all-targets: all-targets-abs-dirs all-programs

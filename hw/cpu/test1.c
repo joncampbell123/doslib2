@@ -5,7 +5,7 @@
 # if defined(TARGET_WINDOWS_GUI) && !defined(TARGET_WINDOWS_CONSOLE)
 #  define WINFCON_ENABLE 1
 #  define WINFCON_STOCK_WIN_MAIN 1
-#  include "hw/cpu/winfcon.h" /* FIXME move to own library */
+#  include <windows/winfcon/winfcon.h>
 # endif
 #endif
 

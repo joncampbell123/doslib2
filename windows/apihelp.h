@@ -1,3 +1,6 @@
+#if defined(TARGET_WINDOWS)
+# include <windows.h>
+#endif
 
 /* Problem: Watcom C runtime will call our WinMain according to memory model.
  *          If we blindly use the "WINAPI" or "STDCALL" types the function
@@ -79,5 +82,25 @@ static inline void UnlockCode() {
 	}
 	UnlockSegment(s);
 }
+#endif
+
+#if defined(TARGET_WINDOWS_WIN16)
+# if defined(TARGET_REALMODE) && TARGET_WINDOWS_VERSION < 20
+	/* Windows 1.x builds target real mode because that's all Windows 1.x supports.
+	 * it's also highly possible that Windows 1.x lacks GetWinFlags() */
+#  define IsWindowsRealMode() (1)
+# elif defined(TARGET_REALMODE) || defined(TARGET_AUTOMODE)
+static inline unsigned int IsWindowsRealMode() {
+	/* real or bi-modal modes: we *can* be run under Windows Real Mode */
+	return (GetWinFlags() & (WF_ENHANCED|WF_STANDARD)) == 0;
+}
+# elif defined(TARGET_PROTMODE)
+   /* Assume protected mode because Win NE images can be marked as protected-mode only */
+#  define IsWindowsRealMode() (0)
+# else
+#  define IsWindowsRealMode() (0)
+# endif
+#else /* !TARGET_WINDOWS_WIN16 */
+# define IsWindowsRealMode() (0)
 #endif
 
