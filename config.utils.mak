@@ -57,8 +57,8 @@ ifeq ($(ENABLE_mm_flat),1)
  BUILD_enabled_mm += flat
 endif
 
-# what Windows versions (TODO: Add 10 95 98 me nt by configure options)
-BUILD_enabled_windows=20 30 31
+# what Windows versions (TODO: Add 10 98 me by configure options)
+BUILD_enabled_windows=20 30 31 95 nt
 
 # list target subdirs
 BUILD_targets=
@@ -83,6 +83,9 @@ include $(abs_top_builddir)/targets/auto.win32s.mak
 
 # winwa386
 include $(abs_top_builddir)/targets/auto.winwa386.mak
+
+# win32
+include $(abs_top_builddir)/targets/auto.win32.mak
 
 # linux-host
 include $(abs_top_builddir)/targets/auto.linuxhost.mak

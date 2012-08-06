@@ -14,11 +14,11 @@ ifeq ($(ENABLE_win32s),1)
       $(error Unsupported memory model for win32s)
     endif
 
-    ifeq ($(BUILD_win386_windows),)
+    ifeq ($(BUILD_win32s_windows),)
       BUILD_win32s_windows=31
     endif
-    ifneq ($(findstring 10 20 30,$(BUILD_win386_windows)),)
-      $(error Unsupported windows version for win386)
+    ifneq ($(findstring 10 20 30,$(BUILD_win32s_windows)),)
+      $(error Unsupported windows version for win32s)
     endif
 
     ifeq ($(BUILD_win32s_debug),)
