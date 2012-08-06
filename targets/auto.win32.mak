@@ -15,7 +15,7 @@ ifeq ($(ENABLE_win32),1)
     endif
 
     ifeq ($(BUILD_win32_windows),)
-      BUILD_win32_windows=95 nt
+      BUILD_win32_windows=95 98 me nt
     endif
     ifneq ($(findstring 10 20 30 31,$(BUILD_win32_windows)),)
       $(error Unsupported windows version for win32)

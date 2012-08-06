@@ -33,6 +33,9 @@ void do_desc() {
 #ifdef TARGET_WINDOWS
 	p += sprintf(p,"TARGET_WINDOWS=%d\n",TARGET_WINDOWS);
 #endif
+#ifdef TARGET_WINDOWS_NT
+	p += sprintf(p,"TARGET_WINDOWS_NT=%d\n",TARGET_WINDOWS_NT);
+#endif
 #ifdef TARGET_WINDOWS_GUI
 	p += sprintf(p,"TARGET_WINDOWS_GUI=%d\n",TARGET_WINDOWS_GUI);
 #endif

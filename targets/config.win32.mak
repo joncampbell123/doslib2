@@ -33,10 +33,28 @@ _win32_t1=$(subst 86,,$(patsubst win32/%,%,$(target_subdir)))
 _win32_t=$(subst 31_,,$(subst 30_,,$(subst 20_,,$(subst 10_,,$(_win32_t1)))))
 
 ifeq ($(findstring 30,$(_win32_t1)),30)
-  TARGET_WINDOWS_VERSION=30
+  $(error Windows 3.0 not supported)
 endif
 ifeq ($(findstring 31,$(_win32_t1)),31)
-  TARGET_WINDOWS_VERSION=31
+  $(error Windows 3.1 not supported)
+endif
+ifeq ($(findstring 95,$(_win32_t1)),95) # 4.0
+  TARGET_WINDOWS_VERSION=40
+  TARGET_WINDOWS_WLINK_OSVERSION=option osversion=4.0
+endif
+ifeq ($(findstring 98,$(_win32_t1)),98) # 4.10
+  TARGET_WINDOWS_VERSION=41
+  TARGET_WINDOWS_WLINK_OSVERSION=option osversion=4.10
+endif
+ifeq ($(findstring me,$(_win32_t1)),me) # 4.90
+  TARGET_WINDOWS_VERSION=49
+  TARGET_WINDOWS_WLINK_OSVERSION=option osversion=4.90
+endif
+ifeq ($(findstring nt,$(_win32_t1)),nt) # When people think "Windows NT" they usually think Windows NT 4.0 or higher
+# TODO: Alternate build targets for Windows NT 3.5, Windows NT 3.1
+  TARGET_WINDOWS_VERSION=40
+  TARGET_WINDOWS_WLINK_OSVERSION=option osversion=4.0
+  TARGET_WINDOWS_NT=1
 endif
 
 ifeq ($(findstring 3,$(_win32_t)),3)
@@ -98,6 +116,9 @@ endif
 ifneq ($(TARGET_WINDOWS_VERSION),)
 _win32_defs += -dTARGET_WINDOWS_VERSION=$(TARGET_WINDOWS_VERSION)
 endif
+ifneq ($(TARGET_WINDOWS_NT),)
+_win32_defs += -dTARGET_WINDOWS_NT=$(TARGET_WINDOWS_NT)
+endif
 
 WLINKFLAGS=
 ifeq ($(TARGET_WINDOWS_VERSION),31)
@@ -107,12 +128,12 @@ WRCFLAGS=-q -r -30
 endif
 WCCFLAGS=-e=2 -zq -m$(W_MMODE) $(W_DEBUG) -bt=windows -oilrtfm -wx -$(W_CPULEVEL) $(_win32_defs) -q -fr=nul
 WASMFLAGS=-e=2 -zq -m$(W_MMODE) $(W_DEBUG) -bt=windows -wx -$(W_CPULEVEL) $(_win32_defs) -q
-NASMFLAGS=-DTARGET_WINDOWS=1 -DTARGET_WINDOWS_GUI=1 -DTARGET_WINDOWS_WIN32=1 -DTARGET_BITS=32 -DTARGET_PROTMODE=1 -DMMODE=$(W_MMODE) -DCPUONLY=$(TARGET_CPUONLY) -DEXTLIB=$(TARGET_EXTLIB) -DDEBUG=$(TARGET_DEBUG) -DTARGET_CPU=$(W_CPULEVEL) -DTARGET_WINDOWS_VERSION=$(TARGET_WINDOWS_VERSION)
+NASMFLAGS=-DTARGET_WINDOWS=1 -DTARGET_WINDOWS_GUI=1 -DTARGET_WINDOWS_WIN32=1 -DTARGET_BITS=32 -DTARGET_PROTMODE=1 -DMMODE=$(W_MMODE) -DCPUONLY=$(TARGET_CPUONLY) -DEXTLIB=$(TARGET_EXTLIB) -DDEBUG=$(TARGET_DEBUG) -DTARGET_CPU=$(W_CPULEVEL) -DTARGET_WINDOWS_VERSION=$(TARGET_WINDOWS_VERSION) -DTARGET_WINDOWS_NT=$(TARGET_WINDOWS_NT)
 WLINK_SYSTEM=nt_win
-WLINKFLAGS=
+WLINKFLAGS=$(TARGET_WINDOWS_WLINK_OSVERSION)
 WLINK_SEGMENTS=
 
-# DOS *IS* a console OS, flags are the same
+# TODO: Copy params for console-mode apps
 WCCFLAGS_CONSOLE=$(WCCFLAGS)
 WASMFLAGS_CONSOLE=$(WASMFLAGS)
 NASMFLAGS_CONSOLE=$(NASMFLAGS)

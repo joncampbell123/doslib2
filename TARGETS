@@ -250,6 +250,8 @@ Form: win32/<V>_<N>86<M>[...]
  #define TARGET_WINDOWS         1
  #define TARGET_WINDOWS_WIN32   1
  #define TARGET_PROTMODE        1
+ #define TARGET_WINDOWS_NT      1      if nt only build
+ #define TARGET_WINDOWS_VERSION
 
 Linux (the host this is compiled on)
 ------------------------------------

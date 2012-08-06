@@ -1,0 +1,1 @@
+TODO: It turns out Watcom's linker will put debug info into the EXE if you put "DEBUG WATCOM ALL" in the linker directives
