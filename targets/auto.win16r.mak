@@ -15,9 +15,9 @@ ifeq ($(ENABLE_win16r),1)
     endif
 
     ifeq ($(BUILD_win16r_windows),)
-      BUILD_win16r_windows=20 30 31
+      BUILD_win16r_windows=10 20 30 31
     endif
-    ifneq ($(findstring 10,$(BUILD_win16r_windows)),)
+    ifneq ($(findstring 95,$(BUILD_win16r_windows)),)
       $(error Unsupported windows version for win16r)
     endif
 
