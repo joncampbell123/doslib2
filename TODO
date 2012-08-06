@@ -1,1 +1,18 @@
+#1: Move winfcon.c into it's own library under Windows. It will become the general-purpose
+    "console emulation" for the other test programs that assume a console. Put it under
+    windows/winfcon.
+
+#2: hw/cpu/test1.c remove all the #define printf stuff and start writing code to detect/test
+    the CPU. This time, put the 8086/286/386/486/etc. detection routines inline to the program,
+    rather than in an external .asm file. Remember that even in 8086 builds you can convince
+    Watcom C to emit 386 instructions if you use the .386p directive at the top of the __asm
+    block. The first DOSLIB had these routines in an external .asm file because you didn't
+    know that at the time :)
+
+#3: start writing DOS/Windows detection code, put it under os/dos. OS-specific stuff belongs
+    under "os/", not "hw/" like what you did in the first DOSLIB.
+
+TODO: Wouldn't it be cool if you made an alternate winfcon.c that rendered a color terminal and
+      provided DEC VT100 escape code emulation? :)
+
 TODO: It turns out Watcom's linker will put debug info into the EXE if you put "DEBUG WATCOM ALL" in the linker directives
