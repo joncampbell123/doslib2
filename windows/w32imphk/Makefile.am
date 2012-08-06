@@ -26,6 +26,7 @@ all:
 	done
 
 clean:
+	@rm -f *~
 	+@for i in "" $(BUILD_targets); do\
 		if [ x"$$i" != x ]; then \
 			$(MAKE) --no-print-directory -$(MAKEFLAGS) clean-targets target_subdir=$$i || break;\

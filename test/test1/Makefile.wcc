@@ -2,8 +2,13 @@
 ifdef target_subdir
 
 all-targets-abs-dirs: $(abs_exe_dir) $(abs_lib_dir) $(abs_obj_dir)
+	
+all_programs=$(abs_exe_dir)/test1$(exe_suffix)
+ifeq ($(TARGET_GUI_CONSOLE),1)
+all_programs+=$(abs_exe_dir)/test1c$(exe_suffix)
+endif
 
-all-programs: $(abs_exe_dir)/test1$(exe_suffix)
+all-programs: $(all_programs)
 
 $(abs_exe_dir)/test1$(exe_suffix): $(obj_win32s_compat) $(abs_obj_dir)/test1$(obj_suffix)
 ifeq ($(target_subdir),linux/host)
@@ -18,6 +23,31 @@ else
  endif
  ifneq ($(WIN16_NE_SETVER),)
 	$(WIN16_NE_SETVER) $@
+ endif
+endif
+
+ifeq ($(TARGET_GUI_CONSOLE),1)
+$(abs_exe_dir)/test1c$(exe_suffix): $(obj_win32s_compat) $(abs_obj_dir)/test1c$(obj_suffix)
+ ifeq ($(target_subdir),linux/host)
+	$(CC) $(LDFLAGS_CONSOLE) -o $@ $^
+ else
+	@echo option quiet system $(WLINK_SYSTEM_CONSOLE) $(WLINKFLAGS_CONSOLE) $(WLINK_SEGMENTS_CONSOLE) $(foreach x,$(filter %$(obj_suffix),$^),file "$(x)") option map=$(abs_obj_dir)/test1c.map name $@ >$(abs_obj_dir)/test1c.cmd
+	$(WLINK) @$(abs_obj_dir)/test1c.cmd
+	@rm -f $(abs_obj_dir)/test1c.cmd
+  ifeq ($(TARGET_WINDOWS_WIN386),1)
+	@$(WIN386_EXE_TO_REX_IF_REX) $@
+	@$(WBIND) $@ -q -n
+  endif
+  ifneq ($(WIN16_NE_SETVER),)
+	$(WIN16_NE_SETVER) $@
+  endif
+ endif
+
+$(abs_obj_dir)/test1c$(obj_suffix): test1c.c $(abs_obj_dir)/test1$(obj_suffix)
+ ifeq ($(target_subdir),linux/host)
+	$(CC) $(CFLAGS_CONSOLE) -I.. -I../.. -c -o $@ $(filter %.c,$^)
+ else
+	$(WCC) $(WCCFLAGS_CONSOLE) -fo=$(abs_obj_dir)/.obj -i=.. -i=../.. $(filter %.c,$^)
  endif
 endif
 
