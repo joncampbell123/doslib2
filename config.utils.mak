@@ -57,8 +57,8 @@ ifeq ($(ENABLE_mm_flat),1)
  BUILD_enabled_mm += flat
 endif
 
-# what Windows versions (TODO: Add 10 98 me by configure options)
-BUILD_enabled_windows=20 30 31 95 98 me nt
+# what Windows versions (TODO: add as configure options too: 10 20 30 31 95 98 me nt)
+BUILD_enabled_windows=30 31 95 nt
 
 # list target subdirs
 BUILD_targets=

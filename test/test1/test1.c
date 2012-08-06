@@ -1,6 +1,6 @@
 #if defined(TARGET_WINDOWS) && defined(TARGET_WINDOWS_GUI)
 # include <windows.h>
-# include "compat.h"
+# include <windows/w32imphk/compat.h>
 
 /* Problem: Watcom C runtime will call our WinMain according to memory model.
  *          If we blindly use the "WINAPI" or "STDCALL" types the function

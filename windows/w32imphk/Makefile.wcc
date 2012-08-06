@@ -1,0 +1,29 @@
+# This is a separate makefile because GNU automake interferes with GNU make conditionals
+ifdef target_subdir
+
+all-targets-abs-dirs: $(abs_exe_dir) $(abs_lib_dir) $(abs_obj_dir)
+
+all-programs: $(lib_win32s_compat) $(obj_win32s_compat)
+
+ifeq ($(TARGET_WINDOWS_WIN32s),1)
+ ifeq ($(rel_srcdir),windows/w32imphk)
+$(lib_win32s_compat): $(obj_win32s_compat)
+	$(WLIB) -q -b -c $@ $(foreach x,$^,-+$(x))
+
+$(obj_win32s_compat): compat.c
+  ifeq ($(target_subdir),linux/host)
+	$(CC) $(CFLAGS) -I.. -I../.. -c -o $@ $^
+  else
+	$(WCC) $(WCCFLAGS) -fo=$(abs_obj_dir)/.obj -i=.. -i=../.. $^
+  endif
+ endif
+endif
+
+all-targets: all-targets-abs-dirs all-programs
+	@true
+
+clean-targets:
+	@rm -Rfv $(abs_exe_dir) $(abs_lib_dir) $(abs_obj_dir)
+
+endif
+
