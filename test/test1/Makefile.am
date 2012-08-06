@@ -1,10 +1,12 @@
 
-BUILD_dos16r=1
-BUILD_dos32p=1
-BUILD_win16r=1
-BUILD_win16p=1
-BUILD_win16b=1
-BUILD_linux_host=1
+#BUILD_dos16r=1
+#BUILD_dos32p=1
+#BUILD_win16r=1
+#BUILD_win16p=1
+#BUILD_win16b=1
+#BUILD_win386=1
+BUILD_win32s=1
+#BUILD_linux_host=1
 
 -include ../../config.mak
 -include Makefile.wcc
@@ -18,14 +20,14 @@ debugme:
 all:
 	+@for i in "" $(BUILD_targets); do\
 		if [ x"$$i" != x ]; then \
-			$(MAKE) --no-print-directory -$(MAKEFLAGS) all-targets target_subdir=$$i;\
+			$(MAKE) --no-print-directory -$(MAKEFLAGS) all-targets target_subdir=$$i || break;\
 		fi;\
 	done
 
 clean:
 	+@for i in "" $(BUILD_targets); do\
 		if [ x"$$i" != x ]; then \
-			$(MAKE) --no-print-directory -$(MAKEFLAGS) clean-targets target_subdir=$$i;\
+			$(MAKE) --no-print-directory -$(MAKEFLAGS) clean-targets target_subdir=$$i || break;\
 		fi;\
 	done
 

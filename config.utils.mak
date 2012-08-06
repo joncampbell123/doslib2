@@ -78,6 +78,12 @@ include $(abs_top_builddir)/targets/auto.win16p.mak
 # win16b
 include $(abs_top_builddir)/targets/auto.win16b.mak
 
+# win32s
+include $(abs_top_builddir)/targets/auto.win32s.mak
+
+# winwa386
+include $(abs_top_builddir)/targets/auto.winwa386.mak
+
 # linux-host
 include $(abs_top_builddir)/targets/auto.linuxhost.mak
 

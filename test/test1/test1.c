@@ -1,12 +1,13 @@
 #if defined(TARGET_WINDOWS) && defined(TARGET_WINDOWS_GUI)
 # include <windows.h>
+# include "compat.h"
 
 /* Problem: Watcom C runtime will call our WinMain according to memory model.
  *          If we blindly use the "WINAPI" or "STDCALL" types the function
  *          will be defined as FAR regardless, and therefore the runtime will
  *          call it wrong and crash on shutdown for small/compact memory model
  *          builds */
-# if defined(__SMALL__) || defined(__COMPACT__)
+# if defined(__SMALL__) || defined(__COMPACT__) || defined(TARGET_WINDOWS_WIN386) || defined(__386__)/*Watcom's internal way of saying "flat memory"*/
 #  define WINMAINPROC __pascal near
 # else
 #  define WINMAINPROC __pascal far
@@ -37,6 +38,9 @@ void do_desc() {
 #endif
 #ifdef TARGET_WINDOWS_WIN16
 	p += sprintf(p,"TARGET_WINDOWS_WIN16=%d\n",TARGET_WINDOWS_WIN16);
+#endif
+#ifdef TARGET_WINDOWS_WIN32s
+	p += sprintf(p,"TARGET_WINDOWS_WIN32s=%d\n",TARGET_WINDOWS_WIN32s);
 #endif
 #ifdef TARGET_WINDOWS_WIN386
 	p += sprintf(p,"TARGET_WINDOWS_WIN386=%d\n",TARGET_WINDOWS_WIN386);
