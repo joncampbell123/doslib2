@@ -1,0 +1,41 @@
+ISSUE: setjmp/longjmp and Windows 3.0 real mode
+TARGETS: 16-bit Windows (win16)
+NOTED BY: Jonathan Campbell
+
+If you are writing a 16-bit windows application, and you use setjmp and longjmp,
+your code will work perfectly fine in Windows 3.0/3.1/95/98/ME/NT/2000/XP/VT,
+because setjmp stores the CS:IP instruction pointer to jump back to. This works
+100% correctly in "standard" and "enhanced" protected modes of Windows, because
+although Windows may move the segment behind the scenes, the actual segment:offset
+pair used by the program never changes.
+
+Windows real mode however is a different story. The 8086 does not have a MMU.
+However that doesn't stop Windows from managing, paging, and moving memory segments
+regardless. Real mode Windows applications have to be coded around the fact that
+at any time that they yield, Windows may move the segment around and change the
+segment value in the pointer. Therefore, the CS:IP instruction pointer stored by
+setjmp() will not be valid by the time it comes to longjmp() and you will see your
+program crash as it jumps into nothingness or the middle of some other subroutine.
+
+WORKAROUND #1:
+   If your program must use setjmp/longjmp, then prior to setjmp() lock your code
+   segment into place using LockSegment(). This prevents Windows from moving the
+   segment around. However remember that real-mode Windows is running in tight
+   memory constraints and if possible, you will want to unlock your code segment
+   as soon as you can. I recommend unlocking your code segment once you longjmp()
+   or when the setjmp/longjmp arrangement is no longer needed.
+
+WORKAROUND #2: [work in progress]
+   Figure out which part of the setjmp buffer contains the CS value. Overwrite it
+   with your program's *CURRENT* code segment value and then longjmp(). Note that
+   since Win16 is non-preemptive, there is no danger of Windows moving your code
+   segment between the overwrite and the longjmp(), unless of course you call into
+   the Windows API or Yield() between those points. Another complication of course,
+   is that for large code segments, you will need to adjust rather than overwrite
+   the CS value, and you will need to know where and how far your code segment
+   moved.
+
+   TODO: One further complication: What does OpenWatcom do if code segments exceed
+         64KB? Does it write it to the NE image as multiple code segments? If so,
+         will Windows move those code segments independently of one another?
+
