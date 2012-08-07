@@ -725,5 +725,16 @@ int WINMAINPROC _win_main_con_entry(HINSTANCE hInstance,HINSTANCE hPrevInstance,
 
 	return 0;
 }
+
+void _win_endloop_user_echo() {
+	int c;
+
+	do {
+		c = _win_getch();
+		if (c == 27) break;
+		if (c == 13 || c == 10) _win_printf("\n");
+		else _win_printf("%c",c);
+	} while (1);
+}
 #endif
 
