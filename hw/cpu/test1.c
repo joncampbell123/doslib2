@@ -245,6 +245,8 @@ struct cpu_cpuid_info {
 	unsigned char				phys_addr_bits;	/* physical address bits supported by CPU */
 	unsigned char				virt_addr_bits;	/* virtual address bits supported by CPU */
 	unsigned char				guest_phys_addr_bits; /* guest physical address bits */
+	unsigned char				cpu_cores;	/* if CPU actually provides it, number of cores on this CPU */
+	unsigned char				cpu_acpi_id_bits;
 };
 #pragma pack(pop)
 
@@ -268,6 +270,8 @@ static inline void do_cpuid(const uint32_t select,struct cpu_cpuid_generic_block
 				: "a" (select), "b" (b->b), "c" (b->c), "d" (b->d) /* input */
 				: /* clobber */);
 }
+# elif defined(__amd64__) /* Linux GCC + x86_64 */
+/* TODO */
 # endif
 #elif TARGET_BITS == 32
 /* TODO: #ifdef to detect Watcom C */
@@ -398,6 +402,9 @@ static void probe_cpuid() {
 		cpuid_info->guest_phys_addr_bits = (tmp.a >> 16) & 0xFF;
 		if (cpuid_info->guest_phys_addr_bits == 0)
 			cpuid_info->guest_phys_addr_bits = cpuid_info->phys_addr_bits;
+
+		cpuid_info->cpu_cores = (tmp.c & 0xFF) + 1;
+		if (tmp.c & 0xF000) cpuid_info->cpu_acpi_id_bits = 1 << (((tmp.c >> 12) & 0xF) - 1);
 	}
 	/* we have to guess for older CPUs */
 	else {
@@ -582,6 +589,8 @@ fin:		popa
 				: "=a" (a) /* output */ : /* input */ : /* clobbered */);
 		if (a&0x40000) cpu_basic_level = 4;
 	}
+# elif defined(__amd64__) /* Linux x86_64 + GCC */
+/* TODO */
 # endif
 #else
 	/* a 386 will not allow setting the AC bit (bit 18) */
@@ -616,6 +625,7 @@ fin2:		nop
 #endif
 
 #if defined(__GNUC__)
+# if defined(__i386__) /* Linux i386 + GCC */
 	/* if a 486 or higher, check for CPUID */
 	{
 		unsigned int a,b;
@@ -644,6 +654,9 @@ fin2:		nop
 		/* a=when we cleared ID  b=when we set ID */
 		if ((a&0x00200000) == 0 && (b&0x00200000)) cpu_flags |= CPU_FLAG_CPUID;
 	}
+# elif defined(__amd64__) /* Linux x86_64 + GCC */
+	/* TODO */
+# endif
 #else
 	/* if a 486 or higher, check for CPUID */
 	if (cpu_basic_level >= 4) {
@@ -796,6 +809,14 @@ int main() {
 			cpuid_info->phys_addr_bits,
 			cpuid_info->virt_addr_bits,
 			cpuid_info->guest_phys_addr_bits);
+
+		if (cpuid_info->e80000000.i.cpuid_max >= 0x80000008) {
+			/* TODO: If this field is the number of cores, then why do most systems so
+			 *       far report 1 (field is zero)? */
+			printf(" - cores=%u acpi_id_bits=%u\n",
+				cpuid_info->cpu_cores,
+				cpuid_info->cpu_acpi_id_bits);
+		}
 	}
 
 #ifdef WIN_STDOUT_CONSOLE
