@@ -19,10 +19,25 @@ signed char cpu_basic_fpu_level = -1;
 unsigned short cpu_flags = 0;
 
 #pragma pack(push,1)
+struct cpu_cpuid_generic_block {
+	uint32_t		a,b,c,d;		/* EAX EBX ECX EDX */
+};
+
+struct cpu_cpuid_00000000_id_info {
+	uint32_t		cpuid_max;		/* EAX */
+	uint32_t		id_1,id_3,id_2;		/* EBX ECX EDX. id_1 id_2 id_3 becomes EBX EDX ECX. do NOT change member order */
+};
+
+/* see what I'm doing here? :)
+ * it avoids the need for redunant assembly language when using CPUID
+ * while bringing meaning to each field */
+union cpu_cpuid_00000000_id_union {
+	struct cpu_cpuid_generic_block		g;
+	struct cpu_cpuid_00000000_id_info	i;
+};
+
 struct cpu_cpuid_info {
-	uint32_t		cpuid_max;
-	char			manufacturer_id[13]; /* 12 bytes ASCII + NUL */
-	unsigned char		unused[3];
+	union cpu_cpuid_00000000_id_union	e0;
 };
 #pragma pack(pop)
 
@@ -37,6 +52,65 @@ struct cpu_cpuid_info {
 
 struct cpu_cpuid_info*		cpuid_info = NULL;
 
+/* CPUID function. To avoid redundant asm blocks */
+#if defined(__GNUC__)
+# if defined(__i386__) /* Linux GCC + i386 */
+static inline void do_cpuid(const uint32_t select,struct cpu_cpuid_generic_block *b) {
+	__asm__ (	"cpuid"
+			: "=a" (b->a), "=b" (b->b), "=c" (b->c), "=d" (b->d) /* outputs */
+			: "a" (select) /* input */
+			: /* clobber */);
+}
+# endif
+#elif TARGET_BITS == 32
+/* TODO: #ifdef to detect Watcom C */
+/* TODO: Alternate do_cpuid() for CPUID functions that require you to fill in EBX ECX or EDX */
+void do_cpuid(const uint32_t select,struct cpu_cpuid_generic_block *b);
+# pragma aux do_cpuid = \
+	".586p" \
+	"cpuid" \
+	"mov [esi],eax" \
+	"mov [esi+4],ebx" \
+	"mov [esi+8],ecx" \
+	"mov [esi+12],edx" \
+	parm [eax] [esi] \
+	modify [eax ebx ecx edx]
+#elif TARGET_BITS == 16
+void do_cpuid(const uint32_t select,struct cpu_cpuid_generic_block *b) {
+	__asm {
+		.586p
+# if defined(__LARGE__) || defined(__COMPACT__)
+		push	ds
+# endif
+		push	eax
+		mov	eax,select
+# if defined(__LARGE__) || defined(__COMPACT__)
+		lds	si,word ptr [b]
+# else
+		mov	si,word ptr [b]
+# endif
+		cpuid
+		mov	[si],eax
+		mov	[si+4],ebx
+		mov	[si+8],ecx
+		mov	[si+12],edx
+		pop	eax
+# if defined(__LARGE__) || defined(__COMPACT__)
+		pop	ds
+# endif
+	}
+}
+#endif
+
+/* CPU ID string buffer length expected: 12 bytes for 3 DWORDs plus ASCIIZ NUL */
+#define CPU_ID_STRING_LENGTH 13
+void cpu_copy_id_string(char *tmp/*must be CPU_ID_STRING_LENGTH or more*/,struct cpu_cpuid_00000000_id_info *i) {
+	*((uint32_t*)(tmp+0)) = i->id_1;
+	*((uint32_t*)(tmp+4)) = i->id_2;
+	*((uint32_t*)(tmp+8)) = i->id_3;
+	tmp[12] = 0;
+}
+
 static void probe_cpuid() {
 	if (cpuid_info != NULL) return;
 
@@ -44,45 +118,15 @@ static void probe_cpuid() {
 	if (cpuid_info == NULL) return;
 	memset(cpuid_info,0,sizeof(*cpuid_info));
 
-#if defined(__GNUC__)
-	/* Linux host: TODO */
-#elif TARGET_BITS == 32
-	__asm {
-		.586
-		pushad
-		mov	esi,[cpuid_info]
-		; ESI = cpuid info
-		xor	eax,eax
-		cpuid
-		mov	[esi+0/*cpuid_max*/],eax
-		mov	[esi+4/*manufact[0]*/],ebx
-		mov	[esi+8/*manufact[4]*/],edx
-		mov	[esi+12/*manufact[8]*/],ecx
-		popad
+	/* alright then, let's ask the CPU it's identification */
+	do_cpuid(0x00000000,&(cpuid_info->e0.g)); /* NTS: e0.g aliases over e0.i and fills in info */
+
+	/* if we didn't get anything, then CPUID is not functional */
+	if (cpuid_info->e0.i.cpuid_max == 0) {
+		cpu_flags &= ~CPU_FLAG_CPUID;
+		free(cpuid_info);
+		return;
 	}
-#else /* TARGET_BITS == 16 */
-	__asm {
-		.586
-		push	ds
-		pusha
-# if defined(__COMPACT__) || defined(__LARGE__)
-		mov	si,seg cpuid_info
-		mov	ds,si
-		lds	si,word ptr [cpuid_info]
-# else
-		mov	si,word ptr [cpuid_info]
-# endif
-		; DS:SI = cpuid info
-		xor	eax,eax
-		cpuid
-		mov	[si+0/*cpuid_max*/],eax
-		mov	[si+4/*manufact[0]*/],ebx
-		mov	[si+8/*manufact[4]*/],edx
-		mov	[si+12/*manufact[8]*/],ecx
-		popa
-		pop	ds
-	}
-#endif
 }
 
 static void probe_fpu() {
@@ -118,7 +162,7 @@ no_fpu:
 static void probe_basic_cpu_level() {
 /* 32-bit builds: The fact that we're executing is proof enough the CPU is a 386 or higher, skip the 8086/286 tests.
  * 16-bit builds: Use the Intel Standard test to determine 8086, 286, or up to 386. Also detect "virtual 8086 mode". */
-#if TARGET_BITS == 32
+#if TARGET_BITS == 32 /* 32-bit DOS, Linux i386, Win32, etc... */
 	cpu_basic_level = 3;	/* we're running as 32-bit code therefore the CPU is at least a 386, we are in protected mode, and not v86 mode */
 	cpu_flags = CPU_FLAG_PROTMODE;
 #elif TARGET_BITS == 16
@@ -226,7 +270,26 @@ fin:		popa
 	if (cpu_basic_level < 3) return;
 
 #if defined(__GNUC__)
-	/* Linux host: TODO */
+# if defined(__i386__) /* Linux i386 + GCC */
+	{
+		unsigned int a;
+
+		/* a 386 will not allow setting the AC bit (bit 18) */
+		__asm__(	"pushfl\n"
+
+				"pushfl\n"
+				"popl	%%eax\n"
+				"or	$0x40000,%%eax\n"
+				"pushl	%%eax\n"
+				"popfl\n"
+				"pushfl\n"
+				"popl	%%eax\n"
+
+				"popfl\n"
+				: "=a" (a) /* output */ : /* input */ : /* clobbered */);
+		if (a&0x40000) cpu_basic_level = 4;
+	}
+# endif
 #else
 	/* a 386 will not allow setting the AC bit (bit 18) */
 	__asm {
@@ -251,7 +314,38 @@ is_not_386:
 
 fin2:		nop
 	}
+#endif
 
+#if defined(__GNUC__)
+	/* if a 486 or higher, check for CPUID */
+	{
+		unsigned int a,b;
+
+		__asm__(	"pushfl\n"
+
+				"pushfl\n"
+				"popl	%%eax\n"
+				"and	$0xFFDFFFFF,%%eax\n"
+				"pushl	%%eax\n"
+				"popfl\n"
+				"pushfl\n"
+				"popl	%%eax\n"
+
+				"mov	%%eax,%%ebx\n"
+
+				"or	$0x00200000,%%ebx\n"
+				"pushl	%%ebx\n"
+				"popfl\n"
+				"pushfl\n"
+				"pop	%%ebx\n"
+
+				"popfl\n"
+				: "=a" (a), "=b" (b) /* output */ : /* input */ : /* clobbered */);
+
+		/* a=when we cleared ID  b=when we set ID */
+		if ((a&0x00200000) == 0 && (b&0x00200000)) cpu_flags |= CPU_FLAG_CPUID;
+	}
+#else
 	/* if a 486 or higher, check for CPUID */
 	if (cpu_basic_level >= 4) {
 		__asm {
@@ -306,9 +400,12 @@ int main() {
 	if (cpu_flags & CPU_FLAG_PROTMODE) printf("- Protected mode is active\n");
 
 	if (cpuid_info != NULL) {
+		char tmp[16];
+
+		cpu_copy_id_string(tmp,&(cpuid_info->e0.i));
 		printf("CPUID info available: max=%08lX id='%s'\n",
-			(unsigned long)cpuid_info->cpuid_max,
-			cpuid_info->manufacturer_id);
+			(unsigned long)cpuid_info->e0.i.cpuid_max,
+			tmp);
 	}
 
 #ifdef WIN_STDOUT_CONSOLE
