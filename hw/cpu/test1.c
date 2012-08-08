@@ -19,6 +19,19 @@
 #define cpp_stringify_l2(x) #x
 #define cpp_stringify(x) cpp_stringify_l2(x)
 
+/* useful FAR definition */
+#ifndef FAR
+# if TARGET_MSDOS == 16
+#  if defined(__COMPACT__) || defined(__LARGE__) || defined(__HUGE__)
+#   define FAR __far
+#  else
+#   define FAR
+#  endif
+# else
+#  define FAR
+# endif
+#endif /* FAR */
+
 signed char cpu_basic_level = -1;
 signed char cpu_basic_fpu_level = -1;
 unsigned short cpu_flags = 0;
@@ -54,7 +67,7 @@ struct cpu_cpuid_00000001_id_features {
 	/* EBX */
 	uint32_t		__undef_ebx;		/* bits 0-31 */
 	/* ECX */
-	uint16_t		c_pni:1;		/* bit 0: prescott new instructions */
+	uint16_t		c_sse3:1;		/* bit 0: SSE3, prescott new instructions */
 	uint16_t		c_pclmulqdq:1;		/* bit 1: PCLMULQDQ */
 	uint16_t		c_dtes64:1;		/* bit 2: dtes64 debug store (EDX bit 21) */
 	uint16_t		c_monitor:1;		/* bit 3: MONITOR and MWAIT */
@@ -126,9 +139,112 @@ union cpu_cpuid_00000001_id_union {
 	struct cpu_cpuid_00000001_id_features	f;
 };
 
+struct cpu_cpuid_80000000_id_info {
+	uint32_t		cpuid_max;		/* EAX */
+	uint32_t		b,c,d;			/* other regs... unknown what they contain */
+};
+
+union cpu_cpuid_80000000_id_union {
+	struct cpu_cpuid_generic_block		g;
+	struct cpu_cpuid_80000000_id_info	i;
+};
+
+struct cpu_cpuid_80000001_id_features {
+	/* EAX */
+	uint16_t		stepping:4;		/* bits 0-3 */
+	uint16_t		model:4;		/* bits 4-7 */
+	uint16_t		family:4;		/* bits 8-11 */
+	uint16_t		processor_type:2;	/* bits 12-13 */
+	uint16_t		__undef_eax_15_14:2;	/* bits 14-15 */
+	uint16_t		extended_model:4;	/* bits 16-19 */
+	uint16_t		extended_family:8;	/* bits 20-27 */
+	uint16_t		__undef_eax_31_28:4;	/* bits 28-31 */
+	/* EBX */
+	uint32_t		__undef_ebx;		/* bits 0-31 */
+	/* ECX */
+	uint16_t		c_ahf64:1;		/* bit 0: LAHF + SAHF available in amd64 */
+	uint16_t		c_cmp:1;		/* bit 1: HTT=1 indicates HTT (0) or CMP (1) (?what does that mean?) */
+	uint16_t		c_svm:1;		/* bit 2: EFER.SVME, VMRUN, VMMCALL, VMLOAD, VMSAVE, STGI, and CLGI, SKINIT, INVLPGA */
+	uint16_t		c_eas:1;		/* bit 3: Extended APIC space */
+	uint16_t		c_cr8d:1;		/* bit 4: MOV from/to CR8D using LOCK MOV from/to CR0 */
+	uint16_t		c_lzcnt:1;		/* bit 5: LZCNT */
+	uint16_t		c_sse4a:1;		/* bit 6: SSE4A */
+	uint16_t		c_msse:1;		/* bit 7: misaligned SSE, MXCSR.MM */
+	uint16_t		c_3dnow_prefetch:1;	/* bit 8: PREFETCH and PREFETCHW 3DNow! */
+	uint16_t		c_osvw:1;		/* bit 9: OS visible workaround (?) */
+	uint16_t		c_ibs:1;		/* bit 10: Instruction based sampling */
+	uint16_t		c_xop:1;		/* bit 11: XOP instructions */
+	uint16_t		c_skinit:1;		/* bit 12: SKINIT, STGI, DEV */
+	uint16_t		c_wdt:1;		/* bit 13: Watchdog timer */
+	uint16_t		_c_reserved_14:1;	/* bit 14 */
+	uint16_t		c_lwp:1;		/* bit 15: LWP (?) */
+	uint16_t		c_fma4:1;		/* bit 16: FMA4 */
+	uint16_t		c_tce:1;		/* bit 17: Translation cache extension */
+	uint16_t		_c_reserved_18:1;	/* bit 18 */
+	uint16_t		c_nodeid:1;		/* bit 19: Node ID in MSR 0xC001100C */
+	uint16_t		_c_reserved_20:1;	/* bit 20 */
+	uint16_t		c_tbm:1;		/* bit 21: TBM (?) */
+	uint16_t		c_topx:1;		/* bit 22: Topology extensions: extended levels 0x8000001D and 0x8000001E */
+	uint16_t		c_pcx_core:1;		/* bit 23: core perf counter extensions */
+	uint16_t		c_pcx_nb:1;		/* bit 24: nb perf counter extensions */
+	uint16_t		_c_reserved_25:1;	/* bit 25 */
+	uint16_t		_c_reserved_26:1;	/* bit 26 */
+	uint16_t		_c_reserved_27:1;	/* bit 27 */
+	uint16_t		_c_reserved_28:1;	/* bit 28 */
+	uint16_t		_c_reserved_29:1;	/* bit 29 */
+	uint16_t		_c_reserved_30:1;	/* bit 30 */
+	uint16_t		_c_reserved_31:1;	/* bit 31 */
+	/* EDX */
+	uint16_t		d_fpu:1;		/* bit 0: Onboard x87 FPU */
+	uint16_t		d_vme:1;		/* bit 1: Virtual mode extensions (VIF) */
+	uint16_t		d_de:1;			/* bit 2: Debugging extensions (CR4 bit 3) */
+	uint16_t		d_pse:1;		/* bit 3: Page size extensions */
+	uint16_t		d_tsc:1;		/* bit 4: Time stamp counter */
+	uint16_t		d_msr:1;		/* bit 5: Model-specific registers */
+	uint16_t		d_pae:1;		/* bit 6: Physical Address Extension */
+	uint16_t		d_mce:1;		/* bit 7: Machine Check Exception */
+	uint16_t		d_cx8:1;		/* bit 8: CMPXCHG8 */
+	uint16_t		d_apic:1;		/* bit 9: Onboard APIC */
+	uint16_t		_d_reserved_10:1;	/* bit 10 */
+	uint16_t		d_sep:1;		/* bit 11: SYSENTER and SYSEXIT */
+	uint16_t		d_mtrr:1;		/* bit 12: Memory Type Range Registers */
+	uint16_t		d_pge:1;		/* bit 13: Page Global Enable bit in CR4 */
+	uint16_t		d_mca:1;		/* bit 14: Machine check architecture */
+	uint16_t		d_cmov:1;		/* bit 15: CMOV and FCMOV instructions */
+	uint16_t		d_pat:1;		/* bit 16: Page Attribute Table */
+	uint16_t		d_pse36:1;		/* bit 17: 36-bit page table extension */
+	uint16_t		_d_reserved_18:1;	/* bit 18 */
+	uint16_t		d_mp:1;			/* bit 19: MP capable */
+	uint16_t		d_nx:1;			/* bit 20: NX (No execute) */
+	uint16_t		_d_reserved_21:1;	/* bit 21 */
+	uint16_t		d_mmxplus:1;		/* bit 22: AMD MMX+ */
+	uint16_t		d_mmx:1;		/* bit 23: MMX instructions */
+	uint16_t		d_fxsr:1;		/* bit 24: FXSAVE, FXRESTOR instructions CR4 bit 9 or Cyrix MMX+ */
+	uint16_t		d_ffxsr:1;		/* bit 25: FFXSR */
+	uint16_t		d_pg1g:1;		/* bit 26: PG1G (1GB pages?) */
+	uint16_t		d_tscp:1;		/* bit 27: TSC, TSC_AUX, RDTSCP, CR4.TSD */
+	uint16_t		_d_reserved_28:1;	/* bit 28 */
+	uint16_t		d_lm:1;			/* bit 29: AMD64 long mode */
+	uint16_t		d_3dnowplus:1;		/* bit 30: 3DNow!+ */
+	uint16_t		d_3dnow:1;		/* bit 31: 3DNow! */
+};
+
+union cpu_cpuid_80000001_id_union {
+	struct cpu_cpuid_generic_block		g;
+	struct cpu_cpuid_80000001_id_features	f;
+};
+
 struct cpu_cpuid_info {
-	union cpu_cpuid_00000000_id_union	e0;	/* CPUID 0x00000000 CPU identification */
-	union cpu_cpuid_00000001_id_union	e1;	/* CPUID 0x00000001 CPU ID and features */
+	union cpu_cpuid_00000000_id_union	e0;		/* CPUID 0x00000000 CPU identification */
+	union cpu_cpuid_00000001_id_union	e1;		/* CPUID 0x00000001 CPU ID and features */
+	union cpu_cpuid_80000000_id_union	e80000000;	/* CPUID 0x80000000 CPU ext. identification */
+	union cpu_cpuid_80000001_id_union	e80000001;	/* CPUID 0x80000001 CPU ID and features */
+	struct cpu_cpuid_generic_block		e80000002;	/* CPUID 0x80000002 CPU extended ID, first 1/3 of string */
+	struct cpu_cpuid_generic_block		e80000003;	/* CPUID 0x80000003 CPU extended ID, first 2/3 of string */
+	struct cpu_cpuid_generic_block		e80000004;	/* CPUID 0x80000004 CPU extended ID, first 3/3 of string */
+	unsigned char				phys_addr_bits;	/* physical address bits supported by CPU */
+	unsigned char				virt_addr_bits;	/* virtual address bits supported by CPU */
+	unsigned char				guest_phys_addr_bits; /* guest physical address bits */
 };
 #pragma pack(pop)
 
@@ -147,18 +263,21 @@ struct cpu_cpuid_info*		cpuid_info = NULL;
 #if defined(__GNUC__)
 # if defined(__i386__) /* Linux GCC + i386 */
 static inline void do_cpuid(const uint32_t select,struct cpu_cpuid_generic_block *b) {
-	__asm__ (	"cpuid"
-			: "=a" (b->a), "=b" (b->b), "=c" (b->c), "=d" (b->d) /* outputs */
-			: "a" (select) /* input */
-			: /* clobber */);
+	__asm__ __volatile__ (	"cpuid"
+				: "=a" (b->a), "=b" (b->b), "=c" (b->c), "=d" (b->d) /* outputs */
+				: "a" (select), "b" (b->b), "c" (b->c), "d" (b->d) /* input */
+				: /* clobber */);
 }
 # endif
 #elif TARGET_BITS == 32
 /* TODO: #ifdef to detect Watcom C */
-/* TODO: Alternate do_cpuid() for CPUID functions that require you to fill in EBX ECX or EDX */
+/* TODO: How do we do this to ensure it's a function call not inline? */
 void do_cpuid(const uint32_t select,struct cpu_cpuid_generic_block *b);
 # pragma aux do_cpuid = \
 	".586p" \
+	"mov ebx,[esi+4]" \
+	"mov ecx,[esi+8]" \
+	"mov edx,[esi+12]" \
 	"cpuid" \
 	"mov [esi],eax" \
 	"mov [esi+4],ebx" \
@@ -167,7 +286,7 @@ void do_cpuid(const uint32_t select,struct cpu_cpuid_generic_block *b);
 	parm [eax] [esi] \
 	modify [eax ebx ecx edx]
 #elif TARGET_BITS == 16
-void do_cpuid(const uint32_t select,struct cpu_cpuid_generic_block *b) {
+void do_cpuid(const uint32_t select,struct cpu_cpuid_generic_block FAR *b) {
 	__asm {
 		.586p
 # if defined(__LARGE__) || defined(__COMPACT__) || defined(__HUGE__)
@@ -180,6 +299,9 @@ void do_cpuid(const uint32_t select,struct cpu_cpuid_generic_block *b) {
 # else
 		mov	si,word ptr [b]
 # endif
+		mov	ebx,[si+4]
+		mov	ecx,[si+8]
+		mov	edx,[si+12]
 		cpuid
 		mov	[si],eax
 		mov	[si+4],ebx
@@ -200,6 +322,31 @@ void cpu_copy_id_string(char *tmp/*must be CPU_ID_STRING_LENGTH or more*/,struct
 	*((uint32_t*)(tmp+4)) = i->id_2;
 	*((uint32_t*)(tmp+8)) = i->id_3;
 	tmp[12] = 0;
+}
+
+/* extended CPU id string buffer length extended: 48 bytes for 4 x 3 DWORDs plus ASCIIZ NUL */
+#define CPU_EXT_ID_STRING_LENGTH 49
+char *cpu_copy_ext_id_string(char *tmp,struct cpu_cpuid_info *i) {
+	unsigned int ii=0;
+
+	*((uint32_t*)(tmp+0)) = i->e80000002.a;
+	*((uint32_t*)(tmp+4)) = i->e80000002.b;
+	*((uint32_t*)(tmp+8)) = i->e80000002.c;
+	*((uint32_t*)(tmp+12)) = i->e80000002.d;
+
+	*((uint32_t*)(tmp+16)) = i->e80000003.a;
+	*((uint32_t*)(tmp+20)) = i->e80000003.b;
+	*((uint32_t*)(tmp+24)) = i->e80000003.c;
+	*((uint32_t*)(tmp+28)) = i->e80000003.d;
+
+	*((uint32_t*)(tmp+32)) = i->e80000004.a;
+	*((uint32_t*)(tmp+36)) = i->e80000004.b;
+	*((uint32_t*)(tmp+40)) = i->e80000004.c;
+	*((uint32_t*)(tmp+44)) = i->e80000004.d;
+
+	tmp[48] = 0;
+	while (ii < 48 && tmp[ii] == ' ') ii++;
+	return tmp+ii;
 }
 
 static void probe_cpuid() {
@@ -223,6 +370,55 @@ static void probe_cpuid() {
 		do_cpuid(0x00000001,&(cpuid_info->e1.g));
 		if (cpuid_info->e1.f.family >= 4 && cpuid_info->e1.f.family <= 6)
 			cpu_basic_level = cpuid_info->e1.f.family;
+
+		/* now check for the extended CPUID. if the value of EAX is less than
+		 * 0x80000000 then it's probably the original Pentium which responds
+		 * to these addresses but with the same responses to 0x00000000.... */
+		do_cpuid(0x80000000,&(cpuid_info->e80000000.g));
+		if (cpuid_info->e80000000.i.cpuid_max < 0x80000000)
+			cpuid_info->e80000000.i.cpuid_max = 0;
+		else if (cpuid_info->e80000000.i.cpuid_max >= 0x80000001)
+			do_cpuid(0x80000001,&(cpuid_info->e80000001.g));
+	}
+
+	/* extended CPU id string */
+	if (cpuid_info->e80000000.i.cpuid_max >= 0x80000004) {
+		do_cpuid(0x80000002,&(cpuid_info->e80000002));
+		do_cpuid(0x80000003,&(cpuid_info->e80000003));
+		do_cpuid(0x80000004,&(cpuid_info->e80000004));
+	}
+
+	/* modern CPUs report the largest physical address, virtual address, etc. */
+	if (cpuid_info->e80000000.i.cpuid_max >= 0x80000008) {
+		struct cpu_cpuid_generic_block tmp={0};
+
+		do_cpuid(0x80000008,&tmp);
+		cpuid_info->phys_addr_bits = tmp.a & 0xFF;
+		cpuid_info->virt_addr_bits = (tmp.a >> 8) & 0xFF;
+		cpuid_info->guest_phys_addr_bits = (tmp.a >> 16) & 0xFF;
+		if (cpuid_info->guest_phys_addr_bits == 0)
+			cpuid_info->guest_phys_addr_bits = cpuid_info->phys_addr_bits;
+	}
+	/* we have to guess for older CPUs */
+	else {
+		/* If CPU supports long mode, then assume 40 bits */
+		if (cpuid_info->e80000001.f.d_lm) {
+			cpuid_info->phys_addr_bits = 40;
+			cpuid_info->virt_addr_bits = 40;
+		}
+		/* If CPU supports PSE36, then assume 36 bits */
+		else if (cpuid_info->e1.f.d_pse36) {
+			cpuid_info->phys_addr_bits = 36;
+			cpuid_info->virt_addr_bits = 36;
+		}
+		else {
+			cpuid_info->phys_addr_bits = 32;
+			cpuid_info->virt_addr_bits = 32;
+			/* TODO: If possible, identify 386SX, which has a 24-bit phys addr limit */
+			/* TODO: If possible, identify 486SX, which has a 26-bit phys addr limit */
+		}
+
+		cpuid_info->guest_phys_addr_bits = cpuid_info->phys_addr_bits;
 	}
 }
 
@@ -391,6 +587,9 @@ fin:		popa
 	/* a 386 will not allow setting the AC bit (bit 18) */
 	__asm {
 		.386
+# if TARGET_BITS == 16
+		cli
+# endif
 		pushfd
 		pop	eax
 		or	eax,0x40000
@@ -398,6 +597,9 @@ fin:		popa
 		popf
 		pushf
 		pop	eax
+# if TARGET_BITS == 16
+		sti
+# endif
 		test	eax,0x40000
 		jnz	is_not_386
 		jmp	fin2
@@ -497,11 +699,12 @@ int main() {
 	if (cpu_flags & CPU_FLAG_PROTMODE) printf("- Protected mode is active\n");
 
 	if (cpuid_info != NULL) {
-		char tmp[16];
+		char tmp[64];
 
 		cpu_copy_id_string(tmp,&(cpuid_info->e0.i));
-		printf("CPUID info available: max=%08lX id='%s'\n",
+		printf("CPUID info available: max=%08lX ext_max=0x%08lX id='%s'\n",
 			(unsigned long)cpuid_info->e0.i.cpuid_max,
+			(unsigned long)cpuid_info->e80000000.i.cpuid_max,
 			tmp);
 
 		if (cpuid_info->e0.i.cpuid_max >= 1) {
@@ -511,10 +714,15 @@ int main() {
 				cpuid_info->e1.f.family,
 				cpuid_info->e1.f.processor_type,
 				cpuid_info->e1.f.extended_family);
-			printf(" - ECX: ");
+			printf("   - RAW: ABCD %08lX %08lX %08lX %08lX\n",
+				(unsigned long)cpuid_info->e1.g.a,
+				(unsigned long)cpuid_info->e1.g.b,
+				(unsigned long)cpuid_info->e1.g.c,
+				(unsigned long)cpuid_info->e1.g.d);
+			printf("   - ECX: ");
 /* Save my wrists and avoid copypasta! */
 #define _(x) if (cpuid_info->e1.f.c_##x) { printf(cpp_stringify(x) " "); }
-			_(pni);		_(pclmulqdq);	_(dtes64);	_(monitor);
+			_(sse3);	_(pclmulqdq);	_(dtes64);	_(monitor);
 			_(ds_cpl);	_(vmx);		_(smx);		_(est);
 			_(tm2);		_(ssse3);	_(cid);		_(fma);
 			_(cx16);	_(xtpr);	_(pdcm);	_(pcid);
@@ -525,7 +733,7 @@ int main() {
 #undef _
 			printf("\n");
 
-			printf(" - EDX: ");
+			printf("   - EDX: ");
 /* Save my wrists and avoid copypasta! */
 #define _(x) if (cpuid_info->e1.f.d_##x) { printf(cpp_stringify(x) " "); }
 			_(fpu);		_(vme);		_(de);		_(pse);
@@ -540,6 +748,54 @@ int main() {
 			printf("\n");
 			assert(sizeof(struct cpu_cpuid_00000001_id_features) == (4 * 4));
 		}
+
+		if (cpuid_info->e80000000.i.cpuid_max >= 0x80000001) {
+			printf(" - Ext. stepping %u model %u family %u processor_type %u ext-family %u\n",
+				cpuid_info->e80000001.f.stepping,
+				cpuid_info->e80000001.f.model + (cpuid_info->e80000001.f.extended_model << 4),
+				cpuid_info->e80000001.f.family,
+				cpuid_info->e80000001.f.processor_type,
+				cpuid_info->e80000001.f.extended_family);
+			printf("   - RAW: ABCD %08lX %08lX %08lX %08lX\n",
+				(unsigned long)cpuid_info->e80000001.g.a,
+				(unsigned long)cpuid_info->e80000001.g.b,
+				(unsigned long)cpuid_info->e80000001.g.c,
+				(unsigned long)cpuid_info->e80000001.g.d);
+			printf("   - ECX: ");
+/* Save my wrists and avoid copypasta! */
+#define _(x) if (cpuid_info->e80000001.f.c_##x) { printf(cpp_stringify(x) " "); }
+			_(ahf64);	_(cmp);		_(svm);		_(eas);
+			_(cr8d);	_(lzcnt);	_(sse4a);	_(msse);
+			_(3dnow_prefetch); _(osvw);	_(ibs);		_(xop);
+			_(skinit);	_(wdt);		_(lwp);		_(fma4);
+			_(tce);		_(nodeid);	_(tbm);		_(topx);
+			_(pcx_core);	_(pcx_nb);
+#undef _
+			printf("\n");
+
+			printf("   - EDX: ");
+/* Save my wrists and avoid copypasta! */
+#define _(x) if (cpuid_info->e80000001.f.d_##x) { printf(cpp_stringify(x) " "); }
+			_(fpu);		_(vme);		_(de);		_(pse);
+			_(tsc);		_(msr);		_(pae);		_(mce);
+			_(cx8);		_(apic);	_(sep);		_(mtrr);
+			_(pge);		_(mca);		_(cmov);	_(pat);
+			_(pse36);	_(mp);		_(nx);		_(mmxplus);
+			_(mmx);		_(fxsr);	_(ffxsr);	_(pg1g);
+			_(tscp);	_(lm);		_(3dnowplus);	_(3dnow);
+#undef _
+			printf("\n");
+			assert(sizeof(struct cpu_cpuid_80000001_id_features) == (4 * 4));
+		}
+
+		if (cpuid_info->e80000000.i.cpuid_max >= 0x80000004) {
+			printf(" - Extended CPU id '%s'\n",cpu_copy_ext_id_string(tmp,cpuid_info));
+		}
+
+		printf(" - CPU address bits: physical=%u virtual=%u guest=%u\n",
+			cpuid_info->phys_addr_bits,
+			cpuid_info->virt_addr_bits,
+			cpuid_info->guest_phys_addr_bits);
 	}
 
 #ifdef WIN_STDOUT_CONSOLE
