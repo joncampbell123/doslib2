@@ -14,6 +14,10 @@
 #include <string.h>
 #include <stdint.h>
 
+/* useful macros */
+#define cpp_stringify_l2(x) #x
+#define cpp_stringify(x) cpp_stringify_l2(x)
+
 signed char cpu_basic_level = -1;
 signed char cpu_basic_fpu_level = -1;
 unsigned short cpu_flags = 0;
@@ -36,8 +40,63 @@ union cpu_cpuid_00000000_id_union {
 	struct cpu_cpuid_00000000_id_info	i;
 };
 
+struct cpu_cpuid_00000001_id_features {
+	/* EAX */
+	uint32_t		stepping:4;		/* bits 0-3 */
+	uint32_t		model:4;		/* bits 4-7 */
+	uint32_t		family:4;		/* bits 8-11 */
+	uint32_t		processor_type:2;	/* bits 12-13 */
+	uint32_t		__undef_eax_15_14:2;	/* bits 14-15 */
+	uint32_t		extended_model:4;	/* bits 16-19 */
+	uint32_t		extended_family:8;	/* bits 20-27 */
+	uint32_t		__undef_eax_31_28:4;	/* bits 28-31 */
+	/* EBX */
+	uint32_t		__undef_ebx;		/* bits 0-31 */
+	/* ECX */
+	uint32_t		c_pni:1;		/* bit 0: prescott new instructions */
+	uint32_t		c_pclmulqdq:1;		/* bit 1: PCLMULQDQ */
+	uint32_t		c_dtes64:1;		/* bit 2: dtes64 debug store (EDX bit 21) */
+	uint32_t		c_monitor:1;		/* bit 3: MONITOR and MWAIT */
+	uint32_t		c_ds_cpl:1;		/* bit 4: CPL qualified debug store */
+	uint32_t		c_vmx:1;		/* bit 5: Virtual Machine eXtensions */
+	uint32_t		c_smx:1;		/* bit 6: Safer Mode eXtensions */
+	uint32_t		c_est:1;		/* bit 7: Enhanced SpeedStep */
+	uint32_t		c_tm2:1;		/* bit 8: Thermal Monitor 2 */
+	uint32_t		c_ssse3:1;		/* bit 9: Supplemental SSE3 instructions */
+	uint32_t		c_cid:1;		/* bit 10: Context ID */
+	uint32_t		_c_reserved_11:1;	/* bit 11 */
+	uint32_t		c_fma:1;		/* bit 12: Fused multiply-add (FMA3) */
+	uint32_t		c_cx16:1;		/* bit 13: CMPXCHG16B */
+	uint32_t		c_xtpr:1;		/* bit 14: Can disable sending task priority messages */
+	uint32_t		c_pdcm:1;		/* bit 15: Perfmon & debug capability */
+	uint32_t		_c_reserved_16:1;	/* bit 16 */
+	uint32_t		c_pcid:1;		/* bit 17: Process context identifiers (CR4 bit 17) */
+	uint32_t		c_dca:1;		/* bit 18: Direct cache access for DMA writes */
+	uint32_t		c_sse4_1:1;		/* bit 19: SSE4.1 instructions */
+	uint32_t		c_sse4_2:1;		/* bit 20: SSE4.2 instructions */
+	uint32_t		c_x2apic:1;		/* bit 21: x2APIC support */
+	uint32_t		c_movbe:1;		/* bit 22: MOVBE instruction */
+	uint32_t		c_popcnt:1;		/* bit 23: POPCNT instruction */
+	uint32_t		c_tscdeadline:1;	/* bit 24: APIC supports one-shot operation using a TSC deadline value */
+	uint32_t		c_aes:1;		/* bit 25: AES instruction set */
+	uint32_t		c_xsave:1;		/* bit 26: XSAVE, XRESTOR, XSETBV, XGETBV */
+	uint32_t		c_osxsave:1;		/* bit 27: XSAVE enabled by OS */
+	uint32_t		c_avx:1;		/* bit 28: Advanced Vector Extensions */
+	uint32_t		c_f16c:1;		/* bit 29: CVT16 instruction set (half precision) floating point support */
+	uint32_t		c_rdrnd:1;		/* bit 30: RDRAND (on-chip random number generator) support */
+	uint32_t		c_hypervisor:1;		/* bit 31: Running on a hypervisor (0 on a real CPU) */
+	/* EDX */
+	uint32_t		__todo2;
+};
+
+union cpu_cpuid_00000001_id_union {
+	struct cpu_cpuid_generic_block		g;
+	struct cpu_cpuid_00000001_id_features	f;
+};
+
 struct cpu_cpuid_info {
-	union cpu_cpuid_00000000_id_union	e0;
+	union cpu_cpuid_00000000_id_union	e0;	/* CPUID 0x00000000 CPU identification */
+	union cpu_cpuid_00000001_id_union	e1;	/* CPUID 0x00000001 CPU ID and features */
 };
 #pragma pack(pop)
 
@@ -127,6 +186,8 @@ static void probe_cpuid() {
 		free(cpuid_info);
 		return;
 	}
+	if (cpuid_info->e0.i.cpuid_max >= 1)
+		do_cpuid(0x00000001,&(cpuid_info->e1.g));
 }
 
 static void probe_fpu() {
@@ -406,6 +467,28 @@ int main() {
 		printf("CPUID info available: max=%08lX id='%s'\n",
 			(unsigned long)cpuid_info->e0.i.cpuid_max,
 			tmp);
+
+		if (cpuid_info->e0.i.cpuid_max >= 1) {
+			printf(" - Stepping %u model %u family %u processor_type %u ext-family %u\n",
+				cpuid_info->e1.f.stepping,
+				cpuid_info->e1.f.model + (cpuid_info->e1.f.extended_model << 4),
+				cpuid_info->e1.f.family,
+				cpuid_info->e1.f.processor_type,
+				cpuid_info->e1.f.extended_family);
+			printf(" - ECX: ");
+/* Save my wrists and avoid copypasta! */
+#define _(x) if (cpuid_info->e1.f.c_##x) { printf(cpp_stringify(x) " "); }
+			_(pni);		_(pclmulqdq);	_(dtes64);	_(monitor);
+			_(ds_cpl);	_(vmx);		_(smx);		_(est);
+			_(tm2);		_(ssse3);	_(cid);		_(fma);
+			_(cx16);	_(xtpr);	_(pdcm);	_(pcid);
+			_(dca);		_(sse4_1);	_(sse4_2);	_(x2apic);
+			_(movbe);	_(popcnt);	_(tscdeadline);	_(aes);
+			_(xsave);	_(osxsave);	_(avx);		_(f16c);
+			_(rdrnd);	_(hypervisor);
+#undef _
+			printf("\n");
+		}
 	}
 
 #ifdef WIN_STDOUT_CONSOLE
