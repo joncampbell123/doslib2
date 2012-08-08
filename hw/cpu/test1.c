@@ -10,6 +10,7 @@
 #endif
 
 #include <stdio.h>
+#include <assert.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdint.h>
@@ -42,51 +43,82 @@ union cpu_cpuid_00000000_id_union {
 
 struct cpu_cpuid_00000001_id_features {
 	/* EAX */
-	uint32_t		stepping:4;		/* bits 0-3 */
-	uint32_t		model:4;		/* bits 4-7 */
-	uint32_t		family:4;		/* bits 8-11 */
-	uint32_t		processor_type:2;	/* bits 12-13 */
-	uint32_t		__undef_eax_15_14:2;	/* bits 14-15 */
-	uint32_t		extended_model:4;	/* bits 16-19 */
-	uint32_t		extended_family:8;	/* bits 20-27 */
-	uint32_t		__undef_eax_31_28:4;	/* bits 28-31 */
+	uint16_t		stepping:4;		/* bits 0-3 */
+	uint16_t		model:4;		/* bits 4-7 */
+	uint16_t		family:4;		/* bits 8-11 */
+	uint16_t		processor_type:2;	/* bits 12-13 */
+	uint16_t		__undef_eax_15_14:2;	/* bits 14-15 */
+	uint16_t		extended_model:4;	/* bits 16-19 */
+	uint16_t		extended_family:8;	/* bits 20-27 */
+	uint16_t		__undef_eax_31_28:4;	/* bits 28-31 */
 	/* EBX */
 	uint32_t		__undef_ebx;		/* bits 0-31 */
 	/* ECX */
-	uint32_t		c_pni:1;		/* bit 0: prescott new instructions */
-	uint32_t		c_pclmulqdq:1;		/* bit 1: PCLMULQDQ */
-	uint32_t		c_dtes64:1;		/* bit 2: dtes64 debug store (EDX bit 21) */
-	uint32_t		c_monitor:1;		/* bit 3: MONITOR and MWAIT */
-	uint32_t		c_ds_cpl:1;		/* bit 4: CPL qualified debug store */
-	uint32_t		c_vmx:1;		/* bit 5: Virtual Machine eXtensions */
-	uint32_t		c_smx:1;		/* bit 6: Safer Mode eXtensions */
-	uint32_t		c_est:1;		/* bit 7: Enhanced SpeedStep */
-	uint32_t		c_tm2:1;		/* bit 8: Thermal Monitor 2 */
-	uint32_t		c_ssse3:1;		/* bit 9: Supplemental SSE3 instructions */
-	uint32_t		c_cid:1;		/* bit 10: Context ID */
-	uint32_t		_c_reserved_11:1;	/* bit 11 */
-	uint32_t		c_fma:1;		/* bit 12: Fused multiply-add (FMA3) */
-	uint32_t		c_cx16:1;		/* bit 13: CMPXCHG16B */
-	uint32_t		c_xtpr:1;		/* bit 14: Can disable sending task priority messages */
-	uint32_t		c_pdcm:1;		/* bit 15: Perfmon & debug capability */
-	uint32_t		_c_reserved_16:1;	/* bit 16 */
-	uint32_t		c_pcid:1;		/* bit 17: Process context identifiers (CR4 bit 17) */
-	uint32_t		c_dca:1;		/* bit 18: Direct cache access for DMA writes */
-	uint32_t		c_sse4_1:1;		/* bit 19: SSE4.1 instructions */
-	uint32_t		c_sse4_2:1;		/* bit 20: SSE4.2 instructions */
-	uint32_t		c_x2apic:1;		/* bit 21: x2APIC support */
-	uint32_t		c_movbe:1;		/* bit 22: MOVBE instruction */
-	uint32_t		c_popcnt:1;		/* bit 23: POPCNT instruction */
-	uint32_t		c_tscdeadline:1;	/* bit 24: APIC supports one-shot operation using a TSC deadline value */
-	uint32_t		c_aes:1;		/* bit 25: AES instruction set */
-	uint32_t		c_xsave:1;		/* bit 26: XSAVE, XRESTOR, XSETBV, XGETBV */
-	uint32_t		c_osxsave:1;		/* bit 27: XSAVE enabled by OS */
-	uint32_t		c_avx:1;		/* bit 28: Advanced Vector Extensions */
-	uint32_t		c_f16c:1;		/* bit 29: CVT16 instruction set (half precision) floating point support */
-	uint32_t		c_rdrnd:1;		/* bit 30: RDRAND (on-chip random number generator) support */
-	uint32_t		c_hypervisor:1;		/* bit 31: Running on a hypervisor (0 on a real CPU) */
+	uint16_t		c_pni:1;		/* bit 0: prescott new instructions */
+	uint16_t		c_pclmulqdq:1;		/* bit 1: PCLMULQDQ */
+	uint16_t		c_dtes64:1;		/* bit 2: dtes64 debug store (EDX bit 21) */
+	uint16_t		c_monitor:1;		/* bit 3: MONITOR and MWAIT */
+	uint16_t		c_ds_cpl:1;		/* bit 4: CPL qualified debug store */
+	uint16_t		c_vmx:1;		/* bit 5: Virtual Machine eXtensions */
+	uint16_t		c_smx:1;		/* bit 6: Safer Mode eXtensions */
+	uint16_t		c_est:1;		/* bit 7: Enhanced SpeedStep */
+	uint16_t		c_tm2:1;		/* bit 8: Thermal Monitor 2 */
+	uint16_t		c_ssse3:1;		/* bit 9: Supplemental SSE3 instructions */
+	uint16_t		c_cid:1;		/* bit 10: Context ID */
+	uint16_t		_c_reserved_11:1;	/* bit 11 */
+	uint16_t		c_fma:1;		/* bit 12: Fused multiply-add (FMA3) */
+	uint16_t		c_cx16:1;		/* bit 13: CMPXCHG16B */
+	uint16_t		c_xtpr:1;		/* bit 14: Can disable sending task priority messages */
+	uint16_t		c_pdcm:1;		/* bit 15: Perfmon & debug capability */
+	uint16_t		_c_reserved_16:1;	/* bit 16 */
+	uint16_t		c_pcid:1;		/* bit 17: Process context identifiers (CR4 bit 17) */
+	uint16_t		c_dca:1;		/* bit 18: Direct cache access for DMA writes */
+	uint16_t		c_sse4_1:1;		/* bit 19: SSE4.1 instructions */
+	uint16_t		c_sse4_2:1;		/* bit 20: SSE4.2 instructions */
+	uint16_t		c_x2apic:1;		/* bit 21: x2APIC support */
+	uint16_t		c_movbe:1;		/* bit 22: MOVBE instruction */
+	uint16_t		c_popcnt:1;		/* bit 23: POPCNT instruction */
+	uint16_t		c_tscdeadline:1;	/* bit 24: APIC supports one-shot operation using a TSC deadline value */
+	uint16_t		c_aes:1;		/* bit 25: AES instruction set */
+	uint16_t		c_xsave:1;		/* bit 26: XSAVE, XRESTOR, XSETBV, XGETBV */
+	uint16_t		c_osxsave:1;		/* bit 27: XSAVE enabled by OS */
+	uint16_t		c_avx:1;		/* bit 28: Advanced Vector Extensions */
+	uint16_t		c_f16c:1;		/* bit 29: CVT16 instruction set (half precision) floating point support */
+	uint16_t		c_rdrnd:1;		/* bit 30: RDRAND (on-chip random number generator) support */
+	uint16_t		c_hypervisor:1;		/* bit 31: Running on a hypervisor (0 on a real CPU) */
 	/* EDX */
-	uint32_t		__todo2;
+	uint16_t		d_fpu:1;		/* bit 0: Onboard x87 FPU */
+	uint16_t		d_vme:1;		/* bit 1: Virtual mode extensions (VIF) */
+	uint16_t		d_de:1;			/* bit 2: Debugging extensions (CR4 bit 3) */
+	uint16_t		d_pse:1;		/* bit 3: Page size extensions */
+	uint16_t		d_tsc:1;		/* bit 4: Time stamp counter */
+	uint16_t		d_msr:1;		/* bit 5: Model-specific registers */
+	uint16_t		d_pae:1;		/* bit 6: Physical Address Extension */
+	uint16_t		d_mce:1;		/* bit 7: Machine Check Exception */
+	uint16_t		d_cx8:1;		/* bit 8: CMPXCHG8 */
+	uint16_t		d_apic:1;		/* bit 9: Onboard APIC */
+	uint16_t		_d_reserved_10:1;	/* bit 10 */
+	uint16_t		d_sep:1;		/* bit 11: SYSENTER and SYSEXIT */
+	uint16_t		d_mtrr:1;		/* bit 12: Memory Type Range Registers */
+	uint16_t		d_pge:1;		/* bit 13: Page Global Enable bit in CR4 */
+	uint16_t		d_mca:1;		/* bit 14: Machine check architecture */
+	uint16_t		d_cmov:1;		/* bit 15: CMOV and FCMOV instructions */
+	uint16_t		d_pat:1;		/* bit 16: Page Attribute Table */
+	uint16_t		d_pse36:1;		/* bit 17: 36-bit page table extension */
+	uint16_t		d_pn:1;			/* bit 18: Processor serial number */
+	uint16_t		d_clflush:1;		/* bit 19: CLFLUSH (SSE2 */
+	uint16_t		_d_reserved_20:1;	/* bit 20 */
+	uint16_t		d_dts:1;		/* bit 21: Debug store: save trace of executed jumps */
+	uint16_t		d_acpi:1;		/* bit 22: Onboard thermal control MSRs for ACPI */
+	uint16_t		d_mmx:1;		/* bit 23: MMX instructions */
+	uint16_t		d_fxsr:1;		/* bit 24: FXSAVE, FXRESTOR instructions CR4 bit 9 */
+	uint16_t		d_sse:1;		/* bit 25: SSE instructions */
+	uint16_t		d_sse2:1;		/* bit 26: SSE2 instructions */
+	uint16_t		d_ss:1;			/* bit 27: CPU supports Self Snoop */
+	uint16_t		d_ht:1;			/* bit 28: Hyper threading */
+	uint16_t		d_tm:1;			/* bit 29: Thermal monitoring automatically limits temp */
+	uint16_t		d_ia64:1;		/* bit 30: IA64 processor emulating x86 */
+	uint16_t		d_pbe:1;		/* bit 31: Pending Break Enable (PBE# pin) wakeup support */
 };
 
 union cpu_cpuid_00000001_id_union {
@@ -186,8 +218,12 @@ static void probe_cpuid() {
 		free(cpuid_info);
 		return;
 	}
-	if (cpuid_info->e0.i.cpuid_max >= 1)
+
+	if (cpuid_info->e0.i.cpuid_max >= 1) {
 		do_cpuid(0x00000001,&(cpuid_info->e1.g));
+		if (cpuid_info->e1.f.family >= 4 && cpuid_info->e1.f.family <= 6)
+			cpu_basic_level = cpuid_info->e1.f.family;
+	}
 }
 
 static void probe_fpu() {
@@ -488,6 +524,21 @@ int main() {
 			_(rdrnd);	_(hypervisor);
 #undef _
 			printf("\n");
+
+			printf(" - EDX: ");
+/* Save my wrists and avoid copypasta! */
+#define _(x) if (cpuid_info->e1.f.d_##x) { printf(cpp_stringify(x) " "); }
+			_(fpu);		_(vme);		_(de);		_(pse);
+			_(tsc);		_(msr);		_(pae);		_(mce);
+			_(cx8);		_(apic);	_(sep);		_(mtrr);
+			_(pge);		_(mca);		_(cmov);	_(pat);
+			_(pse36);	_(pn);		_(clflush);	_(dts);
+			_(acpi);	_(mmx);		_(fxsr);	_(sse);
+			_(sse2);	_(ss);		_(ht);		_(tm);
+			_(ia64);	_(pbe);
+#undef _
+			printf("\n");
+			assert(sizeof(struct cpu_cpuid_00000001_id_features) == (4 * 4));
 		}
 	}
 
