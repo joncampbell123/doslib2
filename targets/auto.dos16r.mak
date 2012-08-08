@@ -8,9 +8,9 @@ ifeq ($(ENABLE_dos16r),1)
     endif
 
     ifeq ($(BUILD_dos16r_mm),)
-      BUILD_dos16r_mm=compact small medium large
+      BUILD_dos16r_mm=compact small medium large huge
     endif
-    ifneq ($(findstring huge flat,$(BUILD_dos16r_mm)),)
+    ifneq ($(findstring flat,$(BUILD_dos16r_mm)),)
       $(error Unsupported memory model for dos16r)
     endif
 

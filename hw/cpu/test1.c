@@ -79,12 +79,12 @@ void do_cpuid(const uint32_t select,struct cpu_cpuid_generic_block *b);
 void do_cpuid(const uint32_t select,struct cpu_cpuid_generic_block *b) {
 	__asm {
 		.586p
-# if defined(__LARGE__) || defined(__COMPACT__)
+# if defined(__LARGE__) || defined(__COMPACT__) || defined(__HUGE__)
 		push	ds
 # endif
 		push	eax
 		mov	eax,select
-# if defined(__LARGE__) || defined(__COMPACT__)
+# if defined(__LARGE__) || defined(__COMPACT__) || defined(__HUGE__)
 		lds	si,word ptr [b]
 # else
 		mov	si,word ptr [b]
@@ -95,7 +95,7 @@ void do_cpuid(const uint32_t select,struct cpu_cpuid_generic_block *b) {
 		mov	[si+8],ecx
 		mov	[si+12],edx
 		pop	eax
-# if defined(__LARGE__) || defined(__COMPACT__)
+# if defined(__LARGE__) || defined(__COMPACT__) || defined(__HUGE__)
 		pop	ds
 # endif
 	}
@@ -148,7 +148,7 @@ static void probe_fpu() {
 		cmp		ax,0x003F
 		jnz		no_fpu
 
-# if defined(__COMPACT__) || defined(__LARGE__)
+# if defined(__COMPACT__) || defined(__LARGE__) || defined(__HUGE__)
 		mov		ax,seg cpu_flags
 		mov		ds,ax
 # endif
@@ -200,7 +200,7 @@ is_not_8086:	pushf				; save FLAGS
 		and	ax,0xF000
 		jnz	is_not_286
 
-# if defined(__COMPACT__) || defined(__LARGE__)
+# if defined(__COMPACT__) || defined(__LARGE__) || defined(__HUGE__)
 		mov	ax,seg cpu_basic_level
 		mov	ds,ax
 # endif
@@ -209,7 +209,7 @@ is_not_8086:	pushf				; save FLAGS
 		jmp	fin
 
 is_not_286:		
-# if defined(__COMPACT__) || defined(__LARGE__)
+# if defined(__COMPACT__) || defined(__LARGE__) || defined(__HUGE__)
 		mov	ax,seg cpu_basic_level
 		mov	ds,ax
 # endif
@@ -233,7 +233,7 @@ fin:		popa
 			smsw	ax
 			and	al,1
 			shl	al,2			; (1 << 1) == 0x04 == CPU_FLAG_PROTMODE
-#if defined(__COMPACT__) || defined(__LARGE__)
+#if defined(__COMPACT__) || defined(__LARGE__) || defined(__HUGE__)
 			mov	bx,seg cpu_flags
 			mov	ds,bx
 #endif
@@ -306,7 +306,7 @@ fin:		popa
 		jmp	fin2
 
 is_not_386:
-# if defined(__COMPACT__) || defined(__LARGE__)
+# if defined(__COMPACT__) || defined(__LARGE__) || defined(__HUGE__)
 		mov	ax,seg cpu_basic_level
 		mov	ds,ax
 # endif
@@ -369,7 +369,7 @@ fin2:		nop
 			test	eax,0x200000
 			jz	no_cpuid		; if we failed to set CPUID then no CPUID
 
-#if defined(__COMPACT__) || defined(__LARGE__)
+#if defined(__COMPACT__) || defined(__LARGE__) || defined(__HUGE__)
 			mov	ax,seg cpu_flags
 			mov	ds,ax
 #endif
