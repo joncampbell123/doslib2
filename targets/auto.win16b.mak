@@ -14,8 +14,8 @@ ifeq ($(ENABLE_win16b),1)
       $(error Unsupported memory model for win16b)
     endif
 
-    ifeq ($(BUILD_win16b_windows),)
-      BUILD_win16b_windows=20 30 31
+    ifeq ($(BUILD_win16b_windows),) # NTS: Most code does not yet run under Windows 2.0 and earlier    20 
+      BUILD_win16b_windows=30 31
     endif
     ifneq ($(findstring 10,$(BUILD_win16b_windows)),)
       $(error Unsupported windows version for win16b)

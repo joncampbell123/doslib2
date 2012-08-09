@@ -11,6 +11,7 @@ BUILD_win16b=1
 BUILD_win16r_windows=10 20 30 31
 BUILD_win16b_windows=20 30 31 95 98 me nt
 BUILD_win16p_windows=20 30 31 95 98 me nt
+BUILD_win16r_mm=small
 
 -include ../../config.mak
 -include Makefile.wcc
@@ -39,20 +40,7 @@ clean:
 disk:
 	dd if=/dev/zero of=test.dsk bs=512 count=2880
 	mkfs.vfat test.dsk
-	mcopy -i test.dsk ../../build/test/test1/win16r/20_086l/exe/test1.exe ::r20_086l.exe
-	mcopy -i test.dsk ../../build/test/test1/win16r/20_086c/exe/test1.exe ::r20_086c.exe
-	mcopy -i test.dsk ../../build/test/test1/win16r/30_086l/exe/test1.exe ::r30_086l.exe
-	mcopy -i test.dsk ../../build/test/test1/win16r/30_086c/exe/test1.exe ::r30_086c.exe
-	mcopy -i test.dsk ../../build/test/test1/win16r/31_086l/exe/test1.exe ::r31_086l.exe
-	mcopy -i test.dsk ../../build/test/test1/win16r/31_086c/exe/test1.exe ::r31_086c.exe
-	mcopy -i test.dsk ../../build/test/test1/win16p/30_386l/exe/test1.exe ::p30_386l.exe
-	mcopy -i test.dsk ../../build/test/test1/win16p/30_386c/exe/test1.exe ::p30_386c.exe
-	mcopy -i test.dsk ../../build/test/test1/win16p/31_386l/exe/test1.exe ::p31_386l.exe
-	mcopy -i test.dsk ../../build/test/test1/win16p/31_386c/exe/test1.exe ::p31_386c.exe
-	mcopy -i test.dsk ../../build/test/test1/win16b/20_386l/exe/test1.exe ::b20_386l.exe
-	mcopy -i test.dsk ../../build/test/test1/win16b/20_386c/exe/test1.exe ::b20_386c.exe
-	mcopy -i test.dsk ../../build/test/test1/win16b/30_386l/exe/test1.exe ::b30_386l.exe
-	mcopy -i test.dsk ../../build/test/test1/win16b/30_386c/exe/test1.exe ::b30_386c.exe
-	mcopy -i test.dsk ../../build/test/test1/win16b/31_386l/exe/test1.exe ::b31_386l.exe
-	mcopy -i test.dsk ../../build/test/test1/win16b/31_386c/exe/test1.exe ::b31_386c.exe
+	mcopy -i test.dsk ../../build/windows/asmhello/win16r/10_086s/exe/hello.exe ::r10_086s.exe
+	mcopy -i test.dsk ../../build/windows/asmhello/win16r/20_086s/exe/hello.exe ::r20_086s.exe
+	mcopy -i test.dsk ../../build/windows/asmhello/win16r/30_086s/exe/hello.exe ::r30_086s.exe
 
