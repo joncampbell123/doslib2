@@ -1,0 +1,10 @@
+Proof-of-concept minimalist Windows program in pure assembly language.
+Target: Win16 (16-bit Windows), real or protected mode.
+
+Can compile and run on:
+  Windows 1.04/2.1/3.0/3.1/95/98/ME
+  Windows NT/2000/XP/Vista/7
+
+NOTES:
+  Microsoft Windows 1.04: While this code does not crash, it is somehow unable to create a window.
+
