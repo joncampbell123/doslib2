@@ -22,7 +22,7 @@
 int main() {
 	probe_cpu();
 	printf("CPU level: %d\n",cpu_basic_level);
-	if (cpu_flags & CPU_FLAG_FPU) printf("- FPU is present\n");
+	if (cpu_flags & CPU_FLAG_FPU) printf("- FPU is present, level %d\n",cpu_basic_fpu_level);
 	if (cpu_flags & CPU_FLAG_V86) printf("- Virtual 8086 mode is active\n");
 	if (cpu_flags & CPU_FLAG_CPUID) printf("- CPUID is present\n");
 	if (cpu_flags & CPU_FLAG_PROTMODE) printf("- Protected mode is active\n");

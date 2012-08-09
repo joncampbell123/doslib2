@@ -111,9 +111,9 @@ static void probe_cpuid() {
 		if (cpuid_info->e1.f.family >= 4 && cpuid_info->e1.f.family <= 6)
 			cpu_basic_level = cpuid_info->e1.f.family;
 
-		/* now check for the extended CPUID. if the value of EAX is less than
-		 * 0x80000000 then it's probably the original Pentium which responds
-		 * to these addresses but with the same responses to 0x00000000.... */
+		/* now check for the extended CPUID. it is said that in the original
+		 * Pentium ranges 0x80000000-0x8000001F respond exactly the same as
+		 * 0x00000000-0x0000001F */
 		do_cpuid(0x80000000,&(cpuid_info->e80000000.g));
 		if (cpuid_info->e80000000.i.cpuid_max < 0x80000000)
 			cpuid_info->e80000000.i.cpuid_max = 0;
@@ -168,6 +168,17 @@ static void probe_cpuid() {
 static void probe_fpu() {
 	unsigned short tmp=0;
 
+	/* If CPUID is available and reports an FPU, then assume
+	 * FPU is present (integrated into the CPU) and do not test.
+	 * Carry out the test if CPUID does not report one. */
+	if ((cpu_flags & CPU_FLAG_CPUID) && cpuid_info != NULL) {
+		if (cpuid_info->e1.f.d_fpu) {
+			cpu_basic_fpu_level = cpu_basic_level;
+			cpu_flags |= CPU_FLAG_FPU;
+			return;
+		}
+	}
+
 #if defined(__GNUC__)
 	/* Linux host: TODO */
 #else
@@ -193,6 +204,83 @@ static void probe_fpu() {
 no_fpu:
 	}
 #endif
+
+	if (cpu_flags & CPU_FLAG_FPU) {
+		/* what we assume initially is based on the CPU basic level we detected earlier.
+		 * these assumptions are based on typical CPU+FPU hookups and the compatibility
+		 * of the chips:
+		 *
+		 *    8086/8088      can be paired with 8087
+		 *    286            can be paired with 80287 (or 80387?)
+		 *    386            can be paired with 80287 or 80387
+		 *    486            can be paired with 80487 or integrated into the CPU
+		 *    Pentium        normally integrated into the CPU
+		 *  (anything newer) integrated into the CPU */
+		if (cpu_basic_level == 2/*286*/ || cpu_basic_level == 3/*386*/) {
+#if defined(__GNUC__)
+			cpu_basic_fpu_level = 3;
+			/* Linux host: TODO */
+#else
+			cpu_basic_fpu_level = 2;
+
+			__asm {
+				.386
+				.387
+/* 287 vs 387 detection code borrowed from:
+ * http://qlibdos32.sourceforge.net/tutor/fpu-detect.asm.txt
+ *
+ * I have this code execute ONLY on 286 and 386 systems because I'm
+ * concerned the test's specific checks might fail on newer processors
+ * that do not exactly emulate these small details --J.C.
+ *
+ * This test can only distinguish a 8087 from 387, it can't exactly detect
+ * if it is a 287. So we assume that if it fails the test for a 387, then
+ * it's a 287. If it's an 8087, then this code path wouldn't run at all
+ * (see "if" statement above)
+ *
+ * TODO: The test code mentions that it enables FPU interrupts. It also
+ *       deliberately divides by zero as part of the test. So far it doesn't
+ *       seem to trigger any kind of FPU exception handler, but how do we
+ *       make sure that interrupt won't trigger? */
+				fstcw		word ptr [tmp]
+				and		word ptr [tmp],0xFF7F
+				fldcw		word ptr [tmp]
+				fdisi
+				fstcw		word ptr [tmp]
+				fwait
+				mov		ax,word ptr [tmp]
+				and		ax,0x80
+				jz		test_ok2
+				jmp		test_done
+
+test_ok2:			finit
+				fld1
+				fldz
+				fdiv
+				fld		st(0)
+				fchs
+				fcompp
+				fstsw		ax
+				fwait
+				and		ah,0x40
+				jz		test_ok3
+				jmp		test_done
+
+test_ok3:			push		ds
+# if defined(__COMPACT__) || defined(__LARGE__) || defined(__HUGE__)
+				mov		ax,seg cpu_basic_fpu_level
+				mov		ds,ax
+# endif
+				mov		byte ptr [cpu_basic_fpu_level],3
+				pop		ds
+test_done:
+			}
+#endif
+		}
+		else {
+			cpu_basic_fpu_level = cpu_basic_level;
+		}
+	}
 }
 
 static void probe_basic_cpu_level() {
