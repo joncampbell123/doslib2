@@ -12,8 +12,7 @@
 
 #include <hw/cpu/cpu.h>
 
-/* TODO: move elsewhere */
-#include <hw/cpu/useful.h>
+#include <misc/useful.h>
 
 signed char			cpu_basic_level = -1;
 signed char			cpu_basic_fpu_level = -1;

@@ -17,8 +17,7 @@
 
 #include <hw/cpu/cpu.h>
 
-/* TODO: move elsewhere */
-#include <hw/cpu/useful.h>
+#include <misc/useful.h>
 
 int main() {
 	probe_cpu();

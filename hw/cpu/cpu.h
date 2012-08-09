@@ -6,8 +6,7 @@
 #include <string.h>
 #include <stdio.h>
 
-/* TODO: move elsewhere */
-#include <hw/cpu/useful.h>
+#include <misc/useful.h>
 
 #pragma pack(push,1)
 struct cpu_cpuid_generic_block {
