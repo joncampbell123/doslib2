@@ -162,6 +162,7 @@ ISP_AUTO_OPTION_DISABLED([windows-10],       [windows_10],       [Windows 1.0 ta
 AC_CONFIG_FILES(Makefile)
 AC_CONFIG_FILES(windows/Makefile)
 AC_CONFIG_FILES(windows/winfcon/Makefile)
+AC_CONFIG_FILES(windows/asmhello/Makefile)
 AC_CONFIG_FILES(windows/w32imphk/Makefile)
 AC_CONFIG_FILES(test/Makefile)
 AC_CONFIG_FILES(test/test1/Makefile)
