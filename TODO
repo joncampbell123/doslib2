@@ -1,19 +1,303 @@
 ---------==== Immediate future ideas and design ====-------------
 
+- DOS host OS detection [os/dos]:
+   - What version am I?
+   - What version am I REALLY running under?
+   - Am I running under Windows?
+   - Is DPMI present?
+   - Is VCPI present?
+   - What version of Windows am I running under?
+   - Identify specific flavors of DOS, such as "FreeDOS"
+- Emulator detection [hw/emu]
+   - DOSBox
+   - Bochs
+   - VirtualBox
+   - QEMU
+   - VirtualPC
+   - Write the code to work even from within Windows or even as a Windows program
+- Routine to locate legacy ISA regions of adapter RAM/ROM (0xC0000-0xFFFFF) [hw/isa]
+   - Identify VGA BIOS at 0xC0000
+   - Identify BIOS at top
+   - Identify adapters within that region
+   - Write the code to work even from within Windows or as a Windows program
+- Code for Intel 8253/8254 Programmable Interval Timer [hw/8254pit]
+   - Code to detect it (in case newer motherboards omit it)
+   - Code to set mode and counters, also to store and remember the last mode byte and countdown written so it can do it's job.
+   - PC speaker control (port 0x61)
+   - 15.085us timer source that can be seen on bit 4 of port 0x61? [http://qlibdos32.sourceforge.net/tutor/tutor-port61h.php]
+   - Set/clear IRQ 0 interrupt with enable/disable IRQ passthrough and code to call down to BIOS IRQ at 18.2 ticks/sec regardless
+   - PIC-level enable/disable
+   - Allow direct control of IRQ or provide "managed mode" where you attach one or more handlers at a specified rate and the
+     library automatically picks the highest timer tick rate to call each one at the desired rate.
+   - Library-provided IRQ handler should be written in assembly language for speed.
+   - Function to wait a specific interval using the 8254 (with a timer of your chosing), interval defined by master clock rate.
+   - Function to convert milliseconds or nanoseconds to 8254 ticks should be #define macros so that when programs call with
+     a constant, the argument passed down is a constant. Don't do runtime integer division if it's not necessary to do so.
+- General timer library [hw/gentimer]
+   - Uses the 8254 library by default to provide "wait" functions, timer watching, and periodic interrupts, but
+     the library provides a layer of abstraction so that code not specific to the 8254 can be easily recompiled
+     to detect and support at runtime the use of the following to carry out wait/timer/periodic ints:
+         - The APIC (Advanced Programmable Interrupt Control)
+         - The TSC register on Pentium or higher CPUs
+         - The HPET on recent motherboards
+         - The RTC clock
+   - The library must provide the calling application an API to tell the program which hardware it is using
+     so that if the program is trying to use the same hardware it can coexist properly
+   - Wait function: Function blocks for a specific period of time in microseconds, then returns.
+   - Timer reading: Function returns a continuously increasing tick count at the timer's native rate.
+       On the 8254, this would be a value that increases at a rate of 1193181.8181...Hz continuously.
+       Since the 8254 itself only provides a 16-bit counter value the library will obviously have to hook
+       IRQ 0 to automatically tick the rest of it forward. And since that 16-bit counter counts down,
+       this function will have to invert that value to one that counts up.
 
+       On the APIC: ...?
+
+       On the HPET: ...?
+
+       On the RTC clock: The RTC doesn't really have I/O to read the counter, it can only signal the IRQ at
+         a high rate. But the RTC might be appropriate for a periodic interrupt.
+- RTC clock library [hw/rtc]
+   - Detect the RTC ports 0x70-0x71
+   - Autodetect "size" of CMOS or assume. Someday when we find ancient 486 systems that supposedly have more
+     than 128 bytes we can support them.
+   - Enable/disable NMI (bit 7 of index), and remember it
+   - Functions to read/write registers and CMOS (index ORed with NMI disable)
+   - Enable/disable RTC interrupts (and remember what was last written)
+   - Allow direct control of IRQ or provide "managed" mode with attaching handlers that want their own rates.
+     This is actually easier than the 8254 one since the RTC only ticks at multiples of 2Hz.
+   - Library IRQ handler should be written in assembly language for speed.
+   - Library IRQ handler should also increment library-provided 32-bit integer on each tick.
+   - Calling program warning: When changing tick rate obviously counter will be reset. Don't rely on it
+     ticking upwards forever.
+   - Whenever RTC tick rate is changed library increments "change" counter.
+- VGA library [hw/vga]
+   - Like DOSLIB, The "VGA" support library will contain support code for MDA/CGA/EGA/VGA/Herc/Amstrad and
+     autodetect the card.
+   - Unlike DOSLIB: Can we rely less on the BIOS this time?
+   - Unlike DOSLIB: This time, the VGA state is in a struct. VGA functions are given the address of this
+     struct. The struct should include whether the VGA is a PCI/PCIe device and what assignment. The idea
+     is that this time the VGA library should be written so it can support multiple PCI VGA devices in one
+     system and if the caller supports it, address each one individually.
+   - VGA functions will call a common routine that, if multiple VGAs are present, will ensure the VGA device
+     asked for is active. On PCI, that means checking the PCI ID and if it changed, programming the PCI bus
+     to switch off the I/O ports of one VGA and switch on the I/O ports of the specific VGA. If the PCI
+     motherboard chipset is supported, that may involve programming the chipset as well to enable/disable
+     the PCI-ISA bridge if an ISA video card is also present.
+
+     Obviously, if the system has only ISA and one video card, that video card will be the only VGA device
+     and you have the one VGA struct to pass around.
+
+     This function must be a function pointer that by default points to a do-nothing function, so that
+     retro-programming projects not using PCI VGA functions will not waste CPU cycles or bloat the EXE with
+     PCI support code it will never use. An external library will change that function pointer if PCI VGA
+     support is truly desired.
+   - The VGA struct must have two fields to remember where the VRAM is. One is the ISA segment (0xA000,0xB800,
+     etc.) and one is the location in extended memory if applicable. On true ISA hardware the extended memory
+     address will not be set, while on VLB/PCI hardware the extended address is where the linear range is
+     mapped. By default the library will NOT detect that area, it is expected external libraries will do that
+     (the VESA framebuffer code for example), so that retro-programming projects not using extended modes
+     anyway will not waste CPU cycles with autodetecting stuff like that or bloat the EXE with PCI support
+     stuff.
+   - The VGA struct must also have a field to indicate where the card's MMIO is located. Again not filled in
+     by library itself, but by external support code.
+   - The "VGA" library by itself must ONLY support the legacy ISA form of VGA programming.
+   - In the makefile: this should also be referred to by $(lib_hw_vga_legacy_default)
+- PCI VGA library [hw/vga/pci]
+   - This library should be compiled in by programming projects that want to support PCI VGA programming.
+     This library "adds on" to the VGA library and provides it:
+       - Scanning for one or more PCI VGA cards attached to the system
+       - PCI VGA "switching" function, this library shall replace the function pointer with one that
+         manipulates the I/O enable/disable bits of the PCI bus to switch from one VGA device to another
+         and possibly between PCI and ISA VGA devices.
+       - Generic code to auto-locate a VGA devices' MMIO registers and linear framebuffer using the
+         PCI resource controls.
+   - In the makefile: this should also be referred to by $(lib_hw_vga_multi_default)
+- PCIe VGA library [hw/vga/pcie]
+   - Should be compiled into programming projects that may want to support the latest VGA hardware
+     attached by PCIe.
+     This library adds on to the VGA library to provide it:
+       - Scanning for PCI/PCIe cards
+       - PCI/PCIe VGA "switching" function.
+       - Auto-detect (generic) of MMIO and VRAM.
+   - Since PCIe provides the backwards compatible PCI control registers, this library is only needed
+     for programs that explicitly need the PCIe extended functions.
+- Bochs/VirtualBox/QEMU VGA library [hw/vga/bochs]
+   - Code to detect the control I/O port provided by these emulators usually for video control.
+   - Modesetting controls
+   - VirtualBox OMAPI controls
+   - Test program to show test patterns
+- Intel 9xx SVGA library [hw/vga/intel/9xx]
+   - Detect Intel 965/945/Clarkdale chipsets
+   - Detect outputs
+   - Provide modesetting
+   - Provide master clock information
+   - ???
+- DMA controller library [hw/isadma]
+   - Detect ports
+   - Detect second DMA controller
+   - Functions to program DMA channels (and library remembers the settings)
+   - Auto-detect whether DMA controller supports 20 or 24 bit wide addressing.
+   - Functions should support full 32-bit values for future support of EISA DMA
+     controller. It should not attempt to auto-detect the EISA DMA controller
+     because the only reliable way to do so is by ISA PnP BIOS which support
+     code is large and cumbersome. But if an external library decides the user
+     has EISA DMA controller functions this code should follow function pointers
+     instead to let that library provide DMA programming functions.
+- ISA PnP hardware & BIOS functions [hw/isapnp]
+   - Detect PnP BIOS
+   - Functions to call into PnP BIOS
+   - ...even from 32-bit protected mode
+   - ...even from 16-bit Windows (Windows 3.x only!)
+   - ...even from 32-bit Windows (Win32s or Win386 Windows 3.x only!)
+   - ...even from 16/32-bit Windows 9x/ME but only if Windows did not load it's PnP BIOS driver
+   - ISA PnP I/O port routines (low level)
+   - Higher level ISA PnP device scan routines. Remember the PnP devices to avoid re-scanning.
+- ACPI BIOS functions [hw/acpibios]
+   - Detect ACPI BIOS
+   - Use general-purpose "flat memory" library
+   - Scan tables and read them
+   - ...?
+- Port "flatmode" API from DOSLIB and clean it up [hw/flatmode]
+- Port "llmem" API from DOSLIB and clean it up [hw/llmem]
+- Port "win16eb" API from DOSLIB (Win16 executable buffers) and clean it up, add support
+  for the caller to potentially create more than one, free, alloc, at will. [windows/win16eb]
+- General-purpose "flat memory" access library [hw/genflat]
+   - Higher level library to tie together multiple techniques for flat physical
+     memory access:
+       - "flatmode" if 16-bit realmode DOS and below 4GB
+       - ...? if 16-bit realmode DOS with v86 monitor and below 4GB
+       - direct pointer casting if flat 32-bit DOS with no memory manager and below 4GB
+       - ...? if 32-bit DOS with EMM386.EXE and below 4GB
+       - Selector abuse if 16-bit Windows/standard mode and below 4GB
+       - Selector and DPMI paging abuse if 16-bit Windows/386 enhanced mode and below 4GB
+       - Abuse of Win16 layer [Win16 executable buffers] if 32-bit running under Windows 3.1/9x/ME and below 4GB
+       - "llmem" if >= 4GB or otherwise appropriate, and it is possible to do so in the environment
+       - Nothing, if Windows NT
+- Win32: Library for directly locating ordinal exports in a DLL, such as the "locked out"
+  ordinals in KERNEL32.DLL under Windows 9x/ME [windows/w9xdllord]
+
+- DOS library: If DPMI present, and we're 16-bit real mode, provide a function call to enable
+  DPMI functions by entering protected mode but then jump back into real mode, thus allowing
+  us to remain real mode while still able to use DPMI function calls when needed. [os/dos]
+
+- DOS library: If VCPI present, and we're 16-bit real mode, provide a function call the
+  program can use to escape virtual 8086 mode and run from true real mode (as well as a
+  function to jump back into virtual 8086 mode). [os/dos]
+
+- DOS library: Code to get/set exception handlers.
+     - 16-bit real mode DOS: getvect/setvect
+     - 16-bit real mode DOS with EMM386.EXE: ...?
+     - 32-bit DOS: Use DPMI get/set exception handler
+     - 32-bit Windows Win386: ...?
+     - 16-bit Windows 3.1: TOOLHELP or DPMI
+     - 16-bit protected mode Windows 3.0: Hack into interrupt vector table, replace vector
+     - 16-bit Windows 95/98/ME/NT/2000/XP/Vista: TOOLHELP
+     - 32-bit Windows 3.1/95/98/ME/etc.: SetExceptionHandler
+
+     Some tests provided by the library will be using this code to catch itself
+     if the test causes a fault, for example when the CPU library executes SSE
+     instructions to test whether the OS enabled them (which if not, the CPU
+     fires the Invalid Opcode exception).
+
+     Don't forget: 16-bit Windows targets if build in "real" or "bimodal" mode
+                   are capable of running in Real Mode. If the code at runtime
+                   detects real mode, then it must use the 16-bit real mode DOS
+                   approach.
+
+- General purpose "linear memory" access library [hw/genlin]
+   - For those operating environments where 16-bit code needs to access
+     virtualized address space directly, and where 32-bit code may be
+     limited.
+        - 16-bit real mode DOS: call "flatmode" library
+        - 16-bit real mode DOS with virtual 8086 mode: call "flatmode" library
+        - 32-bit DOS with no memory manager [no paging]: convert address directly to pointer
+        - 32-bit DOS with EMM386.EXE: Abuse VCPI...?
+        - 16-bit Windows/standard: call "flatmode" library
+        - 16-bit Windows/386 enhanced: Ensure page is present? Hook page fault vector, try to copy memory, unhook page fault vector.
+          If a page fault happened, then the function needs to say so (0 bytes copied). TODO: How will you handle Windows 3.0, who
+          apparently is terrible at actually passing the page fault interrupt to your callback?
+        - 32-bit Windows (Windows 9x/ME/NT/etc.): __try {...} __catch() and memcpy. Let caller know (0 bytes returned) if __catch() happened.
+          TODO: What about Windows ME? KERNEL32.DLL will terminate our program if we page fault too much regardless of our
+                exception handler.
+
+   What the fuck would I do with this kind of library you may ask? Well, I plan to
+   port the VXD enumeration code from DOSLIB and have it use this code. Enumerating
+   VXDs requires us to poke up into the 0xC0000000 range of virtual memory
+   (0x80000000 if Windows 3.0/3.1) and read structures directly. While that may be
+   trivial for a 32-bit Windows program, it requires some work to carry out from
+   16-bit Windows code and quite the programming gymnastics to pull off from
+   16-bit DOS code running in a DOS Box. The possibility of a page fault also requires
+   us to have a common library [mentioned above] to deal with the fault when it
+   arrives.
+
+   Since programs are not likely to scan VXDs often, performance is not an issue with
+   this code.
+
+- Adlib hardware library [hw/adlib]
+   - Unlike DOSLIB, you will use structs to hold I/O port addresses. No more assuming 0x388.
+     This allows your code to work properly if port is moved to another port like 0x38C.
+   - Code should compile for Windows as well
+       - Windows 1.0/2.0/3.0: These Windows versions do not provide their own sound drivers
+         since they mostly pre-date the multimedia era. Having your own code to talk to the
+         Adlib chipset would be necessary for any FM music.
+       - Windows 3.1/9x/ME: These systems DO have FM drivers, but they don't prevent your
+         code from talking to it anyway. If the drivers are not installed, then direct I/O
+         access is the only way to make FM music, they're not gonna stop you.
+       - Windows NT/2000/XP/Vista: No. As a Win32 program you cannot touch I/O ports. As a
+         win16 program NTVDM.EXE might virtualize the I/O to emulate nothing there, but that's
+         about it.
+
+- VGA library: Windows targets [hw/vga]
+   - Windows builds shall contain the same support code but with additional code to deal with
+     the Windows environment:
+       - Windows 1.0/2.0/3.0: Go ahead, fuck around with the I/O ports. Nobody's gonna stop
+         you. But be prepared to restore hardware state if necessary.
+       - Windows 3.1: Use DISPDIB.DLL to get fullscreen, then fuck around with I/O ports.
+                      16-bit Windows target can load it directly.
+                      Win32s builds won't be able to use it.
+                      I'm certain Win386 builds might be able to use it.
+                      Remember that Windows 3.1's DISPDIB.DLL does not provide the Window
+                      procedure that later versions do.
+       - Windows 9x/ME: Use DISPDIB.DLL to get fullscreen, then fuck around with I/O ports.
+                        16-bit again can load directly.
+                        32-bit can use the Win16 executable buffers, or use the Microsoft
+                        approved method using the Win32 hackjob that mimicks Win16 LoadModule().
+                        Note that even as Win32, you can still monkey with the I/O ports.
+       - Windows NT/2000/XP/Vista: No way.
+
+- VGA VESA BIOS library [hw/vga/vesabios]
+    - Supports VGA state in VGA library, but calls into VESA BIOS extensions.
+    - Call from real and protected mode.
+    - Protected mode should be able to call real-mode "window" function.
+    - Watch out for some emulators (*cough* Microsoft Virtual PC *cough*) invalid modes.
+    - Test programs use the general purpose "flat memory" library to access linear VESA
+      framebuffer modes and draw test patterns.
+    - DOS library should make straightforward calls into VESA BIOS
+    - 16-bit Windows builds should either directly do it (Windows 1.0/2.0/3.0) or abuse
+      DISPDIB.DLL (Windows 3.1/9x/ME) just like the main VGA library will. Being able
+      to call up VESA BIOS modes from the Win16 layer would be an awesome hack.
+    - 32-bit Windows builds (Windows 9x/ME): just like the main VGA library, abuse
+      DISPDIB.DLL and Win16 executable buffers to take control of the display and then
+      call into the VESA BIOS to do whatever you want. It will take quite a few layers
+      of hacks but I'm sure you can get it to work... Muahahahaha
+
+- Retro game recreation: Rygar [game/rygar]
+   - Recreation of game using NES port as reference.
+   - Excellent test of programming skills, DOS library utilization. If successful, you get
+     an open source clone of Rygar that runs under DOS [Herc/CGA/EGA/VGA/SVGA/etc] and
+     almost all flavors of Windows :) A wonderful "proof of concept" for this library.
+   - Artistic talent chance: Allow user to select graphics, either the original graphics
+     from the NES version, or updated graphics you made yourself with updated animation.
+
+- Retro game recreation: Tetris [game/tetris]
+   - Relatively simple to program
+
+------------------------==== ALSO ====---------------------------
+
+- Why does the windows/asmhewin program fail under Windows 1.04?
+  Why does RegisterClass() fail? It works fine under Windows 2.0...
 
 -----------------------------------------------------------------
-
-#1: Move winfcon.c into it's own library under Windows. It will become the general-purpose
-    "console emulation" for the other test programs that assume a console. Put it under
-    windows/winfcon.
-
-#2: hw/cpu/test1.c remove all the #define printf stuff and start writing code to detect/test
-    the CPU. This time, put the 8086/286/386/486/etc. detection routines inline to the program,
-    rather than in an external .asm file. Remember that even in 8086 builds you can convince
-    Watcom C to emit 386 instructions if you use the .386p directive at the top of the __asm
-    block. The first DOSLIB had these routines in an external .asm file because you didn't
-    know that at the time :)
 
 #3: start writing DOS/Windows detection code, put it under os/dos. OS-specific stuff belongs
     under "os/", not "hw/" like what you did in the first DOSLIB.
