@@ -209,6 +209,12 @@
      virtualized address space directly, and where 32-bit code may be
      limited.
         - 16-bit real mode DOS: call "flatmode" library
+        - 16-bit real mode DOS with DPMI server present: enter DPMI protected mode then
+          jump back to real mode without deactivating DPMI. when you want to access linear
+          memory jump back into DPMI protected mode and do it. Have a page fault handler
+          ready for 386 protected mode in case you access regions not present.
+             - 16-bit DPMI method: create a selector, map base to desired location, and copy.
+             - 32-bit DPMI method: use/alloc a selector that is zero based, and memcpy as 32-bit code.
         - 16-bit real mode DOS with virtual 8086 mode: call "flatmode" library
         - 32-bit DOS with no memory manager [no paging]: convert address directly to pointer
         - 32-bit DOS with EMM386.EXE: Abuse VCPI...?
@@ -288,6 +294,36 @@
      almost all flavors of Windows :) A wonderful "proof of concept" for this library.
    - Artistic talent chance: Allow user to select graphics, either the original graphics
      from the NES version, or updated graphics you made yourself with updated animation.
+   - Pan-display code programming:
+
+          MS-DOS 16/32-bit and Windows 3.x/9x/ME fullscreen:
+             - Hercules MDA 720x348
+             - CGA 320x200x4 or 640x200x2
+             - EGA 320x200x16, 640x200x16, 640x350x16
+             - VGA 320x200x16, 640x200x16, 640x350x16, 640x400x16, 640x480x16
+             - PCJr 160x200x16, 320x200x16, 640x200x4
+             - Amstrad 640x200x16
+             - VESA BIOS 16, 256, 16bit, 24bit, and 32bit at 320x200, 320x240, 400x300,
+               512x384, 640x400, 640x480, 720x480, 800x600, 1024x768, 1280x1024, etc.
+
+          Windows GDI programming:
+             - CreateCompatibleBitmap, memory DCs, BitBlt, etc.
+
+          Windows external libraries:
+             - SDL
+             - DirectDraw
+             - Direct2D
+             - WinG
+
+   - Audio programming:
+
+          MS-DOS 16/32-bit and 16-bit Windows, 16/32-bit Windows 3.x/9x/ME
+             - PC speaker (fast modulation of music)
+             - Direct communication with Adlib FM synth
+             - Direct communication with Sound Blaster
+          Windows
+             - WINMM wave out functions
+             - WINMM midi functions
 
 - Retro game recreation: Tetris [game/tetris]
    - Relatively simple to program
