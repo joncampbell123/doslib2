@@ -1,3 +1,9 @@
+---------==== Immediate future ideas and design ====-------------
+
+
+
+-----------------------------------------------------------------
+
 #1: Move winfcon.c into it's own library under Windows. It will become the general-purpose
     "console emulation" for the other test programs that assume a console. Put it under
     windows/winfcon.
