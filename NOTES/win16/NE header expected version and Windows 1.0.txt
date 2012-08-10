@@ -1,0 +1,8 @@
+If your code is targeting Windows 2.0 and higher, you can trust Windows not to
+execute your code if the "expected version" field represents a version newer
+than the version running.
+
+Windows 1.0 however, does not seem to pay attention to that field. It will
+happily run Windows 2.x executables (which usually work fine since both
+are real mode). But keep it in mind.
+

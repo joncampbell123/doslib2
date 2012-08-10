@@ -74,7 +74,7 @@ extern LOADICON
 
 		; We need IDI_APPLICATION and IDC_ARROW or Windows 1.0 will not let us create the window class
 		; LoadIcon(HINSTANCE hInstance,LPCSTR lpIconName)
-		push	word [myInstance]	; hInstance
+		push	word 0			; hInstance
 		push	word 0			; lpIconName
 		push	word 32512		; IDI_APPICON
 		call far LOADICON
@@ -83,7 +83,7 @@ extern LOADICON
 		jz	_exit
 
 		; LoadCursor(HINSTANCE hInstance,LPCSTR lpCursorName)
-		push	word [myInstance]	; hInstance
+		push	word 0			; hInstance
 		push	word 0			; lpIconName
 		push	word 32512		; IDC_ARROW
 		call far LOADCURSOR
@@ -101,7 +101,7 @@ extern LOADICON
 		; RegisterClass(myWNDCLASS)
 		push	ds
 		push	word myWNDCLASS
-		call far REGISTERCLASS				; <-- FIXME: Windows 1.04 fails this call. Why?
+		call far REGISTERCLASS				; <-- FIXME: Windows 1.04: I can't get this call to work. Why?
 		or	ax,ax
 		jz	_exit
 		mov	[myWNDCLASSAtom],ax
