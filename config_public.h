@@ -6,8 +6,11 @@
 #define ISP_UTILS_ENABLE_cpu_586 1
 #define ISP_UTILS_ENABLE_cpu_686 1
 #define ISP_UTILS_ENABLE_cpu_8086 1
+#define ISP_UTILS_ENABLE_cpuonly 1
+#define ISP_UTILS_ENABLE_debug 1
 #define ISP_UTILS_ENABLE_dos16r 1
 #define ISP_UTILS_ENABLE_dos32p 1
+#define ISP_UTILS_ENABLE_extlib 1
 #define ISP_UTILS_ENABLE_linux_host 1
 #define ISP_UTILS_ENABLE_mm_compact 1
 #define ISP_UTILS_ENABLE_mm_flat 1
