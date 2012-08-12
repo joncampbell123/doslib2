@@ -175,15 +175,15 @@ target_alias =
 top_build_prefix = ../../
 top_builddir = ../..
 top_srcdir = ../..
-BUILD_dos16r = 1
-BUILD_dos32p = 1
+
+#BUILD_dos16r=1
+#BUILD_dos32p=1
 BUILD_win16r = 1
 BUILD_win16p = 1
 BUILD_win16b = 1
 BUILD_win386 = 1
 BUILD_win32s = 1
 BUILD_win32 = 1
-BUILD_linux_host = 1
 all: all-am
 
 .SUFFIXES:
@@ -366,6 +366,7 @@ uninstall-am:
 	maintainer-clean-generic mostlyclean mostlyclean-generic \
 	mostlyclean-libtool pdf pdf-am ps ps-am uninstall uninstall-am
 
+#BUILD_linux_host=1
 
 -include ../../config.mak
 -include Makefile.wcc
