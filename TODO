@@ -102,6 +102,9 @@
      by library itself, but by external support code.
    - The "VGA" library by itself must ONLY support the legacy ISA form of VGA programming.
    - In the makefile: this should also be referred to by $(lib_hw_vga_legacy_default)
+   - Mode list support: The base VGA library will compile in memory a list of video modes that you can choose
+     from. External libraries (such as for VESA VGA, specialized drivers for SVGA chipsets, etc.) can add to
+     the modelist and provide their own modesetting routines.
 - PCI VGA library [hw/vga/pci]
    - This library should be compiled in by programming projects that want to support PCI VGA programming.
      This library "adds on" to the VGA library and provides it:
