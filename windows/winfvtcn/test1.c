@@ -3,9 +3,9 @@
 # include <windows/w32imphk/compat.h>
 # include <windows/apihelp.h>
 # if defined(TARGET_WINDOWS_GUI) && !defined(TARGET_WINDOWS_CONSOLE)
-#  define WINFCON_ENABLE 1
-#  define WINFCON_STOCK_WIN_MAIN 1
-#  include <windows/winfcvtn/winfcvtn.h>
+#  define WINFVCTN_ENABLE 1
+#  define WINFVCTN_STOCK_WIN_MAIN 1
+#  include <windows/winfvtcn/winfvtcn.h>
 # endif
 #endif
 
@@ -16,6 +16,10 @@
 #include <stdint.h>
 
 #include <misc/useful.h>
+
+#ifndef VT_ESC
+# define VT_ESC "\x1B"
+#endif
 
 int main() {
 	printf("Normal text out\n");

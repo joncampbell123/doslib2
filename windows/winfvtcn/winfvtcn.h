@@ -11,7 +11,7 @@
 
 /* Windows 3.1 and earlier, even for Win32s: there is no system given console.
  * We either have to draw and maintain our own window, or find some other way to printf() and display it. */
-#if defined(TARGET_WINDOWS) && defined(TARGET_WINDOWS_GUI) && !defined(TARGET_WINDOWS_CONSOLE) && defined(WINFCON_ENABLE)
+#if defined(TARGET_WINDOWS) && defined(TARGET_WINDOWS_GUI) && !defined(TARGET_WINDOWS_CONSOLE) && defined(WINFVCTN_ENABLE)
 # define WIN_STDOUT_CONSOLE
 
 # include <windows.h>
@@ -22,7 +22,7 @@
 # include <string.h>
 # include <stdio.h>
 
-#ifndef WINFCON_SELF
+#ifndef WINFVCTN_SELF
 # define getch _winvt_getch
 # define kbhit _winvt_kbhit
 # define fprintf __XXX_TODO_fprintf
@@ -49,7 +49,7 @@ int WINMAINPROC _winvt_main_vtcon_entry(HINSTANCE hInstance,HINSTANCE hPrevInsta
 
 extern HINSTANCE _winvt_hInstance;
 
-# ifdef WINFCON_STOCK_WIN_MAIN
+# ifdef WINFVCTN_STOCK_WIN_MAIN
 int WINMAINPROC WinMain(HINSTANCE hInstance,HINSTANCE hPrevInstance,LPSTR lpCmdLine,int nCmdShow) {
 	return _winvt_main_vtcon_entry(hInstance,hPrevInstance,lpCmdLine,nCmdShow,main);
 }

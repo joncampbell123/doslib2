@@ -1,12 +1,12 @@
 
 ifneq ($(TARGET_WINDOWS_GUI),)
-lib_windows_winfcvtn=$(abs_top_srcdir)/build/windows/winfcvtn/$(target_subdir)/lib/winfcvtn$(lib_suffix)
-lib_windows_winfcvtn_wlink=library $(lib_windows_winfcvtn)
-lib_windows_winfcvtn_dependencies=
+lib_windows_winfvtcn=$(abs_top_srcdir)/build/windows/winfvtcn/$(target_subdir)/lib/winfvtcn$(lib_suffix)
+lib_windows_winfvtcn_wlink=library $(lib_windows_winfvtcn)
+lib_windows_winfvtcn_dependencies=
 endif
 
-ifneq ($(lib_windows_winfcvtn),)
-$(lib_windows_winfcvtn):
-	$(MAKE) -C $(abs_top_srcdir)/windows/winfcvtn --no-print-directory -$(MAKEFLAGS) all-targets
+ifneq ($(lib_windows_winfvtcn),)
+$(lib_windows_winfvtcn):
+	$(MAKE) -C $(abs_top_srcdir)/windows/winfvtcn --no-print-directory -$(MAKEFLAGS) all-targets
 endif
 

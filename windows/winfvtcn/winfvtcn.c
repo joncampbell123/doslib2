@@ -15,14 +15,14 @@
  * that provide a console.
  */
 
-#define WINFCON_ENABLE
-#define WINFCON_SELF
+#define WINFVCTN_ENABLE
+#define WINFVCTN_SELF
 
 #ifdef TARGET_WINDOWS
 # include <windows.h>
 # include <windows/apihelp.h>
 # include <windows/w32imphk/compat.h>
-# include <windows/winfcvtn/winfcvtn.h>
+# include <windows/winfvtcn/winfvtcn.h>
 #else
 # error what
 #endif
@@ -576,12 +576,12 @@ void _gdivt_pause() {
 	/* TODO: delay routines appropriate for Windows 3.0, Windows 3.1, Windows NT, etc. */
 }
 
-int WINMAINPROC _winvt_main_con_entry(HINSTANCE hInstance,HINSTANCE hPrevInstance,LPSTR lpCmdLine,int nCmdShow,int (_cdecl *_main_f)(int argc,char**,char**)) {
+int WINMAINPROC _winvt_main_vtcon_entry(HINSTANCE hInstance,HINSTANCE hPrevInstance,LPSTR lpCmdLine,int nCmdShow,int (_cdecl *_main_f)(int argc,char**,char**)) {
 	WNDCLASS wnd;
 	MSG msg;
 
 	_winvt_hInstance = hInstance;
-	snprintf(_winvt_WindowProcClass,sizeof(_winvt_WindowProcClass),"_HW_DOS_WINFCON_%lX",(DWORD)hInstance);
+	snprintf(_winvt_WindowProcClass,sizeof(_winvt_WindowProcClass),"_HW_DOS_WINFVCTN_%lX",(DWORD)hInstance);
 #if TARGET_BITS == 16 || (TARGET_BITS == 32 && defined(TARGET_WINDOWS_WIN386))
 	_winvt_WindowProc_MPI = MakeProcInstance((FARPROC)_winvt_WindowProc,hInstance);
 #endif
@@ -735,7 +735,7 @@ void _winvt_endloop_user_echo() {
 		if (c == 13 || c == 10) _winvt_printf("\n");
 		else if (c == 22) { /* CTRL-V */
 			c = _winvt_getch();
-			_winvt_printf("%c",c)
+			_winvt_printf("%c",c);
 		}
 		else _winvt_printf("%c",c);
 	} while (1);
