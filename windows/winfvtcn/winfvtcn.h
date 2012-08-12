@@ -38,7 +38,7 @@ int _winvt_getch();
 HWND _winvt_hwnd();
 void _gdivt_pause();
 void _winvt_pump_wait();
-void _winvt_putc(char c);
+int _winvt_putc(char c);
 int _winvt_isatty(int fd);
 void _winvt_endloop_user_echo();
 int _winvt_read(int fd,void *buf,int sz);

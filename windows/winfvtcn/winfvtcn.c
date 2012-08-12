@@ -1,6 +1,7 @@
 /* winfcon.c
  *
  * Fake console for Windows applications where a console is not available.
+ * This version emulates DEC VT100 "ANSI" terminal.
  * (C) 2011-2012 Jonathan Campbell.
  * Hackipedia DOS library.
  *
@@ -14,6 +15,12 @@
  * redirect their use into this program. This code is not used for targets
  * that provide a console.
  */
+
+/* TODO: For arrow keys, function keys, etc. generate VT100 keyboard sequences */
+
+/* TODO: Extended color codes described here?
+ *
+ * https://github.com/robertknight/konsole/blob/master/user-doc/README.moreColors */
 
 #define WINFVCTN_ENABLE
 #define WINFVCTN_SELF
@@ -139,6 +146,17 @@ typedef struct _winvt_console_ctx {
 	unsigned char		escape_argv[MAX_ESC_ARG];
 	unsigned char		escape_argc;
 	unsigned char		escape_arg_accum;
+
+	/* scroll region */
+	unsigned char		scroll_top,scroll_bottom; /* inclusive */
+
+	/* NTS: DEC reference sites never said anything about being able to save & restore in levels,
+	 *      so we assume the terminal had only enough memory for one save */
+	unsigned char		saved_cx,saved_cy;
+	_winvt_char		saved_cattr;
+
+	unsigned char		line_wrap:1;
+	unsigned char		_unused1_:7;
 };
 
 HINSTANCE				_winvt_hInstance;
@@ -218,6 +236,27 @@ void _winvt_sigint() {
 void _winvt_sigint_post(struct _winvt_console_ctx FAR *ctx) {
 	/* because doing a longjmp() out of a Window proc is very foolish */
 	ctx->pendingSigInt = 1;
+}
+
+void _vt_erasescreen() {
+	unsigned int i;
+
+	_this_console.cursor_state.f.chr = ' ';
+	for (i=0;i < (80*25);i++) _this_console.console[i] = _this_console.cursor_state;
+}
+
+void _vt_terminal_reset() { /* <ESC>c */
+	_vt_erasescreen();
+	/* clear the console */
+	_this_console.scroll_top = 0;
+	_this_console.scroll_bottom = _this_console.conHeight - 1;
+	_this_console.saved_cattr.raw = 0;
+	_this_console.saved_cattr.f.chr = ' ';
+	_this_console.saved_cx = 0;
+	_this_console.saved_cy = 0;
+	_this_console.line_wrap = 1;
+	_this_console.conX = 0;
+	_this_console.conY = 0;
 }
 
 static DWORD _vt_palette16[24] = {
@@ -569,6 +608,23 @@ void _winvt_update_cursor() {
 			_this_console.conY * _this_console.monoSpaceFontHeight);
 }
 
+void _winvt_redraw_a_line_row(int y,int x1,int x2) {
+	if (x1 >= x2) return;
+
+	if (y >= 0 && y < _this_console.conHeight) {
+		HDC hdc = GetDC(_this_console.hwndMain);
+		HFONT of;
+
+		SetBkMode(hdc,OPAQUE);
+		of = (HFONT)SelectObject(hdc,_this_console.monoSpaceFont);
+		if (_this_console.myCaret) HideCaret(_this_console.hwndMain);
+		_winvt_do_drawline(hdc,y,x1,x2);
+		if (_this_console.myCaret) ShowCaret(_this_console.hwndMain);
+		SelectObject(hdc,of);
+		ReleaseDC(_this_console.hwndMain,hdc);
+	}
+}
+
 void _winvt_redraw_line_row_partial(int x1,int x2) {
 	if (x1 >= x2) return;
 
@@ -590,29 +646,84 @@ void _winvt_redraw_line_row() {
 	_winvt_redraw_line_row_partial(0,_this_console.conWidth);
 }
 
-void _winvt_scrollup() {
-	unsigned int i;
-
-	HDC hdc = GetDC(_this_console.hwndMain);
+void _winvt_redraw_all() {
+	unsigned int y;
+	HFONT of;
+	HDC hdc;
+	
+	hdc = GetDC(_this_console.hwndMain);
 	if (_this_console.myCaret) HideCaret(_this_console.hwndMain);
-	BitBlt(hdc,0,0,_this_console.conWidth * _this_console.monoSpaceFontWidth,
-		_this_console.conHeight * _this_console.monoSpaceFontHeight,hdc,
-		0,_this_console.monoSpaceFontHeight,SRCCOPY);
+	of = (HFONT)SelectObject(hdc,_this_console.monoSpaceFont);
+	for (y=0;y < _this_console.conHeight;y++) _winvt_do_drawline(hdc,y,0,_this_console.conWidth);
+	SelectObject(hdc,of);
+	if (_this_console.myCaret) ShowCaret(_this_console.hwndMain);
+	ReleaseDC(_this_console.hwndMain,hdc);
+}
+
+void clip_cursor() {
+	if (_this_console.conY < _this_console.scroll_top) _this_console.conY = _this_console.scroll_top;
+	else if (_this_console.conY > _this_console.scroll_bottom) _this_console.conY = _this_console.scroll_bottom;
+
+	if (_this_console.conX < 0) _this_console.conX = 0;
+	else if (_this_console.conX >= _this_console.conWidth) _this_console.conX = _this_console.conWidth - 1;
+}
+
+void _winvt_scrolldown() {
+	unsigned int i;
+	HDC hdc;
+
+	assert(_this_console.scroll_bottom >= (_this_console.scroll_top+1));
+
+	hdc = GetDC(_this_console.hwndMain);
+	if (_this_console.myCaret) HideCaret(_this_console.hwndMain);
+	BitBlt(hdc,
+		0,(_this_console.scroll_top + 1) * _this_console.monoSpaceFontHeight,
+		_this_console.conWidth * _this_console.monoSpaceFontWidth,
+		(_this_console.scroll_bottom - _this_console.scroll_top) * _this_console.monoSpaceFontHeight,
+		hdc,0,_this_console.scroll_top * _this_console.monoSpaceFontHeight,SRCCOPY);
 	if (_this_console.myCaret) ShowCaret(_this_console.hwndMain);
 	ReleaseDC(_this_console.hwndMain,hdc);
 
-	memmove(_this_console.console,_this_console.console+_this_console.conWidth,
-		(_this_console.conHeight-1)*_this_console.conWidth*sizeof(_winvt_char));
+	memmove(_this_console.console+(_this_console.conWidth*(_this_console.scroll_top+1)),
+		_this_console.console+(_this_console.conWidth*_this_console.scroll_top),
+		(_this_console.scroll_bottom-_this_console.scroll_top)*_this_console.conWidth*sizeof(_winvt_char));
 
 	_this_console.cursor_state.f.chr = ' ';
 	for (i=0;i < _this_console.conWidth;i++)
-		_this_console.console[((_this_console.conHeight-1)*_this_console.conWidth)+i] =
+		_this_console.console[(_this_console.scroll_top*_this_console.conWidth)+i] =
+			_this_console.cursor_state;
+}
+
+void _winvt_scrollup() {
+	unsigned int i;
+	HDC hdc;
+
+	assert(_this_console.scroll_bottom >= (_this_console.scroll_top+1));
+
+	hdc = GetDC(_this_console.hwndMain);
+	if (_this_console.myCaret) HideCaret(_this_console.hwndMain);
+	BitBlt(hdc,
+		0,_this_console.scroll_top * _this_console.monoSpaceFontHeight,
+		_this_console.conWidth * _this_console.monoSpaceFontWidth,
+		(_this_console.scroll_bottom - _this_console.scroll_top) * _this_console.monoSpaceFontHeight,
+		hdc,0,(_this_console.scroll_top + 1) * _this_console.monoSpaceFontHeight,SRCCOPY);
+	if (_this_console.myCaret) ShowCaret(_this_console.hwndMain);
+	ReleaseDC(_this_console.hwndMain,hdc);
+
+	memmove(_this_console.console+(_this_console.conWidth*_this_console.scroll_top),
+		_this_console.console+(_this_console.conWidth*(_this_console.scroll_top+1)),
+		(_this_console.scroll_bottom-_this_console.scroll_top)*_this_console.conWidth*sizeof(_winvt_char));
+
+	_this_console.cursor_state.f.chr = ' ';
+	for (i=0;i < _this_console.conWidth;i++)
+		_this_console.console[(_this_console.scroll_bottom*_this_console.conWidth)+i] =
 			_this_console.cursor_state;
 }
 
 void _winvt_newline() {
 	_this_console.conX = 0;
-	if ((_this_console.conY+1) == _this_console.conHeight) {
+	if (_this_console.conY >= _this_console.scroll_bottom) {
+		_this_console.conY = _this_console.scroll_bottom;
 		_winvt_redraw_line_row();
 		_winvt_scrollup();
 		_winvt_redraw_line_row();
@@ -671,13 +782,237 @@ void _winvt_on_esc_ls_m() { /* <ESC>[m attribute */
 	}
 }
 
+void _winvt_on_esc_ls_hl(unsigned char set) {
+	unsigned char what = 0;
+
+	if (_this_console.escape_argc > 0)
+		what = _this_console.escape_argv[0];
+
+	switch (what) {
+		case 7:	/* enable/disable line wrap */
+			_this_console.line_wrap = set;
+			break;
+	};
+}
+
+void _winvt_on_esc_ls_H() {
+	while (_this_console.escape_argc < 2)
+		_this_console.escape_argv[_this_console.escape_argc++] = 1;
+
+	_this_console.conY = _this_console.escape_argv[0] - 1;
+	_this_console.conX = _this_console.escape_argv[1] - 1;
+	_winvt_redraw_line_row();
+	clip_cursor();
+}
+
+void _winvt_on_esc_ls_A() {
+	if (_this_console.escape_argc < 1)
+		_this_console.escape_argv[_this_console.escape_argc++] = 1;
+
+	_this_console.conY -= _this_console.escape_argv[0];
+	_winvt_redraw_line_row();
+	clip_cursor();
+}
+
+void _winvt_on_esc_ls_B() {
+	if (_this_console.escape_argc < 1)
+		_this_console.escape_argv[_this_console.escape_argc++] = 1;
+
+	_this_console.conY += _this_console.escape_argv[0];
+	_winvt_redraw_line_row();
+	clip_cursor();
+}
+
+void _winvt_on_esc_ls_C() {
+	if (_this_console.escape_argc < 1)
+		_this_console.escape_argv[_this_console.escape_argc++] = 1;
+
+	_this_console.conX += _this_console.escape_argv[0];
+	_winvt_redraw_line_row();
+	clip_cursor();
+}
+
+void _winvt_on_esc_ls_D() {
+	if (_this_console.escape_argc < 1)
+		_this_console.escape_argv[_this_console.escape_argc++] = 1;
+
+	_this_console.conX -= _this_console.escape_argv[0];
+	_winvt_redraw_line_row();
+	clip_cursor();
+}
+
+void _winvt_on_esc_ls_K() {
+	unsigned int i,m;
+
+	if (_this_console.escape_argc < 1)
+		_this_console.escape_argv[_this_console.escape_argc++] = 0;
+
+	switch (_this_console.escape_argv[0]) {
+		case 0:	_this_console.cursor_state.f.chr = ' ';
+			m = (_this_console.conY+1) * _this_console.conWidth;
+			i = (_this_console.conY * _this_console.conWidth) + _this_console.conX;
+			while (i < m) _this_console.console[i++] = _this_console.cursor_state;
+			_winvt_redraw_all();
+			break;
+		case 1:	_this_console.cursor_state.f.chr = ' ';
+			m = _this_console.conY * _this_console.conWidth;
+			i = (_this_console.conY * _this_console.conWidth) + _this_console.conX;
+			do { _this_console.console[i] = _this_console.cursor_state;
+			} while ((i--) != m);
+			_winvt_redraw_all();
+			break;
+		case 2:	_this_console.cursor_state.f.chr = ' ';
+			m = (_this_console.conY+1) * _this_console.conWidth;
+			i = _this_console.conY * _this_console.conWidth;
+			while (i < m) _this_console.console[i++] = _this_console.cursor_state;
+			_winvt_redraw_all();
+			break;
+	};
+}
+
+void _winvt_on_esc_ls_J() {
+	unsigned int i,m;
+
+	if (_this_console.escape_argc < 1)
+		_this_console.escape_argv[_this_console.escape_argc++] = 0;
+
+	i = (_this_console.conY * _this_console.conWidth) + _this_console.conX;
+	switch (_this_console.escape_argv[0]) {
+		case 0:	m = _this_console.conWidth * _this_console.conHeight;
+			_this_console.cursor_state.f.chr = ' ';
+			while (i < m) _this_console.console[i++] = _this_console.cursor_state;
+			_winvt_redraw_all();
+			break;
+		case 1:	_this_console.cursor_state.f.chr = ' ';
+			do { _this_console.console[i] = _this_console.cursor_state;
+			} while ((i--) != 0);
+			_winvt_redraw_all();
+			break;
+		case 2:
+			_this_console.conX = 0;
+			_this_console.conY = 0;
+			_vt_erasescreen();
+			_winvt_redraw_all();
+			break;
+	};
+}
+
+void _winvt_on_esc_ls_s() { /* save cursor */
+	_this_console.saved_cx = _this_console.conX;
+	_this_console.saved_cy = _this_console.conY;
+}
+
+void _winvt_on_esc_ls_u() { /* restore cursor */
+	_this_console.conX = _this_console.saved_cx;
+	_this_console.conY = _this_console.saved_cy;
+	_winvt_redraw_all();
+	_winvt_update_cursor();
+}
+
+void _winvt_on_esc_7() { /* save cursor & attrs */
+	_this_console.saved_cattr = _this_console.cursor_state;
+	_this_console.saved_cx = _this_console.conX;
+	_this_console.saved_cy = _this_console.conY;
+}
+
+void _winvt_on_esc_8() { /* restore cursor & attr */
+	_this_console.cursor_state = _this_console.saved_cattr;
+	_this_console.conX = _this_console.saved_cx;
+	_this_console.conY = _this_console.saved_cy;
+	_winvt_redraw_all();
+	_winvt_update_cursor();
+}
+
+void _winvt_on_esc_ls_l_c() { /* query device code */
+	const char *s = "\x1B[?62;9;c"; /* <- FIXME: We're mimicking what Linux returns */
+	while (*s) _winvt_kb_insert(&_this_console,*s++);
+}
+
+void _winvt_on_esc_ls_l_n() { /* query device status/cursor/etc. */
+	const char *s;
+	char tmp[48];
+
+	if (_this_console.escape_argc < 1)
+		_this_console.escape_argv[_this_console.escape_argc++] = 0;
+
+	switch (_this_console.escape_argv[0]) {
+		case 5: /* query device status */
+			s = "\x1B[0n"; /* <- NTS: Device OK */
+			while (*s) _winvt_kb_insert(&_this_console,*s++);
+			break;
+		case 6:	/* query cursor position */
+			sprintf(tmp,"\x1B[%d;%dR",_this_console.conY+1,_this_console.conX+1);
+			s = (const char*)tmp;
+			while (*s) _winvt_kb_insert(&_this_console,*s++);
+			break;
+	};
+}
+
+void _winvt_on_esc_ls_r() {
+	if (_this_console.escape_argc < 1)
+		_this_console.escape_argv[_this_console.escape_argc++] = 1;
+	if (_this_console.escape_argc < 2)
+		_this_console.escape_argv[_this_console.escape_argc++] = _this_console.conHeight - 1;
+	if (_this_console.escape_argv[1] <= _this_console.escape_argv[0])
+		_this_console.escape_argv[1] = _this_console.escape_argv[0]+1;
+	if (_this_console.escape_argv[0] == 0)
+		_this_console.escape_argv[0] = 1;
+	if (_this_console.escape_argv[1] >= _this_console.conHeight)
+		_this_console.escape_argv[1] = _this_console.conHeight - 1;
+
+	_winvt_redraw_line_row();
+	_this_console.scroll_top = _this_console.escape_argv[0];
+	_this_console.scroll_bottom = _this_console.escape_argv[1];
+	clip_cursor();
+}
+
+void _winvt_on_esc_D() { /* scroll down one line (FIXME: Does it move the cursor too?) */
+	_winvt_scrolldown();
+	_winvt_redraw_a_line_row(_this_console.scroll_top,0,_this_console.conWidth);
+	_winvt_update_cursor();
+}
+
+void _winvt_on_esc_M() { /* scroll up one line (FIXME: Does it move the cursor too?) */
+	_winvt_scrollup();
+	_winvt_redraw_a_line_row(_this_console.scroll_bottom,0,_this_console.conWidth);
+	_winvt_update_cursor();
+}
+
 void _winvt_on_esc_lsquare(char c) {
 	if (c == 'm')
 		_winvt_on_esc_ls_m();
+	else if (c == 'h')
+		_winvt_on_esc_ls_hl(1);
+	else if (c == 'l')
+		_winvt_on_esc_ls_hl(0);
+	else if (c == 'H' || c == 'f')
+		_winvt_on_esc_ls_H();
+	else if (c == 'A')
+		_winvt_on_esc_ls_A();
+	else if (c == 'B')
+		_winvt_on_esc_ls_B();
+	else if (c == 'C')
+		_winvt_on_esc_ls_C();
+	else if (c == 'D')
+		_winvt_on_esc_ls_D();
+	else if (c == 'K')
+		_winvt_on_esc_ls_K();
+	else if (c == 'J')
+		_winvt_on_esc_ls_J();
+	else if (c == 's')
+		_winvt_on_esc_ls_s();
+	else if (c == 'u')
+		_winvt_on_esc_ls_u();
+	else if (c == 'r')
+		_winvt_on_esc_ls_r();
+	else if (c == 'c')
+		_winvt_on_esc_ls_l_c();
+	else if (c == 'n')
+		_winvt_on_esc_ls_l_n();
 }
 
 /* write to the console. does NOT redraw the screen unless we get a newline or we need to scroll up */
-void _winvt_putc(char c) {
+int _winvt_putc(char c) {
 	if (c == 10) {
 		_winvt_newline();
 	}
@@ -698,6 +1033,19 @@ void _winvt_putc(char c) {
 		}
 		else {
 			_this_console.escape_mode = 0;
+
+			if (c == 'c') {
+				_vt_terminal_reset();
+				_winvt_redraw_all();
+			}
+			else if (c == '7')
+				_winvt_on_esc_7();
+			else if (c == '8')
+				_winvt_on_esc_8();
+			else if (c == 'D')
+				_winvt_on_esc_D();
+			else if (c == 'M')
+				_winvt_on_esc_M();
 		}
 	}
 	else if (_this_console.escape_mode == ESC_LSQUARE) {
@@ -715,6 +1063,15 @@ void _winvt_putc(char c) {
 			if (c == ';') {
 				/* more args to come, keep scanning */
 			}
+			else if (c == 'R') {
+				char tmp[32],*s = tmp;
+
+				/* <ESC>[..R is supposed to be query cursor response. print it on the console if we get it back.
+				 * NTS we cannot recursively call _winvt_printf() because this function is called by _winvt_printf() */
+				_this_console.escape_mode = ESC_NONE;
+				sprintf(tmp,"^[[%d;%dR",_this_console.escape_argv[0],_this_console.escape_argv[1]);
+				while (*s) _winvt_putc(*s++);
+			}
 			else {
 				/* handle the vtcode */
 				_winvt_on_esc_lsquare(c);
@@ -728,13 +1085,23 @@ void _winvt_putc(char c) {
 			_this_console.console[(_this_console.conY*_this_console.conWidth)+_this_console.conX] =
 				_this_console.cursor_state;
 		}
-		if (++_this_console.conX == _this_console.conWidth)
-			_winvt_newline();
+		if (_this_console.line_wrap) {
+			if (++_this_console.conX == _this_console.conWidth)
+				_winvt_newline();
+		}
+		else {
+			if ((_this_console.conX+1) < _this_console.conWidth)
+				_this_console.conX++;
+			else
+				return 1;
+		}
 	}
+
+	return 0;
 }
 
 size_t _winvt_printf(const char *fmt,...) {
-	int fX = _this_console.conX;
+	int fX = _this_console.conX,all=0;
 	va_list va;
 	char *t;
 
@@ -746,9 +1113,11 @@ size_t _winvt_printf(const char *fmt,...) {
 	if (*t != 0) {
 		while (*t != 0) {
 			if (*t == 13 || *t == 10) fX = 0;
-			_winvt_putc(*t++);
+			if (_winvt_putc(*t++)) { fX = 0; all = 1; }
 		}
-		if (fX <= _this_console.conX) _winvt_redraw_line_row_partial(fX,_this_console.conX);
+		if (fX <= _this_console.conX) {
+			_winvt_redraw_line_row_partial(fX,all ? _this_console.conWidth : _this_console.conX);
+		}
 		_winvt_update_cursor();
 	}
 
@@ -775,20 +1144,11 @@ int WINMAINPROC _winvt_main_vtcon_entry(HINSTANCE hInstance,HINSTANCE hPrevInsta
 	_winvt_WindowProc_MPI = MakeProcInstance((FARPROC)_winvt_WindowProc,hInstance);
 #endif
 
-	/* clear the console */
 	memset(&_this_console,0,sizeof(_this_console));
-	{
-		unsigned int i;
-		for (i=0;i < (80*25);i++) {
-			_this_console.console[i].raw = 0;
-			_this_console.console[i].f.chr = ' ';
-		}
-	}
-	_this_console._winvt_kb_i = _this_console._winvt_kb_o = 0;
 	_this_console.conHeight = 25;
 	_this_console.conWidth = 80;
-	_this_console.conX = 0;
-	_this_console.conY = 0;
+	_this_console._winvt_kb_i = _this_console._winvt_kb_o = 0;
+	_vt_terminal_reset();
 
 #if TARGET_BITS == 16
 	/* Windows real mode: Lock our data segment. Real-mode builds typically set CODE and DATA segments
@@ -937,7 +1297,7 @@ void _winvt_endloop_user_echo() {
 
 	do {
 		c = _winvt_getch();
-		if (c == 27) break;
+		if (c == 27 && !_winvt_kbhit()) break;
 		if (c == 13 || c == 10) _winvt_printf("\n");
 		else if (c == 22) { /* CTRL-V */
 			c = _winvt_getch();

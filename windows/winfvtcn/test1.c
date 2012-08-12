@@ -22,6 +22,8 @@
 #endif
 
 int main() {
+	printf("You shouldn't see this text\n");
+	printf(VT_ESC "c");
 	printf("Normal text out\n");
 	printf(VT_ESC "[1m" "Bright" VT_ESC "[0m" "\n");
 	printf(VT_ESC "[2m" "Dim" VT_ESC "[0m" "\n");
