@@ -1,6 +1,6 @@
 -include ../config.mak
 
-SUBDIRS = w32imphk winfcon asmhello asmhewin
+SUBDIRS = w32imphk winfcon winfvtcn asmhello asmhewin
 ACLOCAL_AMFLAGS = 
 
 library_includedir = $(includedir)/doslib2/test

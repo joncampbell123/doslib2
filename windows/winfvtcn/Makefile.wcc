@@ -1,0 +1,86 @@
+# This is a separate makefile because GNU automake interferes with GNU make conditionals
+ifdef target_subdir
+
+all-targets-abs-dirs: $(abs_exe_dir) $(abs_lib_dir) $(abs_obj_dir)
+
+lib_windows_winfcvtn=
+ifneq ($(TARGET_WINDOWS),)
+ ifneq ($(TARGET_WINDOWS_GUI),)
+  lib_windows_winfcvtn=$(abs_lib_dir)/winfcvtn$(lib_suffix)
+ endif
+endif
+
+ifneq ($(lib_windows_winfcvtn),)
+$(lib_windows_winfcvtn): $(abs_obj_dir)/winfcvtn$(obj_suffix)
+ifeq ($(target_subdir),linux/host)
+	$(AR) r $@ $^
+else
+	$(WLIB) -q -b -c $@ $(foreach x,$^,-+$(x))
+endif
+
+$(abs_exe_dir)/test1$(exe_suffix): $(obj_win32s_compat) $(abs_obj_dir)/test1$(obj_suffix) $(lib_windows_winfcon) $(lib_windows_winfcon_dependencies) $(lib_hw_cpu_libcpu) $(lib_hw_cpu_libcpu_dependencies)
+ifeq ($(target_subdir),linux/host)
+	$(CC) $(LDFLAGS) -o $@ $^
+else
+	@echo option quiet system $(WLINK_SYSTEM) $(WLINKFLAGS) $(WLINK_SEGMENTS) $(foreach x,$(filter %$(obj_suffix),$^),file "$(x)") $(lib_windows_winfcon_wlink) $(lib_hw_cpu_libcpu_wlink) option map=$(abs_obj_dir)/test1.map name $@ >$(abs_obj_dir)/test1.cmd
+	$(WLINK) @$(abs_obj_dir)/test1.cmd
+	#@rm -f $(abs_obj_dir)/test1.cmd
+ ifeq ($(TARGET_WINDOWS_WIN386),1)
+	@$(WIN386_EXE_TO_REX_IF_REX) $@
+	@$(WBIND) $@ -q -n
+ endif
+ ifneq ($(WIN16_NE_SETVER),)
+	$(WIN16_NE_SETVER) $@
+ endif
+endif
+
+ifeq ($(TARGET_GUI_CONSOLE),1)
+$(abs_exe_dir)/test1c$(exe_suffix): $(obj_win32s_compat) $(abs_obj_dir)/test1c$(obj_suffix) $(lib_hw_cpu_libcpu) $(lib_hw_cpu_libcpu_dependencies)
+ ifeq ($(target_subdir),linux/host)
+	$(CC) $(LDFLAGS_CONSOLE) -o $@ $^
+ else
+	@echo option quiet system $(WLINK_SYSTEM_CONSOLE) $(WLINKFLAGS_CONSOLE) $(WLINK_SEGMENTS_CONSOLE) $(foreach x,$(filter %$(obj_suffix),$^),file "$(x)") $(foreach x,$(filter %$(lib_suffix),$^),library "$(x)") $(lib_hw_cpu_libcpu_wlink) option map=$(abs_obj_dir)/test1c.map name $@ >$(abs_obj_dir)/test1c.cmd
+	$(WLINK) @$(abs_obj_dir)/test1c.cmd
+	#@rm -f $(abs_obj_dir)/test1c.cmd
+  ifeq ($(TARGET_WINDOWS_WIN386),1)
+	@$(WIN386_EXE_TO_REX_IF_REX) $@
+	@$(WBIND) $@ -q -n
+  endif
+  ifneq ($(WIN16_NE_SETVER),)
+	$(WIN16_NE_SETVER) $@
+  endif
+ endif
+
+$(abs_obj_dir)/test1c$(obj_suffix): test1c.c $(abs_obj_dir)/test1$(obj_suffix)
+ ifeq ($(target_subdir),linux/host)
+	$(CC) $(CFLAGS_CONSOLE) -I.. -I../.. -c -o $@ $(filter %.c,$^)
+ else
+	$(WCC) $(WCCFLAGS_CONSOLE) -fo=$(abs_obj_dir)/.obj -i=.. -i=../.. $(filter %.c,$^)
+ endif
+endif
+
+$(abs_obj_dir)/test1$(obj_suffix): test1.c
+ifeq ($(target_subdir),linux/host)
+	$(CC) $(CFLAGS) -I.. -I../.. -c -o $@ $^
+else
+	$(WCC) $(WCCFLAGS) -fo=$(abs_obj_dir)/.obj -i=.. -i=../.. $^
+endif
+
+all_programs=$(abs_exe_dir)/test1$(exe_suffix)
+ifeq ($(TARGET_GUI_CONSOLE),1)
+all_programs+=$(abs_exe_dir)/test1c$(exe_suffix)
+endif
+
+# we need: the windows winfcon library
+include $(abs_top_srcdir)/windows/winfcon/Makefile.dpl
+
+all-programs: $(all_programs) $(lib_windows_winfcvtn)
+
+all-targets: all-targets-abs-dirs all-programs
+	@true
+
+clean-targets:
+	@rm -Rfv $(abs_exe_dir) $(abs_lib_dir) $(abs_obj_dir)
+
+endif
+

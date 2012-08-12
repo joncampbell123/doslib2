@@ -7,7 +7,7 @@ BUILD_win16b=1
 BUILD_win386=1
 BUILD_win32s=1
 BUILD_win32=1
-#BUILD_linux_host=1
+BUILD_linux_host=1
 
 -include ../../config.mak
 -include Makefile.wcc
