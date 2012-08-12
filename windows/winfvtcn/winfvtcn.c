@@ -36,6 +36,7 @@
 #include <stdlib.h>
 #include <stdarg.h>
 #include <unistd.h>
+#include <ctype.h>
 #include <stdio.h>
 #include <conio.h>
 #include <fcntl.h>
@@ -51,6 +52,42 @@
 #define KBSIZE		256
 
 static char		_winvt_WindowProcClass[128];
+
+#pragma pack(push,1)
+typedef struct _winvt_char_s {
+	uint16_t	chr:8;		/* 0-7 */
+
+	uint16_t	bold:1;		/* [1m */ /* 8-15 */
+	uint16_t	dim:1;		/* [2m */
+	uint16_t	underscore:1;	/* [4m */
+	uint16_t	blink:1;	/* [5m */
+	uint16_t	reverse:1;	/* [7m */
+	uint16_t	hidden:1;	/* [8m */
+	uint16_t	_unused1_:1;
+	uint16_t	_unused2_:1;
+
+	uint16_t	foreground_set:1;	/* 16-19 */
+	uint16_t	foreground:3;
+
+	uint16_t	background_set:1;	/* 20-23 */
+	uint16_t	background:3;
+
+	uint16_t	_unused3_:8;		/* 24-31 */
+} _winvt_char_s;
+
+typedef union _winvt_char {
+	uint32_t		raw;
+	_winvt_char_s		f;
+} _winvt_char;
+#pragma pack(pop)
+
+#define MAX_ESC_ARG		10
+
+enum {
+	ESC_NONE=0,
+	ESC_ALONE,
+	ESC_LSQUARE
+};
 
 /* If we stick all these variables in the data segment and reference
  * them directly, then we'll work from a single instance, but run into
@@ -77,29 +114,36 @@ static char		_winvt_WindowProcClass[128];
  * world. The Win32 world is free from this hell and so we only
  * have to maintain one context structure. */
 typedef struct _winvt_console_ctx {
-	char		console[80*25];
-	char		_winvt_kb[KBSIZE];
-	int		conHeight,conWidth;
-	int		_winvt_kb_i,_winvt_kb_o;
-	int		monoSpaceFontHeight;
+	_winvt_char		console[80*25];
+	char			_winvt_kb[KBSIZE];
+	int			conHeight,conWidth;
+	int			_winvt_kb_i,_winvt_kb_o;
+	int			monoSpaceFontHeight;
 #if TARGET_BITS == 32 && defined(TARGET_WINDOWS_WIN386)
-	short int	monoSpaceFontWidth;
+	short int		monoSpaceFontWidth;
 #else
-	int		monoSpaceFontWidth;
+	int			monoSpaceFontWidth;
 #endif
-	HFONT		monoSpaceFont;
-	int		pendingSigInt;
-	int		userReqClose;
-	int		allowClose;
-	int		conX,conY;
-	jmp_buf		exit_jmp;
-	HWND		hwndMain;
-	int		myCaret;
+	HFONT			monoSpaceFont;
+	HFONT			monoSpaceFontUnderline;
+	int			pendingSigInt;
+	int			userReqClose;
+	int			allowClose;
+	int			conX,conY;
+	jmp_buf			exit_jmp;
+	HWND			hwndMain;
+	int			myCaret;
+	_winvt_char		cursor_state;
+	unsigned char		escape_mode;
+	unsigned char		escape_cmd;
+	unsigned char		escape_argv[MAX_ESC_ARG];
+	unsigned char		escape_argc;
+	unsigned char		escape_arg_accum;
 };
 
-HINSTANCE			_winvt_hInstance;
+HINSTANCE				_winvt_hInstance;
 static struct _winvt_console_ctx	_this_console;
-static char			temprintf[1024];
+static char				temprintf[1024];
 
 #if TARGET_BITS == 32 && defined(TARGET_WINDOWS_WIN386)
 # define USER_GWW_CTX			0
@@ -174,6 +218,80 @@ void _winvt_sigint() {
 void _winvt_sigint_post(struct _winvt_console_ctx FAR *ctx) {
 	/* because doing a longjmp() out of a Window proc is very foolish */
 	ctx->pendingSigInt = 1;
+}
+
+static DWORD _vt_palette16[24] = {
+	/* normal */
+	RGB(0  ,0  ,0  ),
+	RGB(170,0  ,0  ),
+	RGB(0  ,170,0  ),
+	RGB(170,170,0  ),
+	RGB(0  ,0  ,170),
+	RGB(170,0  ,170),
+	RGB(170,170,0  ),
+	RGB(192,192,192),
+	/* bold */
+	RGB(0  ,0  ,0  ),
+	RGB(255,0  ,0  ),
+	RGB(0  ,255,0  ),
+	RGB(255,255,0  ),
+	RGB(0  ,0  ,255),
+	RGB(255,0  ,255),
+	RGB(255,255,0  ),
+	RGB(255,255,255),
+	/* dim */
+	RGB(0  ,0  ,0  ),
+	RGB(128,0  ,0  ),
+	RGB(0  ,128,0  ),
+	RGB(128,128,0  ),
+	RGB(0  ,0  ,128),
+	RGB(128,0  ,128),
+	RGB(128,128,0  ),
+	RGB(128,128,128)
+};
+
+static DWORD _vt_bgcolor(_winvt_char FAR *c) {
+	if (c->f.background_set)
+		return _vt_palette16[c->f.background/* + (c->f.bold ? 8 : (c->f.dim ? 16 : 0))*/];
+
+	return RGB(0,0,0);
+}
+
+static DWORD _vt_fgcolor(_winvt_char FAR *c) {
+	if (c->f.foreground_set)
+		return _vt_palette16[c->f.foreground + (c->f.bold ? 8 : (c->f.dim ? 16 : 0))];
+	else if (c->f.bold)
+		return RGB(255,255,255);
+	else if (c->f.dim)
+		return RGB(128,128,128);
+
+	return RGB(192,192,192);
+}
+
+void _winvt_do_drawline(HDC hdc,unsigned int y,unsigned int x1,unsigned int x2) {
+	_winvt_char FAR *srow;
+	_winvt_char cur;
+	unsigned int x,i;
+	char tmp[80];
+
+	for (x=x1;x < x2;) {
+		srow = _this_console.console + (_this_console.conWidth * y) + x;
+		cur = *srow++;
+		tmp[0] = cur.f.chr;
+		i = 1;
+
+		while ((x+i) < x2 && (srow->raw & 0xFFFF00UL) == (cur.raw & 0xFFFF00UL)) {
+			tmp[i++] = srow->f.chr;
+			srow++;
+		}
+
+		SelectObject(hdc,cur.f.underscore ? _this_console.monoSpaceFontUnderline : _this_console.monoSpaceFont);
+		SetBkColor(hdc,cur.f.reverse ? _vt_fgcolor(&cur) : _vt_bgcolor(&cur));
+		SetTextColor(hdc,(cur.f.reverse || cur.f.hidden) ? _vt_bgcolor(&cur) : _vt_fgcolor(&cur));
+		TextOut(hdc,x * _this_console.monoSpaceFontWidth,y * _this_console.monoSpaceFontHeight,tmp,i);
+		x += i;
+		assert(x <= x2);
+	}
 }
 
 /* WARNING: To avoid crashiness in the Win16 environment:
@@ -303,7 +421,7 @@ WindowProcType_NoLoadDS _export _winvt_WindowProc(HWND hwnd,UINT message,WPARAM 
 			HPEN oldPen,newPen;
 
 			newPen = (HPEN)GetStockObject(NULL_PEN);
-			newBrush = (HBRUSH)GetStockObject(WHITE_BRUSH);
+			newBrush = (HBRUSH)GetStockObject(BLACK_BRUSH);
 
 			oldPen = SelectObject((HDC)wparam,newPen);
 			oldBrush = SelectObject((HDC)wparam,newBrush);
@@ -327,14 +445,8 @@ WindowProcType_NoLoadDS _export _winvt_WindowProc(HWND hwnd,UINT message,WPARAM 
 
 			if (BeginPaint(hwnd,&ps) != NULL) {
 				SetBkMode(ps.hdc,OPAQUE);
-				SetTextColor(ps.hdc,RGB(0,0,0));
-				SetBkColor(ps.hdc,RGB(255,255,255));
 				of = (HFONT)SelectObject(ps.hdc,_ctx_console->monoSpaceFont);
-				for (y=0;y < _ctx_console->conHeight;y++) {
-					TextOut(ps.hdc,0,y * _ctx_console->monoSpaceFontHeight,
-						_ctx_console->console + (_ctx_console->conWidth * y),
-						_ctx_console->conWidth);
-				}
+				for (y=0;y < _ctx_console->conHeight;y++) _winvt_do_drawline(ps.hdc,y,0,_ctx_console->conWidth);
 				SelectObject(ps.hdc,of);
 				EndPaint(hwnd,&ps);
 			}
@@ -457,24 +569,6 @@ void _winvt_update_cursor() {
 			_this_console.conY * _this_console.monoSpaceFontHeight);
 }
 
-void _winvt_redraw_line_row() {
-	if (_this_console.conY >= 0 && _this_console.conY < _this_console.conHeight) {
-		HDC hdc = GetDC(_this_console.hwndMain);
-		HFONT of;
-
-		SetBkMode(hdc,OPAQUE);
-		SetBkColor(hdc,RGB(255,255,255));
-		SetTextColor(hdc,RGB(0,0,0));
-		of = (HFONT)SelectObject(hdc,_this_console.monoSpaceFont);
-		if (_this_console.myCaret) HideCaret(_this_console.hwndMain);
-		TextOut(hdc,0,_this_console.conY * _this_console.monoSpaceFontHeight,
-			_this_console.console + (_this_console.conWidth * _this_console.conY),_this_console.conWidth);
-		if (_this_console.myCaret) ShowCaret(_this_console.hwndMain);
-		SelectObject(hdc,of);
-		ReleaseDC(_this_console.hwndMain,hdc);
-	}
-}
-
 void _winvt_redraw_line_row_partial(int x1,int x2) {
 	if (x1 >= x2) return;
 
@@ -483,19 +577,22 @@ void _winvt_redraw_line_row_partial(int x1,int x2) {
 		HFONT of;
 
 		SetBkMode(hdc,OPAQUE);
-		SetBkColor(hdc,RGB(255,255,255));
-		SetTextColor(hdc,RGB(0,0,0));
 		of = (HFONT)SelectObject(hdc,_this_console.monoSpaceFont);
 		if (_this_console.myCaret) HideCaret(_this_console.hwndMain);
-		TextOut(hdc,x1 * _this_console.monoSpaceFontWidth,_this_console.conY * _this_console.monoSpaceFontHeight,
-			_this_console.console + (_this_console.conWidth * _this_console.conY) + x1,x2 - x1);
+		_winvt_do_drawline(hdc,_this_console.conY,x1,x2);
 		if (_this_console.myCaret) ShowCaret(_this_console.hwndMain);
 		SelectObject(hdc,of);
 		ReleaseDC(_this_console.hwndMain,hdc);
 	}
 }
 
+void _winvt_redraw_line_row() {
+	_winvt_redraw_line_row_partial(0,_this_console.conWidth);
+}
+
 void _winvt_scrollup() {
+	unsigned int i;
+
 	HDC hdc = GetDC(_this_console.hwndMain);
 	if (_this_console.myCaret) HideCaret(_this_console.hwndMain);
 	BitBlt(hdc,0,0,_this_console.conWidth * _this_console.monoSpaceFontWidth,
@@ -505,9 +602,12 @@ void _winvt_scrollup() {
 	ReleaseDC(_this_console.hwndMain,hdc);
 
 	memmove(_this_console.console,_this_console.console+_this_console.conWidth,
-		(_this_console.conHeight-1)*_this_console.conWidth);
-	memset(_this_console.console+((_this_console.conHeight-1)*_this_console.conWidth),
-		' ',_this_console.conWidth);
+		(_this_console.conHeight-1)*_this_console.conWidth*sizeof(_winvt_char));
+
+	_this_console.cursor_state.f.chr = ' ';
+	for (i=0;i < _this_console.conWidth;i++)
+		_this_console.console[((_this_console.conHeight-1)*_this_console.conWidth)+i] =
+			_this_console.cursor_state;
 }
 
 void _winvt_newline() {
@@ -525,6 +625,57 @@ void _winvt_newline() {
 	}
 }
 
+void _winvt_on_esc_ls_m() { /* <ESC>[m attribute */
+	unsigned int i;
+	unsigned char c;
+
+	if (_this_console.escape_argc == 0) {
+		_this_console.escape_argv[0] = 0;
+		_this_console.escape_argc = 1;
+	}
+
+	for (i=0;i < _this_console.escape_argc;i++) {
+		c = _this_console.escape_argv[i];
+
+		switch (c) {
+			case 0: /* reset attr */
+				_this_console.cursor_state.raw = 0;
+				break;
+			case 1:
+				_this_console.cursor_state.f.bold = 1;
+				break;
+			case 2:
+				_this_console.cursor_state.f.dim = 1;
+				break;
+			case 4:
+				_this_console.cursor_state.f.underscore = 1;
+				break;
+			case 5:
+				_this_console.cursor_state.f.blink = 1;
+				break;
+			case 7:
+				_this_console.cursor_state.f.reverse = 1;
+				break;
+			case 8:
+				_this_console.cursor_state.f.hidden = 1;
+				break;
+			case 30: case 31: case 32: case 33: case 34: case 35: case 36: case 37:
+				_this_console.cursor_state.f.foreground_set = 1;
+				_this_console.cursor_state.f.foreground = c-30;
+				break;
+			case 40: case 41: case 42: case 43: case 44: case 45: case 46: case 47:
+				_this_console.cursor_state.f.background_set = 1;
+				_this_console.cursor_state.f.background = c-40;
+				break;
+		};
+	}
+}
+
+void _winvt_on_esc_lsquare(char c) {
+	if (c == 'm')
+		_winvt_on_esc_ls_m();
+}
+
 /* write to the console. does NOT redraw the screen unless we get a newline or we need to scroll up */
 void _winvt_putc(char c) {
 	if (c == 10) {
@@ -536,9 +687,47 @@ void _winvt_putc(char c) {
 		_winvt_update_cursor();
 		_gdivt_pause();
 	}
+	else if (c == 27) {
+		_this_console.escape_mode = ESC_ALONE;
+	}
+	else if (_this_console.escape_mode == ESC_ALONE) {
+		if (c == '[') {
+			_this_console.escape_mode = ESC_LSQUARE;
+			_this_console.escape_arg_accum = 0;
+			_this_console.escape_argc = 0;
+		}
+		else {
+			_this_console.escape_mode = 0;
+		}
+	}
+	else if (_this_console.escape_mode == ESC_LSQUARE) {
+		if (isdigit(c)) {
+			_this_console.escape_arg_accum = (_this_console.escape_arg_accum * 10) + (c - '0');
+		}
+		else {
+			if (_this_console.escape_argc < MAX_ESC_ARG) {
+				_this_console.escape_argv[_this_console.escape_argc++] =
+					_this_console.escape_arg_accum;
+			}
+
+			_this_console.escape_arg_accum = 0;
+
+			if (c == ';') {
+				/* more args to come, keep scanning */
+			}
+			else {
+				/* handle the vtcode */
+				_winvt_on_esc_lsquare(c);
+				_this_console.escape_mode = ESC_NONE;
+			}
+		}
+	}
 	else {
-		if (_this_console.conX < _this_console.conWidth)
-			_this_console.console[(_this_console.conY*_this_console.conWidth)+_this_console.conX] = c;
+		if (_this_console.conX < _this_console.conWidth) {
+			_this_console.cursor_state.f.chr = (unsigned char)c;
+			_this_console.console[(_this_console.conY*_this_console.conWidth)+_this_console.conX] =
+				_this_console.cursor_state;
+		}
 		if (++_this_console.conX == _this_console.conWidth)
 			_winvt_newline();
 	}
@@ -588,7 +777,13 @@ int WINMAINPROC _winvt_main_vtcon_entry(HINSTANCE hInstance,HINSTANCE hPrevInsta
 
 	/* clear the console */
 	memset(&_this_console,0,sizeof(_this_console));
-	memset(_this_console.console,' ',sizeof(_this_console.console));
+	{
+		unsigned int i;
+		for (i=0;i < (80*25);i++) {
+			_this_console.console[i].raw = 0;
+			_this_console.console[i].f.chr = ' ';
+		}
+	}
 	_this_console._winvt_kb_i = _this_console._winvt_kb_o = 0;
 	_this_console.conHeight = 25;
 	_this_console.conWidth = 80;
@@ -682,6 +877,14 @@ int WINMAINPROC _winvt_main_vtcon_entry(HINSTANCE hInstance,HINSTANCE hPrevInsta
 		}
 	}
 
+	{
+		_this_console.monoSpaceFontUnderline = CreateFont(-12,0,0,0,FW_NORMAL,FALSE,TRUE,FALSE,DEFAULT_CHARSET,OUT_DEFAULT_PRECIS,CLIP_DEFAULT_PRECIS,DEFAULT_QUALITY,FIXED_PITCH | FF_DONTCARE,"Terminal");
+		if (!_this_console.monoSpaceFontUnderline) {
+			MessageBox(NULL,"Unable to create Font (underline)","Oops!",MB_OK);
+			return 1;
+		}
+	}
+
 	ShowWindow(_this_console.hwndMain,nCmdShow);
 	UpdateWindow(_this_console.hwndMain);
 	SetWindowPos(_this_console.hwndMain,HWND_TOP,0,0,
@@ -714,6 +917,9 @@ int WINMAINPROC _winvt_main_vtcon_entry(HINSTANCE hInstance,HINSTANCE hPrevInsta
 
 	DeleteObject(_this_console.monoSpaceFont);
 	_this_console.monoSpaceFont = NULL;
+
+	DeleteObject(_this_console.monoSpaceFontUnderline);
+	_this_console.monoSpaceFontUnderline = NULL;
 
 #if TARGET_BITS == 16
 	/* Real mode: undo our work above */

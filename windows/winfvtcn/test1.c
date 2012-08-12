@@ -28,8 +28,9 @@ int main() {
 	printf(VT_ESC "[4m" "Underscore" VT_ESC "[0m" "\n");
 	printf(VT_ESC "[5m" "Blink" VT_ESC "[0m" "\n");
 	printf(VT_ESC "[7m" "Reverse" VT_ESC "[0m" "\n");
-	printf(VT_ESC "[31m" "Red FG" VT_ESC "[0m" "\n");
-	printf(VT_ESC "[41m" "Red BG" VT_ESC "[0m" "\n");
+	printf(VT_ESC "[8m" "Hidden" VT_ESC "[0m" "\n");
+	printf(VT_ESC "[31m" "Red FG " VT_ESC "[1m" "Bright" VT_ESC "[0m" "\n");
+	printf(VT_ESC "[41m" "Red BG " VT_ESC "[1m" "Bright" VT_ESC "[0m" "\n");
 
 #ifdef WIN_STDOUT_CONSOLE
 	_winvt_endloop_user_echo();
