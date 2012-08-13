@@ -34,6 +34,12 @@ int main() {
 	printf(VT_ESC "[31m" "Red FG " VT_ESC "[1m" "Bright" VT_ESC "[0m" "\n");
 	printf(VT_ESC "[41m" "Red BG " VT_ESC "[1m" "Bright" VT_ESC "[0m" "\n");
 
+	/* our emulation even includes the double wide and double high modes */
+	printf(VT_ESC "#6" "Double wide text\n");
+	printf(VT_ESC "#3" "Double high text\n");
+	printf(VT_ESC "#4" "Double high text\n");
+	printf(VT_ESC "#5" "Normal text\n");
+
 #ifdef WIN_STDOUT_CONSOLE
 	_winvt_endloop_user_echo();
 #endif

@@ -16,10 +16,11 @@
  * that provide a console.
  */
 
+/* TODO: New double wide/high mode codec while distracted, clean up later to catch leaks */
+
 /* TODO: For arrow keys, function keys, etc. generate VT100 keyboard sequences */
 
-/* TODO: Extended color codes described here?
- *
+/* TODO: Extended color codes described by KDE doc:
  * https://github.com/robertknight/konsole/blob/master/user-doc/README.moreColors */
 
 #define WINFVCTN_ENABLE
@@ -93,6 +94,7 @@ typedef union _winvt_char {
 enum {
 	ESC_NONE=0,
 	ESC_ALONE,
+	ESC_POUND,
 	ESC_LSQUARE
 };
 
@@ -139,13 +141,13 @@ typedef struct _winvt_console_ctx {
 	int			conX,conY;
 	jmp_buf			exit_jmp;
 	HWND			hwndMain;
-	int			myCaret;
 	_winvt_char		cursor_state;
 	unsigned char		escape_mode;
 	unsigned char		escape_cmd;
 	unsigned char		escape_argv[MAX_ESC_ARG];
 	unsigned char		escape_argc;
 	unsigned char		escape_arg_accum;
+	unsigned char		escape_arg_digits;
 
 	/* scroll region */
 	unsigned char		scroll_top,scroll_bottom; /* inclusive */
@@ -156,8 +158,22 @@ typedef struct _winvt_console_ctx {
 	_winvt_char		saved_cattr;
 
 	unsigned char		line_wrap:1;
-	unsigned char		_unused1_:7;
+	unsigned char		scroll_mode:1;		/* <ESC>[?4h (set) or <ESC>[?4l (reset) */
+	unsigned char		myCaret:1;
+	unsigned char		myCaretDoubleWide:1;
+	unsigned char		_unused1_:4;
+
+	/* compatible DC and bitmap used for double-wide and double-high modes */
+	HBITMAP			tmpBMP,tmpBMPold;
+	HDC			tmpDC;
+
+	/* row flags for double-width and double-height */
+	unsigned char		rowflag[25];
 };
+
+#define ROWFLAG_DOUBLEWIDE		0x01
+#define ROWFLAG_DOUBLEHIGH		0x02
+#define ROWFLAG_DOUBLEHIGH_BOTTOMHALF	0x04
 
 HINSTANCE				_winvt_hInstance;
 static struct _winvt_console_ctx	_this_console;
@@ -198,6 +214,41 @@ void far *win386_help_MapAliasToFlat(DWORD farptr) {
 	return MK_FP(farptr>>16,farptr&0xFFFF);
 }
 #endif
+
+int _winvt_init_tmp(struct _winvt_console_ctx FAR *c) {
+	HDC hdc;
+
+	if (c->tmpBMP == NULL) {
+		hdc = GetDC(c->hwndMain);
+		if (hdc == NULL) return -1;
+		c->tmpBMP = CreateCompatibleBitmap(hdc,c->monoSpaceFontWidth*c->conWidth,c->monoSpaceFontHeight);
+		ReleaseDC(c->hwndMain,hdc);
+		if (c->tmpBMP == NULL) return -1;
+	}
+	if (c->tmpDC == NULL) {
+		hdc = GetDC(c->hwndMain);
+		if (hdc == NULL) return -1;
+		c->tmpDC = CreateCompatibleDC(hdc);
+		ReleaseDC(c->hwndMain,hdc);
+		if (c->tmpDC == NULL) return -1;
+		c->tmpBMPold = (HBITMAP)SelectObject(c->tmpDC,c->tmpBMP);
+		SetBkMode(c->tmpDC,OPAQUE);
+	}
+
+	return 0;
+}
+
+void _winvt_free_tmp(struct _winvt_console_ctx FAR *c) {
+	if (c->tmpDC) {
+		SelectObject(c->tmpDC,c->tmpBMPold);
+		DeleteDC(c->tmpDC);
+		c->tmpDC = NULL;
+	}
+	if (c->tmpBMP) {
+		DeleteObject(c->tmpBMP);
+		c->tmpBMP = NULL;
+	}
+}
 
 HWND _winvt_hwnd() {
 	return _this_console.hwndMain;
@@ -307,30 +358,92 @@ static DWORD _vt_fgcolor(_winvt_char FAR *c) {
 	return RGB(192,192,192);
 }
 
-void _winvt_do_drawline(HDC hdc,unsigned int y,unsigned int x1,unsigned int x2) {
+void _winvt_free_caret(struct _winvt_console_ctx FAR *c) {
+	if (c->myCaret) {
+		HideCaret(c->hwndMain);
+		DestroyCaret();
+		c->myCaret = 0;
+	}
+}
+
+void _winvt_setup_caret(struct _winvt_console_ctx FAR *c) {
+	if (!c->myCaret) {
+		c->myCaretDoubleWide = (c->rowflag[c->conY] & ROWFLAG_DOUBLEWIDE) ? 1 : 0;
+		if (c->myCaretDoubleWide)
+			CreateCaret(c->hwndMain,NULL,c->monoSpaceFontWidth * 2,c->monoSpaceFontHeight);
+		else
+			CreateCaret(c->hwndMain,NULL,c->monoSpaceFontWidth,c->monoSpaceFontHeight);
+
+		SetCaretPos(c->conX * c->monoSpaceFontWidth * (c->myCaretDoubleWide ? 2 : 1),
+			c->conY * c->monoSpaceFontHeight);
+		ShowCaret(c->hwndMain);
+		c->myCaret = 1;
+	}
+}
+
+void _winvt_do_drawline(struct _winvt_console_ctx FAR *ctx,HDC hdc,unsigned int y,unsigned int x1,unsigned int x2) {
 	_winvt_char FAR *srow;
 	_winvt_char cur;
 	unsigned int x,i;
 	char tmp[80];
 
+#define _this_console EVIL
+
+	if (ctx->rowflag[y] & ROWFLAG_DOUBLEWIDE) {
+		if (x1 > (ctx->conWidth/2)) x1 = (ctx->conWidth/2);
+		if (x2 > (ctx->conWidth/2)) x2 = (ctx->conWidth/2);
+	}
+
 	for (x=x1;x < x2;) {
-		srow = _this_console.console + (_this_console.conWidth * y) + x;
+		srow = ctx->console + (ctx->conWidth * y) + x;
 		cur = *srow++;
 		tmp[0] = cur.f.chr;
 		i = 1;
 
-		while ((x+i) < x2 && (srow->raw & 0xFFFF00UL) == (cur.raw & 0xFFFF00UL)) {
+		while ((x+i) < x2 && i < sizeof(tmp) && (srow->raw & 0xFFFF00UL) == (cur.raw & 0xFFFF00UL)) {
 			tmp[i++] = srow->f.chr;
 			srow++;
 		}
 
-		SelectObject(hdc,cur.f.underscore ? _this_console.monoSpaceFontUnderline : _this_console.monoSpaceFont);
-		SetBkColor(hdc,cur.f.reverse ? _vt_fgcolor(&cur) : _vt_bgcolor(&cur));
-		SetTextColor(hdc,(cur.f.reverse || cur.f.hidden) ? _vt_bgcolor(&cur) : _vt_fgcolor(&cur));
-		TextOut(hdc,x * _this_console.monoSpaceFontWidth,y * _this_console.monoSpaceFontHeight,tmp,i);
+		if (ctx->rowflag[y] & ROWFLAG_DOUBLEWIDE) {
+			if (_winvt_init_tmp(ctx) == 0) {
+				HFONT of;
+
+				of = (HFONT)SelectObject(ctx->tmpDC,cur.f.underscore ? ctx->monoSpaceFontUnderline : ctx->monoSpaceFont);
+				SetBkColor(ctx->tmpDC,cur.f.reverse ? _vt_fgcolor(&cur) : _vt_bgcolor(&cur));
+				SetTextColor(ctx->tmpDC,(cur.f.reverse || cur.f.hidden) ? _vt_bgcolor(&cur) : _vt_fgcolor(&cur));
+
+				/* use the memory DC to draw, then stretchblt */
+				TextOut(ctx->tmpDC,0,0,tmp,i);
+				StretchBlt(
+					/* dest */
+					hdc,
+					x * ctx->monoSpaceFontWidth * 2,y * ctx->monoSpaceFontHeight,
+					i * ctx->monoSpaceFontWidth * 2,ctx->monoSpaceFontHeight,
+					/* source */
+					ctx->tmpDC,
+					0,(ctx->rowflag[y] & ROWFLAG_DOUBLEHIGH_BOTTOMHALF) ? (ctx->monoSpaceFontHeight/2) : 0,
+					i * ctx->monoSpaceFontWidth,
+					(ctx->rowflag[y] & ROWFLAG_DOUBLEHIGH) ? (ctx->monoSpaceFontHeight/2) : ctx->monoSpaceFontHeight,
+					/* rop */
+					SRCCOPY);
+
+				SelectObject(ctx->tmpDC,of);
+			}
+		}
+		else {
+			SelectObject(hdc,cur.f.underscore ? ctx->monoSpaceFontUnderline : ctx->monoSpaceFont);
+			SetBkColor(hdc,cur.f.reverse ? _vt_fgcolor(&cur) : _vt_bgcolor(&cur));
+			SetTextColor(hdc,(cur.f.reverse || cur.f.hidden) ? _vt_bgcolor(&cur) : _vt_fgcolor(&cur));
+
+			TextOut(hdc,x * ctx->monoSpaceFontWidth,y * ctx->monoSpaceFontHeight,tmp,i);
+		}
+
 		x += i;
 		assert(x <= x2);
 	}
+
+#undef _this_console
 }
 
 /* WARNING: To avoid crashiness in the Win16 environment:
@@ -345,6 +458,7 @@ FARPROC _winvt_WindowProc_MPI;
 #endif
 WindowProcType_NoLoadDS _export _winvt_WindowProc(HWND hwnd,UINT message,WPARAM wparam,LPARAM lparam) {
 #if TARGET_BITS == 32 && defined(TARGET_WINDOWS_WIN386)
+# define _this_console EVIL
 	struct _winvt_console_ctx FAR *_ctx_console;
 	{
 		unsigned short s = GetWindowWord(hwnd,USER_GWW_CTX);
@@ -352,24 +466,19 @@ WindowProcType_NoLoadDS _export _winvt_WindowProc(HWND hwnd,UINT message,WPARAM 
 		_ctx_console = (void far *)MK_FP(s,o);
 	}
 	if (_ctx_console == NULL) return DefWindowProc(hwnd,message,wparam,lparam);
-# define _ctx_console_unlock()
 #elif TARGET_BITS == 16
+# define _this_console EVIL
 	struct _winvt_console_ctx FAR *_ctx_console =
 		(struct _winvt_console_ctx FAR *)GetWindowLong(hwnd,USER_GWW_CTX);
 	if (_ctx_console == NULL) return DefWindowProc(hwnd,message,wparam,lparam);
-# define _ctx_console_unlock()
 #else
 # define _ctx_console (&_this_console)
-# define _ctx_console_unlock()
 #endif
 
 	if (message == WM_GETMINMAXINFO) {
 #if TARGET_BITS == 32 && defined(TARGET_WINDOWS_WIN386) /* Watcom Win386 does NOT translate LPARAM for us */
 		MINMAXINFO FAR *mm = (MINMAXINFO FAR*)win386_help_MapAliasToFlat(lparam);
-		if (mm == NULL) {
-			_ctx_console_unlock();
-			return DefWindowProc(hwnd,message,wparam,lparam);
-		}
+		if (mm == NULL) return DefWindowProc(hwnd,message,wparam,lparam);
 #else
 		MINMAXINFO FAR *mm = (MINMAXINFO FAR*)(lparam);
 #endif
@@ -381,7 +490,6 @@ WindowProcType_NoLoadDS _export _winvt_WindowProc(HWND hwnd,UINT message,WPARAM 
 		mm->ptMinTrackSize.y = mm->ptMaxSize.y;
 		mm->ptMaxTrackSize.x = mm->ptMaxSize.x;
 		mm->ptMaxTrackSize.y = mm->ptMaxSize.y;
-		_ctx_console_unlock();
 		return 0;
 	}
 	else if (message == WM_CLOSE) {
@@ -392,52 +500,29 @@ WindowProcType_NoLoadDS _export _winvt_WindowProc(HWND hwnd,UINT message,WPARAM 
 	else if (message == WM_DESTROY) {
 		_ctx_console->allowClose = 1;
 		_ctx_console->userReqClose = 1;
-		if (_ctx_console->myCaret) {
-			HideCaret(hwnd);
-			DestroyCaret();
-			_ctx_console->myCaret = 0;
-		}
-
+		_winvt_free_caret(_ctx_console);
 		PostQuitMessage(0);
 		_ctx_console->hwndMain = NULL;
-		_ctx_console_unlock();
 		return 0; /* OK */
 	}
 	else if (message == WM_SETCURSOR) {
 		if (LOWORD(lparam) == HTCLIENT) {
 			SetCursor(LoadCursor(NULL,IDC_ARROW));
-			_ctx_console_unlock();
 			return 1;
 		}
 		else {
-			_ctx_console_unlock();
 			return DefWindowProc(hwnd,message,wparam,lparam);
 		}
 	}
 	else if (message == WM_ACTIVATE) {
-		if (wparam) {
-			if (!_ctx_console->myCaret) {
-				CreateCaret(hwnd,NULL,_ctx_console->monoSpaceFontWidth,_ctx_console->monoSpaceFontHeight);
-				SetCaretPos(_ctx_console->conX * _ctx_console->monoSpaceFontWidth,
-					_ctx_console->conY * _ctx_console->monoSpaceFontHeight);
-				ShowCaret(hwnd);
-				_ctx_console->myCaret = 1;
-			}
-		}
-		else {
-			if (_ctx_console->myCaret) {
-				HideCaret(hwnd);
-				DestroyCaret();
-				_ctx_console->myCaret = 0;
-			}
-		}
+		if (wparam)	_winvt_setup_caret(_ctx_console);
+		else		_winvt_free_caret(_ctx_console);
 
 		/* BUGFIX: Microsoft Windows 3.1 SDK says "return 0 if we processed the message".
 		 *         Yet if we actually do, we get funny behavior. Like if I minimize another
 		 *         application's window and then activate this app again, every keypress
 		 *         causes Windows to send WM_SYSKEYDOWN/WM_SYSKEYUP. Somehow passing it
 		 *         down to DefWindowProc() solves this. */
-		_ctx_console_unlock();
 		return DefWindowProc(hwnd,message,wparam,lparam);
 	}
 	else if (message == WM_CHAR) {
@@ -471,7 +556,6 @@ WindowProcType_NoLoadDS _export _winvt_WindowProc(HWND hwnd,UINT message,WPARAM 
 			SelectObject((HDC)wparam,oldPen);
 		}
 
-		_ctx_console_unlock();
 		return 1; /* Important: Returning 1 signals to Windows that we processed the message. Windows 3.0 gets really screwed up if we don't! */
 	}
 	else if (message == WM_PAINT) {
@@ -485,24 +569,27 @@ WindowProcType_NoLoadDS _export _winvt_WindowProc(HWND hwnd,UINT message,WPARAM 
 			if (BeginPaint(hwnd,&ps) != NULL) {
 				SetBkMode(ps.hdc,OPAQUE);
 				of = (HFONT)SelectObject(ps.hdc,_ctx_console->monoSpaceFont);
-				for (y=0;y < _ctx_console->conHeight;y++) _winvt_do_drawline(ps.hdc,y,0,_ctx_console->conWidth);
+				for (y=0;y < _ctx_console->conHeight;y++) _winvt_do_drawline(_ctx_console,ps.hdc,y,0,_ctx_console->conWidth);
 				SelectObject(ps.hdc,of);
 				EndPaint(hwnd,&ps);
 			}
 		}
 
-		_ctx_console_unlock();
 		return 0; /* Return 0 to signal we processed the message */
 	}
 	else {
-		_ctx_console_unlock();
 		return DefWindowProc(hwnd,message,wparam,lparam);
 	}
 
-	_ctx_console_unlock();
 	return 0;
 #undef _ctx_console
 #undef _ctx_console_unlock
+
+#if TARGET_BITS == 32 && defined(TARGET_WINDOWS_WIN386)
+# undef _this_console
+#elif TARGET_BITS == 16
+# undef _this_console
+#endif
 }
 
 int _winvt_kbhit() {
@@ -603,9 +690,15 @@ void _winvt_pump() {
 }
 
 void _winvt_update_cursor() {
-	if (_this_console.myCaret)
-		SetCaretPos(_this_console.conX * _this_console.monoSpaceFontWidth,
+	if (_this_console.myCaret) {
+		if (((_this_console.rowflag[_this_console.conY] & ROWFLAG_DOUBLEWIDE)?1:0) != _this_console.myCaretDoubleWide) {
+			_winvt_free_caret(&_this_console);
+			_winvt_setup_caret(&_this_console);
+		}
+
+		SetCaretPos(_this_console.conX * _this_console.monoSpaceFontWidth * (_this_console.myCaretDoubleWide ? 2 : 1),
 			_this_console.conY * _this_console.monoSpaceFontHeight);
+	}
 }
 
 void _winvt_redraw_a_line_row(int y,int x1,int x2) {
@@ -618,7 +711,7 @@ void _winvt_redraw_a_line_row(int y,int x1,int x2) {
 		SetBkMode(hdc,OPAQUE);
 		of = (HFONT)SelectObject(hdc,_this_console.monoSpaceFont);
 		if (_this_console.myCaret) HideCaret(_this_console.hwndMain);
-		_winvt_do_drawline(hdc,y,x1,x2);
+		_winvt_do_drawline(&_this_console,hdc,y,x1,x2);
 		if (_this_console.myCaret) ShowCaret(_this_console.hwndMain);
 		SelectObject(hdc,of);
 		ReleaseDC(_this_console.hwndMain,hdc);
@@ -635,7 +728,7 @@ void _winvt_redraw_line_row_partial(int x1,int x2) {
 		SetBkMode(hdc,OPAQUE);
 		of = (HFONT)SelectObject(hdc,_this_console.monoSpaceFont);
 		if (_this_console.myCaret) HideCaret(_this_console.hwndMain);
-		_winvt_do_drawline(hdc,_this_console.conY,x1,x2);
+		_winvt_do_drawline(&_this_console,hdc,_this_console.conY,x1,x2);
 		if (_this_console.myCaret) ShowCaret(_this_console.hwndMain);
 		SelectObject(hdc,of);
 		ReleaseDC(_this_console.hwndMain,hdc);
@@ -654,7 +747,7 @@ void _winvt_redraw_all() {
 	hdc = GetDC(_this_console.hwndMain);
 	if (_this_console.myCaret) HideCaret(_this_console.hwndMain);
 	of = (HFONT)SelectObject(hdc,_this_console.monoSpaceFont);
-	for (y=0;y < _this_console.conHeight;y++) _winvt_do_drawline(hdc,y,0,_this_console.conWidth);
+	for (y=0;y < _this_console.conHeight;y++) _winvt_do_drawline(&_this_console,hdc,y,0,_this_console.conWidth);
 	SelectObject(hdc,of);
 	if (_this_console.myCaret) ShowCaret(_this_console.hwndMain);
 	ReleaseDC(_this_console.hwndMain,hdc);
@@ -688,6 +781,10 @@ void _winvt_scrolldown() {
 		_this_console.console+(_this_console.conWidth*_this_console.scroll_top),
 		(_this_console.scroll_bottom-_this_console.scroll_top)*_this_console.conWidth*sizeof(_winvt_char));
 
+	memmove(_this_console.rowflag+_this_console.scroll_top+1,
+		_this_console.rowflag+_this_console.scroll_top,
+		(_this_console.scroll_bottom-_this_console.scroll_top)*sizeof(_this_console.rowflag[0]));
+
 	_this_console.cursor_state.f.chr = ' ';
 	for (i=0;i < _this_console.conWidth;i++)
 		_this_console.console[(_this_console.scroll_top*_this_console.conWidth)+i] =
@@ -713,6 +810,10 @@ void _winvt_scrollup() {
 	memmove(_this_console.console+(_this_console.conWidth*_this_console.scroll_top),
 		_this_console.console+(_this_console.conWidth*(_this_console.scroll_top+1)),
 		(_this_console.scroll_bottom-_this_console.scroll_top)*_this_console.conWidth*sizeof(_winvt_char));
+
+	memmove(_this_console.rowflag+_this_console.scroll_top,
+		_this_console.rowflag+_this_console.scroll_top+1,
+		(_this_console.scroll_bottom-_this_console.scroll_top)*sizeof(_this_console.rowflag[0]));
 
 	_this_console.cursor_state.f.chr = ' ';
 	for (i=0;i < _this_console.conWidth;i++)
@@ -839,6 +940,16 @@ void _winvt_on_esc_ls_D() {
 	_this_console.conX -= _this_console.escape_argv[0];
 	_winvt_redraw_line_row();
 	clip_cursor();
+}
+
+void _winvt_erase_this_line() {
+	unsigned int i,m;
+
+	_this_console.cursor_state.f.chr = ' ';
+	m = (_this_console.conY+1) * _this_console.conWidth;
+	i = _this_console.conY * _this_console.conWidth;
+	while (i < m) _this_console.console[i++] = _this_console.cursor_state;
+	_winvt_redraw_all();
 }
 
 void _winvt_on_esc_ls_K() {
@@ -1016,6 +1127,12 @@ int _winvt_putc(char c) {
 	if (c == 10) {
 		_winvt_newline();
 	}
+	else if (c == 8) {
+		if (_this_console.conX > 0) {
+			_this_console.conX--;
+			_winvt_update_cursor();
+		}
+	}
 	else if (c == 13) {
 		_this_console.conX = 0;
 		_winvt_redraw_line_row();
@@ -1029,7 +1146,11 @@ int _winvt_putc(char c) {
 		if (c == '[') {
 			_this_console.escape_mode = ESC_LSQUARE;
 			_this_console.escape_arg_accum = 0;
+			_this_console.escape_arg_digits = 0;
 			_this_console.escape_argc = 0;
+		}
+		else if (c == '#') {
+			_this_console.escape_mode = ESC_POUND;
 		}
 		else {
 			_this_console.escape_mode = 0;
@@ -1048,17 +1169,51 @@ int _winvt_putc(char c) {
 				_winvt_on_esc_M();
 		}
 	}
+	else if (_this_console.escape_mode == ESC_POUND) { /* <ESC> # <N> */
+		_winvt_free_caret(&_this_console);
+
+		if (c == '3') { /* change the current line to double high double wide top half */
+			_this_console.rowflag[_this_console.conY] &= ~(ROWFLAG_DOUBLEWIDE | ROWFLAG_DOUBLEHIGH | ROWFLAG_DOUBLEHIGH_BOTTOMHALF);
+			_this_console.rowflag[_this_console.conY] |=  (ROWFLAG_DOUBLEWIDE | ROWFLAG_DOUBLEHIGH);
+			_this_console.conX = 0;
+			_winvt_erase_this_line();
+		}
+		else if (c == '4') { /* change the current line to double high double wide bottom half */
+			_this_console.rowflag[_this_console.conY] &= ~(ROWFLAG_DOUBLEWIDE | ROWFLAG_DOUBLEHIGH | ROWFLAG_DOUBLEHIGH_BOTTOMHALF);
+			_this_console.rowflag[_this_console.conY] |=  (ROWFLAG_DOUBLEWIDE | ROWFLAG_DOUBLEHIGH | ROWFLAG_DOUBLEHIGH_BOTTOMHALF);
+			_this_console.conX = 0;
+			_winvt_erase_this_line();
+		}
+		else if (c == '5') { /* change the current line to single width/height */
+			_this_console.rowflag[_this_console.conY] &= ~(ROWFLAG_DOUBLEWIDE | ROWFLAG_DOUBLEHIGH | ROWFLAG_DOUBLEHIGH_BOTTOMHALF);
+			_this_console.conX = 0;
+			_winvt_erase_this_line();
+		}
+		else if (c == '6') { /* change the current line to single high double wide */
+			_this_console.rowflag[_this_console.conY] &= ~(ROWFLAG_DOUBLEWIDE | ROWFLAG_DOUBLEHIGH | ROWFLAG_DOUBLEHIGH_BOTTOMHALF);
+			_this_console.rowflag[_this_console.conY] |=  (ROWFLAG_DOUBLEWIDE);
+			_this_console.conX = 0;
+			_winvt_erase_this_line();
+		}
+
+		_winvt_setup_caret(&_this_console);
+		_this_console.escape_mode = ESC_NONE;
+	}
 	else if (_this_console.escape_mode == ESC_LSQUARE) {
 		if (isdigit(c)) {
 			_this_console.escape_arg_accum = (_this_console.escape_arg_accum * 10) + (c - '0');
+			_this_console.escape_arg_digits++;
 		}
 		else {
-			if (_this_console.escape_argc < MAX_ESC_ARG) {
-				_this_console.escape_argv[_this_console.escape_argc++] =
-					_this_console.escape_arg_accum;
+			if (c == ';' || _this_console.escape_arg_digits != 0) {
+				if (_this_console.escape_argc < MAX_ESC_ARG) {
+					_this_console.escape_argv[_this_console.escape_argc++] =
+						_this_console.escape_arg_accum;
+				}
 			}
 
 			_this_console.escape_arg_accum = 0;
+			_this_console.escape_arg_digits = 0;
 
 			if (c == ';') {
 				/* more args to come, keep scanning */
@@ -1080,17 +1235,21 @@ int _winvt_putc(char c) {
 		}
 	}
 	else {
-		if (_this_console.conX < _this_console.conWidth) {
+		int cwmax = (_this_console.rowflag[_this_console.conY] & ROWFLAG_DOUBLEWIDE) ?
+			(_this_console.conWidth >> 1) :
+			_this_console.conWidth;
+
+		if (_this_console.conX < cwmax) {
 			_this_console.cursor_state.f.chr = (unsigned char)c;
 			_this_console.console[(_this_console.conY*_this_console.conWidth)+_this_console.conX] =
 				_this_console.cursor_state;
 		}
 		if (_this_console.line_wrap) {
-			if (++_this_console.conX == _this_console.conWidth)
+			if (++_this_console.conX == cwmax)
 				_winvt_newline();
 		}
 		else {
-			if ((_this_console.conX+1) < _this_console.conWidth)
+			if ((_this_console.conX+1) < cwmax)
 				_this_console.conX++;
 			else
 				return 1;
@@ -1274,6 +1433,8 @@ int WINMAINPROC _winvt_main_vtcon_entry(HINSTANCE hInstance,HINSTANCE hPrevInsta
 			}
 		}
 	}
+
+	_winvt_free_tmp(&_this_console);
 
 	DeleteObject(_this_console.monoSpaceFont);
 	_this_console.monoSpaceFont = NULL;
