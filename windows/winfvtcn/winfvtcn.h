@@ -25,6 +25,7 @@
 #ifndef WINFVCTN_SELF
 # define getch _winvt_getch
 # define kbhit _winvt_kbhit
+# define fflush _winvt_fflush
 # define fprintf __XXX_TODO_fprintf
 # define printf _winvt_printf
 # define isatty _winvt_isatty
@@ -40,6 +41,7 @@ void _gdivt_pause();
 void _winvt_pump_wait();
 int _winvt_putc(char c);
 int _winvt_isatty(int fd);
+void _winvt_fflush(FILE *f);
 void _winvt_endloop_user_echo();
 int _winvt_read(int fd,void *buf,int sz);
 size_t _winvt_printf(const char *fmt,...);

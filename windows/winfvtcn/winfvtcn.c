@@ -16,6 +16,8 @@
  * that provide a console.
  */
 
+/* TODO: When "doublewide" is active... what happens to the cursor commands <ESC>[C, <ESC>[D, etc.? */
+
 /* TODO: New double wide/high mode codec while distracted, clean up later to catch leaks */
 
 /* TODO: For arrow keys, function keys, etc. generate VT100 keyboard sequences */
@@ -80,7 +82,10 @@ typedef struct _winvt_char_s {
 	uint16_t	background_set:1;	/* 20-23 */
 	uint16_t	background:3;
 
-	uint16_t	_unused3_:8;		/* 24-31 */
+	uint16_t	doublewide:1;		/* 24-31 */
+	uint16_t	doublehigh:1;
+	uint16_t	doublehigh_bottomhalf:1;
+	uint16_t	_unused3_:5;
 } _winvt_char_s;
 
 typedef union _winvt_char {
@@ -166,9 +171,6 @@ typedef struct _winvt_console_ctx {
 	/* compatible DC and bitmap used for double-wide and double-high modes */
 	HBITMAP			tmpBMP,tmpBMPold;
 	HDC			tmpDC;
-
-	/* row flags for double-width and double-height */
-	unsigned char		rowflag[25];
 };
 
 #define ROWFLAG_DOUBLEWIDE		0x01
@@ -368,14 +370,13 @@ void _winvt_free_caret(struct _winvt_console_ctx FAR *c) {
 
 void _winvt_setup_caret(struct _winvt_console_ctx FAR *c) {
 	if (!c->myCaret) {
-		c->myCaretDoubleWide = (c->rowflag[c->conY] & ROWFLAG_DOUBLEWIDE) ? 1 : 0;
+		c->myCaretDoubleWide = (c->console[(c->conY*c->conWidth)+c->conX].f.doublewide) ? 1 : 0;
 		if (c->myCaretDoubleWide)
 			CreateCaret(c->hwndMain,NULL,c->monoSpaceFontWidth * 2,c->monoSpaceFontHeight);
 		else
 			CreateCaret(c->hwndMain,NULL,c->monoSpaceFontWidth,c->monoSpaceFontHeight);
 
-		SetCaretPos(c->conX * c->monoSpaceFontWidth * (c->myCaretDoubleWide ? 2 : 1),
-			c->conY * c->monoSpaceFontHeight);
+		SetCaretPos(c->conX * c->monoSpaceFontWidth,c->conY * c->monoSpaceFontHeight);
 		ShowCaret(c->hwndMain);
 		c->myCaret = 1;
 	}
@@ -389,23 +390,30 @@ void _winvt_do_drawline(struct _winvt_console_ctx FAR *ctx,HDC hdc,unsigned int 
 
 #define _this_console EVIL
 
-	if (ctx->rowflag[y] & ROWFLAG_DOUBLEWIDE) {
-		if (x1 > (ctx->conWidth/2)) x1 = (ctx->conWidth/2);
-		if (x2 > (ctx->conWidth/2)) x2 = (ctx->conWidth/2);
+	if (x1 != 0) {
+		/* we need to step back if we land in the middle of a double-wide char */
+		srow = ctx->console + (ctx->conWidth * y) + x1;
+		if (srow->raw == 0) { /* our double-wide code writes one char + one NULL */
+			srow--;
+			if (srow->f.doublewide) {
+				x1--;
+			}
+		}
 	}
 
 	for (x=x1;x < x2;) {
 		srow = ctx->console + (ctx->conWidth * y) + x;
-		cur = *srow++;
+		cur = *srow;
 		tmp[0] = cur.f.chr;
 		i = 1;
 
-		while ((x+i) < x2 && i < sizeof(tmp) && (srow->raw & 0xFFFF00UL) == (cur.raw & 0xFFFF00UL)) {
-			tmp[i++] = srow->f.chr;
-			srow++;
-		}
+		if (cur.f.doublewide) {
+			srow += 2;
+			while ((x+(i*2)) < x2 && i < sizeof(tmp) && (srow->raw & 0xFFFFFF00UL) == (cur.raw & 0xFFFFFF00UL)) {
+				tmp[i++] = srow->f.chr;
+				srow += 2;
+			}
 
-		if (ctx->rowflag[y] & ROWFLAG_DOUBLEWIDE) {
 			if (_winvt_init_tmp(ctx) == 0) {
 				HFONT of;
 
@@ -414,33 +422,40 @@ void _winvt_do_drawline(struct _winvt_console_ctx FAR *ctx,HDC hdc,unsigned int 
 				SetTextColor(ctx->tmpDC,(cur.f.reverse || cur.f.hidden) ? _vt_bgcolor(&cur) : _vt_fgcolor(&cur));
 
 				/* use the memory DC to draw, then stretchblt */
+				/* FIXME: This actually causes quite a slowdown in rendering! Is there a faster way? Is there a 24-pt high Terminal font we can use? */
 				TextOut(ctx->tmpDC,0,0,tmp,i);
 				StretchBlt(
 					/* dest */
 					hdc,
-					x * ctx->monoSpaceFontWidth * 2,y * ctx->monoSpaceFontHeight,
+					x * ctx->monoSpaceFontWidth,y * ctx->monoSpaceFontHeight,
 					i * ctx->monoSpaceFontWidth * 2,ctx->monoSpaceFontHeight,
 					/* source */
 					ctx->tmpDC,
-					0,(ctx->rowflag[y] & ROWFLAG_DOUBLEHIGH_BOTTOMHALF) ? (ctx->monoSpaceFontHeight/2) : 0,
+					0,cur.f.doublehigh_bottomhalf ? (ctx->monoSpaceFontHeight/2) : 0,
 					i * ctx->monoSpaceFontWidth,
-					(ctx->rowflag[y] & ROWFLAG_DOUBLEHIGH) ? (ctx->monoSpaceFontHeight/2) : ctx->monoSpaceFontHeight,
+					cur.f.doublehigh ? (ctx->monoSpaceFontHeight/2) : ctx->monoSpaceFontHeight,
 					/* rop */
 					SRCCOPY);
 
 				SelectObject(ctx->tmpDC,of);
 			}
+
+			x += i * 2;
 		}
 		else {
+			srow++;
+			while ((x+i) < x2 && i < sizeof(tmp) && (srow->raw & 0xFFFFFF00UL) == (cur.raw & 0xFFFFFF00UL)) {
+				tmp[i++] = srow->f.chr;
+				srow++;
+			}
+
 			SelectObject(hdc,cur.f.underscore ? ctx->monoSpaceFontUnderline : ctx->monoSpaceFont);
 			SetBkColor(hdc,cur.f.reverse ? _vt_fgcolor(&cur) : _vt_bgcolor(&cur));
 			SetTextColor(hdc,(cur.f.reverse || cur.f.hidden) ? _vt_bgcolor(&cur) : _vt_fgcolor(&cur));
 
 			TextOut(hdc,x * ctx->monoSpaceFontWidth,y * ctx->monoSpaceFontHeight,tmp,i);
+			x += i;
 		}
-
-		x += i;
-		assert(x <= x2);
 	}
 
 #undef _this_console
@@ -691,12 +706,12 @@ void _winvt_pump() {
 
 void _winvt_update_cursor() {
 	if (_this_console.myCaret) {
-		if (((_this_console.rowflag[_this_console.conY] & ROWFLAG_DOUBLEWIDE)?1:0) != _this_console.myCaretDoubleWide) {
+		if (_this_console.console[(_this_console.conY*_this_console.conWidth)+_this_console.conX].f.doublewide != _this_console.myCaretDoubleWide) {
 			_winvt_free_caret(&_this_console);
 			_winvt_setup_caret(&_this_console);
 		}
 
-		SetCaretPos(_this_console.conX * _this_console.monoSpaceFontWidth * (_this_console.myCaretDoubleWide ? 2 : 1),
+		SetCaretPos(_this_console.conX * _this_console.monoSpaceFontWidth,
 			_this_console.conY * _this_console.monoSpaceFontHeight);
 	}
 }
@@ -781,10 +796,6 @@ void _winvt_scrolldown() {
 		_this_console.console+(_this_console.conWidth*_this_console.scroll_top),
 		(_this_console.scroll_bottom-_this_console.scroll_top)*_this_console.conWidth*sizeof(_winvt_char));
 
-	memmove(_this_console.rowflag+_this_console.scroll_top+1,
-		_this_console.rowflag+_this_console.scroll_top,
-		(_this_console.scroll_bottom-_this_console.scroll_top)*sizeof(_this_console.rowflag[0]));
-
 	_this_console.cursor_state.f.chr = ' ';
 	for (i=0;i < _this_console.conWidth;i++)
 		_this_console.console[(_this_console.scroll_top*_this_console.conWidth)+i] =
@@ -811,10 +822,6 @@ void _winvt_scrollup() {
 		_this_console.console+(_this_console.conWidth*(_this_console.scroll_top+1)),
 		(_this_console.scroll_bottom-_this_console.scroll_top)*_this_console.conWidth*sizeof(_winvt_char));
 
-	memmove(_this_console.rowflag+_this_console.scroll_top,
-		_this_console.rowflag+_this_console.scroll_top+1,
-		(_this_console.scroll_bottom-_this_console.scroll_top)*sizeof(_this_console.rowflag[0]));
-
 	_this_console.cursor_state.f.chr = ' ';
 	for (i=0;i < _this_console.conWidth;i++)
 		_this_console.console[(_this_console.scroll_bottom*_this_console.conWidth)+i] =
@@ -823,6 +830,9 @@ void _winvt_scrollup() {
 
 void _winvt_newline() {
 	_this_console.conX = 0;
+	_this_console.cursor_state.f.doublewide = 0;
+	_this_console.cursor_state.f.doublehigh = 0;
+	_this_console.cursor_state.f.doublehigh_bottomhalf = 0;
 	if (_this_console.conY >= _this_console.scroll_bottom) {
 		_this_console.conY = _this_console.scroll_bottom;
 		_winvt_redraw_line_row();
@@ -1129,7 +1139,8 @@ int _winvt_putc(char c) {
 	}
 	else if (c == 8) {
 		if (_this_console.conX > 0) {
-			_this_console.conX--;
+			_this_console.conX -= _this_console.cursor_state.f.doublewide ? 2 : 1;
+			if (_this_console.conX < 0) _this_console.conX = 0;
 			_winvt_update_cursor();
 		}
 	}
@@ -1173,27 +1184,28 @@ int _winvt_putc(char c) {
 		_winvt_free_caret(&_this_console);
 
 		if (c == '3') { /* change the current line to double high double wide top half */
-			_this_console.rowflag[_this_console.conY] &= ~(ROWFLAG_DOUBLEWIDE | ROWFLAG_DOUBLEHIGH | ROWFLAG_DOUBLEHIGH_BOTTOMHALF);
-			_this_console.rowflag[_this_console.conY] |=  (ROWFLAG_DOUBLEWIDE | ROWFLAG_DOUBLEHIGH);
+			_this_console.cursor_state.f.doublewide = 1;
+			_this_console.cursor_state.f.doublehigh = 1;
+			_this_console.cursor_state.f.doublehigh_bottomhalf = 0;
 			_this_console.conX = 0;
-			_winvt_erase_this_line();
 		}
 		else if (c == '4') { /* change the current line to double high double wide bottom half */
-			_this_console.rowflag[_this_console.conY] &= ~(ROWFLAG_DOUBLEWIDE | ROWFLAG_DOUBLEHIGH | ROWFLAG_DOUBLEHIGH_BOTTOMHALF);
-			_this_console.rowflag[_this_console.conY] |=  (ROWFLAG_DOUBLEWIDE | ROWFLAG_DOUBLEHIGH | ROWFLAG_DOUBLEHIGH_BOTTOMHALF);
+			_this_console.cursor_state.f.doublewide = 1;
+			_this_console.cursor_state.f.doublehigh = 1;
+			_this_console.cursor_state.f.doublehigh_bottomhalf = 1;
 			_this_console.conX = 0;
-			_winvt_erase_this_line();
 		}
 		else if (c == '5') { /* change the current line to single width/height */
-			_this_console.rowflag[_this_console.conY] &= ~(ROWFLAG_DOUBLEWIDE | ROWFLAG_DOUBLEHIGH | ROWFLAG_DOUBLEHIGH_BOTTOMHALF);
+			_this_console.cursor_state.f.doublewide = 0;
+			_this_console.cursor_state.f.doublehigh = 0;
+			_this_console.cursor_state.f.doublehigh_bottomhalf = 0;
 			_this_console.conX = 0;
-			_winvt_erase_this_line();
 		}
 		else if (c == '6') { /* change the current line to single high double wide */
-			_this_console.rowflag[_this_console.conY] &= ~(ROWFLAG_DOUBLEWIDE | ROWFLAG_DOUBLEHIGH | ROWFLAG_DOUBLEHIGH_BOTTOMHALF);
-			_this_console.rowflag[_this_console.conY] |=  (ROWFLAG_DOUBLEWIDE);
+			_this_console.cursor_state.f.doublewide = 1;
+			_this_console.cursor_state.f.doublehigh = 0;
+			_this_console.cursor_state.f.doublehigh_bottomhalf = 0;
 			_this_console.conX = 0;
-			_winvt_erase_this_line();
 		}
 
 		_winvt_setup_caret(&_this_console);
@@ -1235,28 +1247,42 @@ int _winvt_putc(char c) {
 		}
 	}
 	else {
-		int cwmax = (_this_console.rowflag[_this_console.conY] & ROWFLAG_DOUBLEWIDE) ?
-			(_this_console.conWidth >> 1) :
-			_this_console.conWidth;
+		int step = _this_console.cursor_state.f.doublewide ? 2 : 1;
 
-		if (_this_console.conX < cwmax) {
+		if (_this_console.conX < _this_console.conWidth) {
 			_this_console.cursor_state.f.chr = (unsigned char)c;
 			_this_console.console[(_this_console.conY*_this_console.conWidth)+_this_console.conX] =
 				_this_console.cursor_state;
+
+			if (step == 2) {
+				if ((_this_console.conX+1) < _this_console.conWidth) {
+					_this_console.console[(_this_console.conY*_this_console.conWidth)+_this_console.conX+1].raw = 0;
+				}
+			}
 		}
 		if (_this_console.line_wrap) {
-			if (++_this_console.conX == cwmax)
+			if ((_this_console.conX += step) >= _this_console.conWidth)
 				_winvt_newline();
 		}
 		else {
-			if ((_this_console.conX+1) < cwmax)
-				_this_console.conX++;
+			if ((_this_console.conX+step) < _this_console.conWidth)
+				_this_console.conX += step;
 			else
 				return 1;
 		}
 	}
 
 	return 0;
+}
+
+void _winvt_fflush(FILE *f) {
+	if (f == stdout) {
+		_winvt_redraw_all(); /* TODO: Implement a more intelligent refresh mechanism! */
+		_winvt_update_cursor();
+	}
+	else {
+		fflush(f);
+	}
 }
 
 size_t _winvt_printf(const char *fmt,...) {
