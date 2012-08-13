@@ -44,6 +44,7 @@ int main() {
 	printf("6. dirty.vtm\n");
 	printf("7. trek.vtm [FIXME]\n");
 	printf("8. turkey.vtm [FIXME]\n");
+	printf("9. hell01.vtm\n");
 	printf("ESC to quit\n");
 
 	do {
@@ -91,6 +92,11 @@ int main() {
 		else if (c == '8') {
 			bytes_per_sec = 9600/8;
 			anim = "turkey.vtm";
+			break;
+		}
+		else if (c == '9') {
+			bytes_per_sec = 28800/8;
+			anim = "hell01.vtm";
 			break;
 		}
 	} while (1);

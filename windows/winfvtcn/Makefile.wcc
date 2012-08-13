@@ -54,6 +54,7 @@ else
 	@cp -v startrek.vtm $(abs_exe_dir)/startrek.vtm
 	@cp -v firework.vtm $(abs_exe_dir)/firework.vtm
 	@cp -v firewor2.vtm $(abs_exe_dir)/firewor2.vtm
+	@cp -v hell01.vtm $(abs_exe_dir)/hell01.vtm
 	@cp -v turkey.vtm $(abs_exe_dir)/turkey.vtm
 	@cp -v fishy.vtm $(abs_exe_dir)/fishy.vtm
 	@cp -v dirty.vtm $(abs_exe_dir)/dirty.vtm
