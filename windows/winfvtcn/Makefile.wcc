@@ -59,6 +59,8 @@ else
 	@cp -v fishy.vtm $(abs_exe_dir)/fishy.vtm
 	@cp -v dirty.vtm $(abs_exe_dir)/dirty.vtm
 	@cp -v trek.vtm $(abs_exe_dir)/trek.vtm
+	@cp -v shadowgt.vtm $(abs_exe_dir)/shadowgt.vtm
+	@cp -v xmas1.vtm $(abs_exe_dir)/xmas1.vtm
 	#@rm -f $(abs_obj_dir)/test1.cmd
  ifeq ($(TARGET_WINDOWS_WIN386),1)
 	@$(WIN386_EXE_TO_REX_IF_REX) $@
@@ -66,31 +68,6 @@ else
  endif
  ifneq ($(WIN16_NE_SETVER),)
 	$(WIN16_NE_SETVER) $@
- endif
-endif
-
-ifeq ($(TARGET_GUI_CONSOLE),1)
-$(abs_exe_dir)/test1c$(exe_suffix): $(obj_win32s_compat) $(abs_obj_dir)/test1c$(obj_suffix) $(lib_hw_cpu_libcpu) $(lib_hw_cpu_libcpu_dependencies)
- ifeq ($(target_subdir),linux/host)
-	$(CC) $(LDFLAGS_CONSOLE) -o $@ $^
- else
-	@echo option quiet system $(WLINK_SYSTEM_CONSOLE) $(WLINKFLAGS_CONSOLE) $(WLINK_SEGMENTS_CONSOLE) $(foreach x,$(filter %$(obj_suffix),$^),file "$(x)") $(foreach x,$(filter %$(lib_suffix),$^),library "$(x)") $(lib_hw_cpu_libcpu_wlink) option map=$(abs_obj_dir)/test1c.map name $@ >$(abs_obj_dir)/test1c.cmd
-	$(WLINK) @$(abs_obj_dir)/test1c.cmd
-	#@rm -f $(abs_obj_dir)/test1c.cmd
-  ifeq ($(TARGET_WINDOWS_WIN386),1)
-	@$(WIN386_EXE_TO_REX_IF_REX) $@
-	@$(WBIND) $@ -q -n
-  endif
-  ifneq ($(WIN16_NE_SETVER),)
-	$(WIN16_NE_SETVER) $@
-  endif
- endif
-
-$(abs_obj_dir)/test1c$(obj_suffix): test1c.c $(abs_obj_dir)/test1$(obj_suffix)
- ifeq ($(target_subdir),linux/host)
-	$(CC) $(CFLAGS_CONSOLE) -I.. -I../.. -c -o $@ $(filter %.c,$^)
- else
-	$(WCC) $(WCCFLAGS_CONSOLE) -fo=$(abs_obj_dir)/.obj -i=.. -i=../.. $(filter %.c,$^)
  endif
 endif
 
@@ -109,9 +86,6 @@ else
 endif
 
 all_programs=$(abs_exe_dir)/test1$(exe_suffix) $(abs_exe_dir)/vtmplay$(exe_suffix)
-ifeq ($(TARGET_GUI_CONSOLE),1)
-all_programs+=$(abs_exe_dir)/test1c$(exe_suffix)
-endif
 
 all-programs: $(all_programs) $(lib_windows_winfvtcn)
 

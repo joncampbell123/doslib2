@@ -46,6 +46,8 @@ void _winvt_endloop_user_echo();
 int _winvt_read(int fd,void *buf,int sz);
 size_t _winvt_printf(const char *fmt,...);
 int _winvt_write(int fd,const void *buf,int sz);
+void _winvt_update_cursor();
+void _winvt_redraw_changes();
 int _cdecl main(int argc,char **argv,char **envp);
 int WINMAINPROC _winvt_main_vtcon_entry(HINSTANCE hInstance,HINSTANCE hPrevInstance,LPSTR lpCmdLine,int nCmdShow,int (_cdecl *_main_f)(int argc,char**,char**));
 

@@ -8,6 +8,9 @@
 #  include <windows/winfvtcn/winfvtcn.h>
 # endif
 #endif
+#if defined(TARGET_LINUX) && defined(__GNUC__)
+# include <termios.h>
+#endif
 
 #include <stdio.h>
 #include <assert.h>
@@ -23,6 +26,33 @@
 
 #define INTERVAL (50)
 
+#if defined(TARGET_LINUX) && defined(__GNUC__)
+static int getch() {
+	char c;
+
+	if (read(0/*STDIN*/,&c,1) == 1)
+		return (int)((unsigned char)c);
+
+	return -1;
+}
+
+static struct termios termios_orig,termios_now;
+
+static void termios_save() {
+	tcgetattr(0/*STDIN*/,&termios_orig);
+	termios_now = termios_orig;
+}
+
+static void termios_immediate_mode() {
+	termios_now.c_lflag &= ~(ICANON|ECHO|ECHOE|ECHOK|ECHONL|ECHOCTL);
+	tcsetattr(0/*STDIN*/,TCSANOW,&termios_now);
+}
+
+static void termios_restore() {
+	tcsetattr(0/*STDIN*/,TCSANOW,&termios_orig);
+}
+#endif
+
 int main() {
 #if defined(TARGET_WINDOWS)
 	DWORD basetime;
@@ -35,24 +65,27 @@ int main() {
 	char c;
 	int rd;
 
+#if defined(TARGET_LINUX) && defined(__GNUC__)
+	termios_save();
+	termios_immediate_mode();
+#endif
+
 	printf("Select animation:\n");
 	printf("1. test.vtm [Alice in Wonderland-esque ANSI animation]\n");
 	printf("2. startrek.vtm\n");
-	printf("3. firework.vtm [FIXME]\n");
-	printf("4. firewor2.vtm [FIXME]\n");
+	printf("3. firework.vtm\n");
+	printf("4. firewor2.vtm\n");
 	printf("5. fishy.vtm\n");
 	printf("6. dirty.vtm\n");
-	printf("7. trek.vtm [FIXME]\n");
-	printf("8. turkey.vtm [FIXME]\n");
+	printf("7. trek.vtm\n");
+	printf("8. turkey.vtm\n");
 	printf("9. hell01.vtm\n");
+	printf("a. shadowgt.vtm\n");
+	printf("b. xmas1.vtm\n");
 	printf("ESC to quit\n");
 
 	do {
-#ifdef WIN_STDOUT_CONSOLE
 		c = getch();
-#else
-		if (read(0/*stdin*/,&c,1) != 1) return 1;
-#endif
 		if (c == 27) return 0;
 		else if (c == '1') {
 			bytes_per_sec = 2400/8;
@@ -65,7 +98,7 @@ int main() {
 			break;
 		}
 		else if (c == '3') {
-			bytes_per_sec = 2400/8;
+			bytes_per_sec = 4800/8;
 			anim = "firework.vtm";
 			break;
 		}
@@ -97,6 +130,16 @@ int main() {
 		else if (c == '9') {
 			bytes_per_sec = 28800/8;
 			anim = "hell01.vtm";
+			break;
+		}
+		else if (c == 'a') {
+			bytes_per_sec = 28800/8;
+			anim = "shadowgt.vtm";
+			break;
+		}
+		else if (c == 'b') {
+			bytes_per_sec = 14400/8;
+			anim = "xmas1.vtm";
 			break;
 		}
 	} while (1);
@@ -153,6 +196,9 @@ int main() {
 	}
 
 	fclose(fp);
+#if defined(TARGET_LINUX) && defined(__GNUC__)
+	termios_restore();
+#endif
 #ifdef WIN_STDOUT_CONSOLE
 	_winvt_endloop_user_echo();
 #endif

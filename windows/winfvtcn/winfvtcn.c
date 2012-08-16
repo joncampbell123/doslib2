@@ -16,9 +16,29 @@
  * that provide a console.
  */
 
-/* TODO: When "doublewide" is active... what happens to the cursor commands <ESC>[C, <ESC>[D, etc.? */
-
-/* TODO: New double wide/high mode codec while distracted, clean up later to catch leaks */
+/* TODO: http://www.vt100.net/docs/vt102-ug/chapter5.html
+ *      Delete Character (DCH)
+ *      Insert Line (IL)
+ *      Delete Line (DL)
+ *      Insertion-Replacement Mode (IRM)
+ *      Screen Alignment Display
+ *
+ *      http://www.vt100.net/docs/vt100-ug/chapter3.html
+ *      Load LEDs
+ *      Select Character Set
+ *      Screen Alignment Display
+ *      ANSI/VT52 mode
+ *      Auto repeat mode
+ *      Cursor Keys Mode
+ *      Column Mode (132-column)
+ *      Keypad Application Mode
+ *
+ *      - Smooth scrolling
+ *      - System to queue updates per-line (with start-end coords) rather than redrawing on the fly,
+ *      - Redraw triggered when calling program calls "flush" or the idle function
+ *      - Support and mapping for VT100 graphics characters
+ *      - Support xterm 256-color escapes (#38 & #48)
+ *      - Support m-code #39: default text color (#39 & #49) */
 
 /* TODO: For arrow keys, function keys, etc. generate VT100 keyboard sequences */
 
@@ -85,8 +105,13 @@ typedef struct _winvt_char_s {
 	uint16_t	doublewide:1;		/* 24-31 */
 	uint16_t	doublehigh:1;
 	uint16_t	doublehigh_bottomhalf:1;
-	uint16_t	_unused3_:5;
+	uint16_t	charset:2;
+	uint16_t	_unused3_:3;
 } _winvt_char_s;
+
+#define CHRSET_UK		0
+#define CHRSET_US		1
+#define CHRSET_GRAPHICS		2
 
 typedef union _winvt_char {
 	uint32_t		raw;
@@ -100,8 +125,15 @@ enum {
 	ESC_NONE=0,
 	ESC_ALONE,
 	ESC_POUND,
+	ESC_CHARSET_G0,
+	ESC_CHARSET_G1,
+	ESC_LSQUARE_QUESTION,
 	ESC_LSQUARE
 };
+
+typedef struct _winvt_redraw {
+	unsigned char		s,e;
+} _winvt_redraw;
 
 /* If we stick all these variables in the data segment and reference
  * them directly, then we'll work from a single instance, but run into
@@ -154,6 +186,9 @@ typedef struct _winvt_console_ctx {
 	unsigned char		escape_arg_accum;
 	unsigned char		escape_arg_digits;
 
+	/* map of lines that need to be redrawn */
+	_winvt_redraw		redraw[25];
+
 	/* scroll region */
 	unsigned char		scroll_top,scroll_bottom; /* inclusive */
 
@@ -166,7 +201,9 @@ typedef struct _winvt_console_ctx {
 	unsigned char		scroll_mode:1;		/* <ESC>[?4h (set) or <ESC>[?4l (reset) */
 	unsigned char		myCaret:1;
 	unsigned char		myCaretDoubleWide:1;
-	unsigned char		_unused1_:4;
+	unsigned char		screen_mode:1;		/* <ESC>[?7h (set) reverse mode */
+	unsigned char		cursor_moved:1;
+	unsigned char		_unused1_:3;
 
 	/* compatible DC and bitmap used for double-wide and double-high modes */
 	HBITMAP			tmpBMP,tmpBMPold;
@@ -216,6 +253,35 @@ void far *win386_help_MapAliasToFlat(DWORD farptr) {
 	return MK_FP(farptr>>16,farptr&0xFFFF);
 }
 #endif
+
+static unsigned char decvt_graphics_az[26/*a-z*/] = {
+	177,			/* a */
+	' ',			/* b (HT) */
+	' ',			/* c (FF) */
+	' ',			/* d (CR) */
+	' ',			/* e (LF) */
+	0xF8,			/* f */
+	0xF1,			/* g */
+	' ',			/* h (NL) */
+	' ',			/* i (VT) */
+	0xD9,			/* j */
+	0xBF,			/* k */
+	0xDA,			/* l */
+	0xC0,			/* m */
+	0xC5,			/* n */
+	0xC4,			/* o (bar at top---no equiv) */
+	0xC4,			/* p (bar at top/mid--no equiv) */
+	0xC4,			/* q (bar in middle) */
+	0xC4,			/* r (bar at bottom/mid--no equiv) */
+	'_',			/* s (bar at bottom) */
+	0xC3,			/* t */
+	0xB4,			/* u */
+	0xC1,			/* v */
+	0xC2,			/* w */
+	0xB3,			/* x */
+	0xF3,			/* y */
+	0xF2			/* z */
+};
 
 int _winvt_init_tmp(struct _winvt_console_ctx FAR *c) {
 	HDC hdc;
@@ -296,6 +362,10 @@ void _vt_erasescreen() {
 
 	_this_console.cursor_state.f.chr = ' ';
 	for (i=0;i < (80*25);i++) _this_console.console[i] = _this_console.cursor_state;
+	for (i=0;i < 25;i++) {
+		_this_console.redraw[i].s = 0;
+		_this_console.redraw[i].e = _this_console.conWidth;
+	}
 }
 
 void _vt_terminal_reset() { /* <ESC>c */
@@ -308,8 +378,11 @@ void _vt_terminal_reset() { /* <ESC>c */
 	_this_console.saved_cx = 0;
 	_this_console.saved_cy = 0;
 	_this_console.line_wrap = 1;
+	_this_console.screen_mode = 0;
+	_this_console.cursor_state.f.charset = CHRSET_US;
 	_this_console.conX = 0;
 	_this_console.conY = 0;
+	_this_console.cursor_moved = 1;
 }
 
 static DWORD _vt_palette16[24] = {
@@ -387,6 +460,7 @@ void _winvt_do_drawline(struct _winvt_console_ctx FAR *ctx,HDC hdc,unsigned int 
 	_winvt_char cur;
 	unsigned int x,i;
 	char tmp[80];
+	HFONT of;
 
 #define _this_console EVIL
 
@@ -401,6 +475,13 @@ void _winvt_do_drawline(struct _winvt_console_ctx FAR *ctx,HDC hdc,unsigned int 
 		}
 	}
 
+	if (_winvt_init_tmp(ctx) != 0)
+		return;
+
+	/* we are drawing the line, clear the redraw flag */
+	ctx->redraw[y].s = 0;
+	ctx->redraw[y].e = 0;
+
 	for (x=x1;x < x2;) {
 		srow = ctx->console + (ctx->conWidth * y) + x;
 		cur = *srow;
@@ -408,38 +489,33 @@ void _winvt_do_drawline(struct _winvt_console_ctx FAR *ctx,HDC hdc,unsigned int 
 		i = 1;
 
 		if (cur.f.doublewide) {
+			of = (HFONT)SelectObject(ctx->tmpDC,cur.f.underscore ? ctx->monoSpaceFontUnderline : ctx->monoSpaceFont);
+			SetBkColor(ctx->tmpDC,((cur.f.reverse?1:0)^(ctx->screen_mode?1:0)) ? _vt_fgcolor(&cur) : _vt_bgcolor(&cur));
+			SetTextColor(ctx->tmpDC,(((cur.f.reverse||cur.f.hidden)?1:0)^(ctx->screen_mode?1:0)) ? _vt_bgcolor(&cur) : _vt_fgcolor(&cur));
+
 			srow += 2;
 			while ((x+(i*2)) < x2 && i < sizeof(tmp) && (srow->raw & 0xFFFFFF00UL) == (cur.raw & 0xFFFFFF00UL)) {
 				tmp[i++] = srow->f.chr;
 				srow += 2;
 			}
 
-			if (_winvt_init_tmp(ctx) == 0) {
-				HFONT of;
+			/* use the memory DC to draw, then stretchblt */
+			/* FIXME: This actually causes quite a slowdown in rendering! Is there a faster way? Is there a 24-pt high Terminal font we can use? */
+			TextOut(ctx->tmpDC,0,0,tmp,i);
+			StretchBlt(
+				/* dest */
+				hdc,
+				x * ctx->monoSpaceFontWidth,y * ctx->monoSpaceFontHeight,
+				i * ctx->monoSpaceFontWidth * 2,ctx->monoSpaceFontHeight,
+				/* source */
+				ctx->tmpDC,
+				0,cur.f.doublehigh_bottomhalf ? (ctx->monoSpaceFontHeight/2) : 0,
+				i * ctx->monoSpaceFontWidth,
+				cur.f.doublehigh ? (ctx->monoSpaceFontHeight/2) : ctx->monoSpaceFontHeight,
+				/* rop */
+				SRCCOPY);
 
-				of = (HFONT)SelectObject(ctx->tmpDC,cur.f.underscore ? ctx->monoSpaceFontUnderline : ctx->monoSpaceFont);
-				SetBkColor(ctx->tmpDC,cur.f.reverse ? _vt_fgcolor(&cur) : _vt_bgcolor(&cur));
-				SetTextColor(ctx->tmpDC,(cur.f.reverse || cur.f.hidden) ? _vt_bgcolor(&cur) : _vt_fgcolor(&cur));
-
-				/* use the memory DC to draw, then stretchblt */
-				/* FIXME: This actually causes quite a slowdown in rendering! Is there a faster way? Is there a 24-pt high Terminal font we can use? */
-				TextOut(ctx->tmpDC,0,0,tmp,i);
-				StretchBlt(
-					/* dest */
-					hdc,
-					x * ctx->monoSpaceFontWidth,y * ctx->monoSpaceFontHeight,
-					i * ctx->monoSpaceFontWidth * 2,ctx->monoSpaceFontHeight,
-					/* source */
-					ctx->tmpDC,
-					0,cur.f.doublehigh_bottomhalf ? (ctx->monoSpaceFontHeight/2) : 0,
-					i * ctx->monoSpaceFontWidth,
-					cur.f.doublehigh ? (ctx->monoSpaceFontHeight/2) : ctx->monoSpaceFontHeight,
-					/* rop */
-					SRCCOPY);
-
-				SelectObject(ctx->tmpDC,of);
-			}
-
+			SelectObject(ctx->tmpDC,of);
 			x += i * 2;
 		}
 		else {
@@ -449,15 +525,12 @@ void _winvt_do_drawline(struct _winvt_console_ctx FAR *ctx,HDC hdc,unsigned int 
 				srow++;
 			}
 
-			SelectObject(hdc,cur.f.underscore ? ctx->monoSpaceFontUnderline : ctx->monoSpaceFont);
-			SetBkColor(hdc,cur.f.reverse ? _vt_fgcolor(&cur) : _vt_bgcolor(&cur));
-			SetTextColor(hdc,(cur.f.reverse || cur.f.hidden) ? _vt_bgcolor(&cur) : _vt_fgcolor(&cur));
-
+			SetBkColor(hdc,((cur.f.reverse?1:0)^(ctx->screen_mode?1:0)) ? _vt_fgcolor(&cur) : _vt_bgcolor(&cur));
+			SetTextColor(hdc,(((cur.f.reverse||cur.f.hidden)?1:0)^(ctx->screen_mode?1:0)) ? _vt_bgcolor(&cur) : _vt_fgcolor(&cur));
 			TextOut(hdc,x * ctx->monoSpaceFontWidth,y * ctx->monoSpaceFontHeight,tmp,i);
 			x += i;
 		}
 	}
-
 #undef _this_console
 }
 
@@ -682,6 +755,9 @@ void _winvt_pump_wait() {
 void _winvt_pump() {
 	MSG msg;
 
+	_winvt_redraw_changes();
+	if (_this_console.cursor_moved) _winvt_update_cursor();
+
 #if TARGET_BITS == 16 || (TARGET_BITS == 32 && defined(TARGET_WINDOWS_WIN386))
 	/* Hack: Windows has this nice "GetTickCount()" function that has serious problems
 	 *       maintaining a count if we don't process the message pump! Doing this
@@ -705,6 +781,9 @@ void _winvt_pump() {
 }
 
 void _winvt_update_cursor() {
+	if (!_this_console.myCaret)
+		_winvt_setup_caret(&_this_console);
+
 	if (_this_console.myCaret) {
 		if (_this_console.console[(_this_console.conY*_this_console.conWidth)+_this_console.conX].f.doublewide != _this_console.myCaretDoubleWide) {
 			_winvt_free_caret(&_this_console);
@@ -714,6 +793,8 @@ void _winvt_update_cursor() {
 		SetCaretPos(_this_console.conX * _this_console.monoSpaceFontWidth,
 			_this_console.conY * _this_console.monoSpaceFontHeight);
 	}
+
+	_this_console.cursor_moved = 0;
 }
 
 void _winvt_redraw_a_line_row(int y,int x1,int x2) {
@@ -733,25 +814,24 @@ void _winvt_redraw_a_line_row(int y,int x1,int x2) {
 	}
 }
 
-void _winvt_redraw_line_row_partial(int x1,int x2) {
-	if (x1 >= x2) return;
+void _winvt_redraw_changes() {
+	unsigned int y;
+	HFONT of;
+	HDC hdc;
+	
+	hdc = GetDC(_this_console.hwndMain);
+	if (_this_console.myCaret) HideCaret(_this_console.hwndMain);
+	of = (HFONT)SelectObject(hdc,_this_console.monoSpaceFont);
+	for (y=0;y < _this_console.conHeight;y++) {
+		if (_this_console.redraw[y].s == 0 && _this_console.redraw[y].e == 0)
+			continue;
 
-	if (_this_console.conY >= 0 && _this_console.conY < _this_console.conHeight) {
-		HDC hdc = GetDC(_this_console.hwndMain);
-		HFONT of;
-
-		SetBkMode(hdc,OPAQUE);
-		of = (HFONT)SelectObject(hdc,_this_console.monoSpaceFont);
-		if (_this_console.myCaret) HideCaret(_this_console.hwndMain);
-		_winvt_do_drawline(&_this_console,hdc,_this_console.conY,x1,x2);
-		if (_this_console.myCaret) ShowCaret(_this_console.hwndMain);
-		SelectObject(hdc,of);
-		ReleaseDC(_this_console.hwndMain,hdc);
+		_winvt_do_drawline(&_this_console,hdc,y,
+			_this_console.redraw[y].s,_this_console.redraw[y].e);
 	}
-}
-
-void _winvt_redraw_line_row() {
-	_winvt_redraw_line_row_partial(0,_this_console.conWidth);
+	SelectObject(hdc,of);
+	if (_this_console.myCaret) ShowCaret(_this_console.hwndMain);
+	ReleaseDC(_this_console.hwndMain,hdc);
 }
 
 void _winvt_redraw_all() {
@@ -796,6 +876,14 @@ void _winvt_scrolldown() {
 		_this_console.console+(_this_console.conWidth*_this_console.scroll_top),
 		(_this_console.scroll_bottom-_this_console.scroll_top)*_this_console.conWidth*sizeof(_winvt_char));
 
+	memmove(_this_console.redraw+(_this_console.scroll_top+1),
+		_this_console.redraw+_this_console.scroll_top,
+		(_this_console.scroll_bottom-_this_console.scroll_top)*sizeof(_winvt_redraw));
+
+	/* for speed, we use BitBlt to scroll up and then only mark the one line as redraw */
+	_this_console.redraw[_this_console.scroll_top].s = 0;
+	_this_console.redraw[_this_console.scroll_top].e = _this_console.conWidth;
+
 	_this_console.cursor_state.f.chr = ' ';
 	for (i=0;i < _this_console.conWidth;i++)
 		_this_console.console[(_this_console.scroll_top*_this_console.conWidth)+i] =
@@ -822,6 +910,14 @@ void _winvt_scrollup() {
 		_this_console.console+(_this_console.conWidth*(_this_console.scroll_top+1)),
 		(_this_console.scroll_bottom-_this_console.scroll_top)*_this_console.conWidth*sizeof(_winvt_char));
 
+	memmove(_this_console.redraw+_this_console.scroll_top,
+		_this_console.redraw+(_this_console.scroll_top+1),
+		(_this_console.scroll_bottom-_this_console.scroll_top)*sizeof(_winvt_redraw));
+
+	/* for speed, we use BitBlt to scroll up and then only mark the one line as redraw */
+	_this_console.redraw[_this_console.scroll_bottom].s = 0;
+	_this_console.redraw[_this_console.scroll_bottom].e = _this_console.conWidth;
+
 	_this_console.cursor_state.f.chr = ' ';
 	for (i=0;i < _this_console.conWidth;i++)
 		_this_console.console[(_this_console.scroll_bottom*_this_console.conWidth)+i] =
@@ -830,19 +926,16 @@ void _winvt_scrollup() {
 
 void _winvt_newline() {
 	_this_console.conX = 0;
+	_this_console.cursor_moved = 1;
 	_this_console.cursor_state.f.doublewide = 0;
 	_this_console.cursor_state.f.doublehigh = 0;
 	_this_console.cursor_state.f.doublehigh_bottomhalf = 0;
 	if (_this_console.conY >= _this_console.scroll_bottom) {
 		_this_console.conY = _this_console.scroll_bottom;
-		_winvt_redraw_line_row();
 		_winvt_scrollup();
-		_winvt_redraw_line_row();
-		_winvt_update_cursor();
 		_gdivt_pause();
 	}
 	else {
-		_winvt_redraw_line_row();
 		_this_console.conY++;
 	}
 }
@@ -861,7 +954,16 @@ void _winvt_on_esc_ls_m() { /* <ESC>[m attribute */
 
 		switch (c) {
 			case 0: /* reset attr */
-				_this_console.cursor_state.raw = 0;
+				_this_console.cursor_state.f.bold = 0;
+				_this_console.cursor_state.f.dim = 0;
+				_this_console.cursor_state.f.underscore = 0;
+				_this_console.cursor_state.f.blink = 0;
+				_this_console.cursor_state.f.reverse = 0;
+				_this_console.cursor_state.f.hidden = 0;
+				_this_console.cursor_state.f.foreground_set = 0;
+				_this_console.cursor_state.f.foreground = 0;
+				_this_console.cursor_state.f.background_set = 0;
+				_this_console.cursor_state.f.background = 0;
 				break;
 			case 1:
 				_this_console.cursor_state.f.bold = 1;
@@ -895,11 +997,21 @@ void _winvt_on_esc_ls_m() { /* <ESC>[m attribute */
 
 void _winvt_on_esc_ls_hl(unsigned char set) {
 	unsigned char what = 0;
+	unsigned int i;
 
 	if (_this_console.escape_argc > 0)
 		what = _this_console.escape_argv[0];
 
 	switch (what) {
+		case 5: /* enable/disable "screen mode" reverse */
+			if (_this_console.screen_mode != set) {
+				_this_console.screen_mode = set;
+				for (i=0;i < _this_console.conHeight;i++) {
+					_this_console.redraw[i].s = 0;
+					_this_console.redraw[i].e = _this_console.conWidth;
+				}
+			}
+			break;
 		case 7:	/* enable/disable line wrap */
 			_this_console.line_wrap = set;
 			break;
@@ -912,7 +1024,7 @@ void _winvt_on_esc_ls_H() {
 
 	_this_console.conY = _this_console.escape_argv[0] - 1;
 	_this_console.conX = _this_console.escape_argv[1] - 1;
-	_winvt_redraw_line_row();
+	_this_console.cursor_moved = 1;
 	clip_cursor();
 }
 
@@ -921,7 +1033,7 @@ void _winvt_on_esc_ls_A() {
 		_this_console.escape_argv[_this_console.escape_argc++] = 1;
 
 	_this_console.conY -= _this_console.escape_argv[0];
-	_winvt_redraw_line_row();
+	_this_console.cursor_moved = 1;
 	clip_cursor();
 }
 
@@ -930,7 +1042,7 @@ void _winvt_on_esc_ls_B() {
 		_this_console.escape_argv[_this_console.escape_argc++] = 1;
 
 	_this_console.conY += _this_console.escape_argv[0];
-	_winvt_redraw_line_row();
+	_this_console.cursor_moved = 1;
 	clip_cursor();
 }
 
@@ -939,7 +1051,7 @@ void _winvt_on_esc_ls_C() {
 		_this_console.escape_argv[_this_console.escape_argc++] = 1;
 
 	_this_console.conX += _this_console.escape_argv[0];
-	_winvt_redraw_line_row();
+	_this_console.cursor_moved = 1;
 	clip_cursor();
 }
 
@@ -948,18 +1060,8 @@ void _winvt_on_esc_ls_D() {
 		_this_console.escape_argv[_this_console.escape_argc++] = 1;
 
 	_this_console.conX -= _this_console.escape_argv[0];
-	_winvt_redraw_line_row();
+	_this_console.cursor_moved = 1;
 	clip_cursor();
-}
-
-void _winvt_erase_this_line() {
-	unsigned int i,m;
-
-	_this_console.cursor_state.f.chr = ' ';
-	m = (_this_console.conY+1) * _this_console.conWidth;
-	i = _this_console.conY * _this_console.conWidth;
-	while (i < m) _this_console.console[i++] = _this_console.cursor_state;
-	_winvt_redraw_all();
 }
 
 void _winvt_on_esc_ls_K() {
@@ -973,20 +1075,23 @@ void _winvt_on_esc_ls_K() {
 			m = (_this_console.conY+1) * _this_console.conWidth;
 			i = (_this_console.conY * _this_console.conWidth) + _this_console.conX;
 			while (i < m) _this_console.console[i++] = _this_console.cursor_state;
-			_winvt_redraw_all();
+			_this_console.redraw[_this_console.conY].s = 0;
+			_this_console.redraw[_this_console.conY].e = _this_console.conWidth;
 			break;
 		case 1:	_this_console.cursor_state.f.chr = ' ';
 			m = _this_console.conY * _this_console.conWidth;
 			i = (_this_console.conY * _this_console.conWidth) + _this_console.conX;
 			do { _this_console.console[i] = _this_console.cursor_state;
 			} while ((i--) != m);
-			_winvt_redraw_all();
+			_this_console.redraw[_this_console.conY].s = 0;
+			_this_console.redraw[_this_console.conY].e = _this_console.conWidth;
 			break;
 		case 2:	_this_console.cursor_state.f.chr = ' ';
 			m = (_this_console.conY+1) * _this_console.conWidth;
 			i = _this_console.conY * _this_console.conWidth;
 			while (i < m) _this_console.console[i++] = _this_console.cursor_state;
-			_winvt_redraw_all();
+			_this_console.redraw[_this_console.conY].s = 0;
+			_this_console.redraw[_this_console.conY].e = _this_console.conWidth;
 			break;
 	};
 }
@@ -1002,18 +1107,28 @@ void _winvt_on_esc_ls_J() {
 		case 0:	m = _this_console.conWidth * _this_console.conHeight;
 			_this_console.cursor_state.f.chr = ' ';
 			while (i < m) _this_console.console[i++] = _this_console.cursor_state;
-			_winvt_redraw_all();
+			for (i=_this_console.conY;i < _this_console.conHeight;i++) {
+				_this_console.redraw[i].s = 0;
+				_this_console.redraw[i].e = _this_console.conWidth;
+			}
 			break;
 		case 1:	_this_console.cursor_state.f.chr = ' ';
 			do { _this_console.console[i] = _this_console.cursor_state;
 			} while ((i--) != 0);
-			_winvt_redraw_all();
+			for (i=0;i <= _this_console.conY;i++) {
+				_this_console.redraw[i].s = 0;
+				_this_console.redraw[i].e = _this_console.conWidth;
+			}
 			break;
 		case 2:
+			_this_console.cursor_moved = 1;
 			_this_console.conX = 0;
 			_this_console.conY = 0;
 			_vt_erasescreen();
-			_winvt_redraw_all();
+			for (i=0;i < _this_console.conHeight;i++) {
+				_this_console.redraw[i].s = 0;
+				_this_console.redraw[i].e = _this_console.conWidth;
+			}
 			break;
 	};
 }
@@ -1026,8 +1141,7 @@ void _winvt_on_esc_ls_s() { /* save cursor */
 void _winvt_on_esc_ls_u() { /* restore cursor */
 	_this_console.conX = _this_console.saved_cx;
 	_this_console.conY = _this_console.saved_cy;
-	_winvt_redraw_all();
-	_winvt_update_cursor();
+	_this_console.cursor_moved = 1;
 }
 
 void _winvt_on_esc_7() { /* save cursor & attrs */
@@ -1040,8 +1154,7 @@ void _winvt_on_esc_8() { /* restore cursor & attr */
 	_this_console.cursor_state = _this_console.saved_cattr;
 	_this_console.conX = _this_console.saved_cx;
 	_this_console.conY = _this_console.saved_cy;
-	_winvt_redraw_all();
-	_winvt_update_cursor();
+	_this_console.cursor_moved = 1;
 }
 
 void _winvt_on_esc_ls_l_c() { /* query device code */
@@ -1081,7 +1194,6 @@ void _winvt_on_esc_ls_r() {
 	if (_this_console.escape_argv[1] >= _this_console.conHeight)
 		_this_console.escape_argv[1] = _this_console.conHeight - 1;
 
-	_winvt_redraw_line_row();
 	_this_console.scroll_top = _this_console.escape_argv[0];
 	_this_console.scroll_bottom = _this_console.escape_argv[1];
 	clip_cursor();
@@ -1090,46 +1202,48 @@ void _winvt_on_esc_ls_r() {
 void _winvt_on_esc_D() { /* scroll down one line (FIXME: Does it move the cursor too?) */
 	_winvt_scrolldown();
 	_winvt_redraw_a_line_row(_this_console.scroll_top,0,_this_console.conWidth);
-	_winvt_update_cursor();
 }
 
 void _winvt_on_esc_M() { /* scroll up one line (FIXME: Does it move the cursor too?) */
 	_winvt_scrollup();
 	_winvt_redraw_a_line_row(_this_console.scroll_bottom,0,_this_console.conWidth);
-	_winvt_update_cursor();
 }
 
 void _winvt_on_esc_lsquare(char c) {
-	if (c == 'm')
-		_winvt_on_esc_ls_m();
-	else if (c == 'h')
-		_winvt_on_esc_ls_hl(1);
-	else if (c == 'l')
-		_winvt_on_esc_ls_hl(0);
-	else if (c == 'H' || c == 'f')
-		_winvt_on_esc_ls_H();
-	else if (c == 'A')
-		_winvt_on_esc_ls_A();
-	else if (c == 'B')
-		_winvt_on_esc_ls_B();
-	else if (c == 'C')
-		_winvt_on_esc_ls_C();
-	else if (c == 'D')
-		_winvt_on_esc_ls_D();
-	else if (c == 'K')
-		_winvt_on_esc_ls_K();
-	else if (c == 'J')
-		_winvt_on_esc_ls_J();
-	else if (c == 's')
-		_winvt_on_esc_ls_s();
-	else if (c == 'u')
-		_winvt_on_esc_ls_u();
-	else if (c == 'r')
-		_winvt_on_esc_ls_r();
-	else if (c == 'c')
-		_winvt_on_esc_ls_l_c();
-	else if (c == 'n')
-		_winvt_on_esc_ls_l_n();
+	if (_this_console.escape_mode == ESC_LSQUARE_QUESTION) { /* <ESC>[?... */
+		if (c == 'h')
+			_winvt_on_esc_ls_hl(1);
+		else if (c == 'l')
+			_winvt_on_esc_ls_hl(0);
+	}
+	else { /* <ESC>[... */
+		if (c == 'm')
+			_winvt_on_esc_ls_m();
+		else if (c == 'H' || c == 'f')
+			_winvt_on_esc_ls_H();
+		else if (c == 'A')
+			_winvt_on_esc_ls_A();
+		else if (c == 'B')
+			_winvt_on_esc_ls_B();
+		else if (c == 'C')
+			_winvt_on_esc_ls_C();
+		else if (c == 'D')
+			_winvt_on_esc_ls_D();
+		else if (c == 'K')
+			_winvt_on_esc_ls_K();
+		else if (c == 'J')
+			_winvt_on_esc_ls_J();
+		else if (c == 's')
+			_winvt_on_esc_ls_s();
+		else if (c == 'u')
+			_winvt_on_esc_ls_u();
+		else if (c == 'r')
+			_winvt_on_esc_ls_r();
+		else if (c == 'c')
+			_winvt_on_esc_ls_l_c();
+		else if (c == 'n')
+			_winvt_on_esc_ls_l_n();
+	}
 }
 
 /* write to the console. does NOT redraw the screen unless we get a newline or we need to scroll up */
@@ -1141,17 +1255,35 @@ int _winvt_putc(char c) {
 		if (_this_console.conX > 0) {
 			_this_console.conX -= _this_console.cursor_state.f.doublewide ? 2 : 1;
 			if (_this_console.conX < 0) _this_console.conX = 0;
-			_winvt_update_cursor();
+			_this_console.cursor_moved = 1;
 		}
 	}
 	else if (c == 13) {
+		_this_console.cursor_moved = 1;
 		_this_console.conX = 0;
-		_winvt_redraw_line_row();
-		_winvt_update_cursor();
 		_gdivt_pause();
 	}
 	else if (c == 27) {
 		_this_console.escape_mode = ESC_ALONE;
+	}
+	else if (_this_console.escape_mode == ESC_CHARSET_G0 || _this_console.escape_mode == ESC_CHARSET_G1) {
+		if (c == 'A') { /* G0/G1 United Kingdom */
+			_this_console.cursor_state.f.charset = CHRSET_UK;
+		}
+		else if (c == 'B') { /* G0/G1 United States */
+			_this_console.cursor_state.f.charset = CHRSET_US;
+		}
+		else if (c == '0') { /* G0/G1 special chars & line set */
+			_this_console.cursor_state.f.charset = CHRSET_GRAPHICS;
+		}
+		else if (c == '1') { /* G0/G1 alternate char ROM */
+			_this_console.cursor_state.f.charset = CHRSET_US;
+		}
+		else if (c == '2') { /* G0/G1 alt char ROM and special */
+			_this_console.cursor_state.f.charset = CHRSET_GRAPHICS;
+		}
+
+		_this_console.escape_mode = 0;
 	}
 	else if (_this_console.escape_mode == ESC_ALONE) {
 		if (c == '[') {
@@ -1159,6 +1291,12 @@ int _winvt_putc(char c) {
 			_this_console.escape_arg_accum = 0;
 			_this_console.escape_arg_digits = 0;
 			_this_console.escape_argc = 0;
+		}
+		else if (c == '(') {
+			_this_console.escape_mode = ESC_CHARSET_G0;
+		}
+		else if (c == ')') {
+			_this_console.escape_mode = ESC_CHARSET_G1;
 		}
 		else if (c == '#') {
 			_this_console.escape_mode = ESC_POUND;
@@ -1168,7 +1306,6 @@ int _winvt_putc(char c) {
 
 			if (c == 'c') {
 				_vt_terminal_reset();
-				_winvt_redraw_all();
 			}
 			else if (c == '7')
 				_winvt_on_esc_7();
@@ -1187,31 +1324,27 @@ int _winvt_putc(char c) {
 			_this_console.cursor_state.f.doublewide = 1;
 			_this_console.cursor_state.f.doublehigh = 1;
 			_this_console.cursor_state.f.doublehigh_bottomhalf = 0;
-			_this_console.conX = 0;
 		}
 		else if (c == '4') { /* change the current line to double high double wide bottom half */
 			_this_console.cursor_state.f.doublewide = 1;
 			_this_console.cursor_state.f.doublehigh = 1;
 			_this_console.cursor_state.f.doublehigh_bottomhalf = 1;
-			_this_console.conX = 0;
 		}
 		else if (c == '5') { /* change the current line to single width/height */
 			_this_console.cursor_state.f.doublewide = 0;
 			_this_console.cursor_state.f.doublehigh = 0;
 			_this_console.cursor_state.f.doublehigh_bottomhalf = 0;
-			_this_console.conX = 0;
 		}
 		else if (c == '6') { /* change the current line to single high double wide */
 			_this_console.cursor_state.f.doublewide = 1;
 			_this_console.cursor_state.f.doublehigh = 0;
 			_this_console.cursor_state.f.doublehigh_bottomhalf = 0;
-			_this_console.conX = 0;
 		}
 
 		_winvt_setup_caret(&_this_console);
 		_this_console.escape_mode = ESC_NONE;
 	}
-	else if (_this_console.escape_mode == ESC_LSQUARE) {
+	else if (_this_console.escape_mode == ESC_LSQUARE || _this_console.escape_mode == ESC_LSQUARE_QUESTION) {
 		if (isdigit(c)) {
 			_this_console.escape_arg_accum = (_this_console.escape_arg_accum * 10) + (c - '0');
 			_this_console.escape_arg_digits++;
@@ -1227,10 +1360,14 @@ int _winvt_putc(char c) {
 			_this_console.escape_arg_accum = 0;
 			_this_console.escape_arg_digits = 0;
 
-			if (c == ';') {
+			/* DEC private <ESC>[?... */
+			if (c == '?' && _this_console.escape_argc == 0 && _this_console.escape_mode == ESC_LSQUARE) {
+				_this_console.escape_mode = ESC_LSQUARE_QUESTION;
+			}
+			else if (c == ';') {
 				/* more args to come, keep scanning */
 			}
-			else if (c == 'R') {
+			else if (c == 'R' && _this_console.escape_mode == ESC_LSQUARE) {
 				char tmp[32],*s = tmp;
 
 				/* <ESC>[..R is supposed to be query cursor response. print it on the console if we get it back.
@@ -1249,7 +1386,25 @@ int _winvt_putc(char c) {
 	else {
 		int step = _this_console.cursor_state.f.doublewide ? 2 : 1;
 
+		if (_this_console.cursor_state.f.charset == CHRSET_GRAPHICS) {
+			if (c >= 'a' && c <= 'z') c = decvt_graphics_az[c-'a'];
+			else if (c == '~') c = 0xFA;
+		}
+
+		if (step == 2) /* double-wide text must be aligned to two-cell boundary */
+			_this_console.conX &= ~1;
+
+		_this_console.cursor_moved = 1;
 		if (_this_console.conX < _this_console.conWidth) {
+			if (_this_console.redraw[_this_console.conY].s == 0 && _this_console.redraw[_this_console.conY].e == 0) {
+				_this_console.redraw[_this_console.conY].s = _this_console.conX;
+				_this_console.redraw[_this_console.conY].e = _this_console.conX+1;
+			}
+			else if (_this_console.redraw[_this_console.conY].s > _this_console.conX)
+				_this_console.redraw[_this_console.conY].s = _this_console.conX;
+			else if (_this_console.redraw[_this_console.conY].e <= _this_console.conX)
+				_this_console.redraw[_this_console.conY].e = _this_console.conX+1;
+
 			_this_console.cursor_state.f.chr = (unsigned char)c;
 			_this_console.console[(_this_console.conY*_this_console.conWidth)+_this_console.conX] =
 				_this_console.cursor_state;
@@ -1277,8 +1432,8 @@ int _winvt_putc(char c) {
 
 void _winvt_fflush(FILE *f) {
 	if (f == stdout) {
-		_winvt_redraw_all(); /* TODO: Implement a more intelligent refresh mechanism! */
-		_winvt_update_cursor();
+		_winvt_redraw_changes();
+		if (_this_console.cursor_moved) _winvt_update_cursor();
 	}
 	else {
 		fflush(f);
@@ -1300,10 +1455,6 @@ size_t _winvt_printf(const char *fmt,...) {
 			if (*t == 13 || *t == 10) fX = 0;
 			if (_winvt_putc(*t++)) { fX = 0; all = 1; }
 		}
-		if (fX <= _this_console.conX) {
-			_winvt_redraw_line_row_partial(fX,all ? _this_console.conWidth : _this_console.conX);
-		}
-		_winvt_update_cursor();
 	}
 
 	_winvt_pump();

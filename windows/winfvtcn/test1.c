@@ -8,6 +8,9 @@
 #  include <windows/winfvtcn/winfvtcn.h>
 # endif
 #endif
+#if defined(TARGET_LINUX) && defined(__GNUC__)
+# include <termios.h>
+#endif
 
 #include <stdio.h>
 #include <assert.h>
@@ -21,7 +24,55 @@
 # define VT_ESC "\x1B"
 #endif
 
+#if defined(TARGET_LINUX) && defined(__GNUC__)
+static int getch() {
+	char c;
+
+	if (read(0/*STDIN*/,&c,1) == 1)
+		return (int)((unsigned char)c);
+
+	return -1;
+}
+
+static int kbhit() {
+	struct timeval tv={0,0};
+	fd_set f;
+	int n;
+
+	FD_ZERO(&f);
+	FD_SET(0,&f);
+	n = select(1/*STDIN+1*/,&f,NULL,NULL,&tv);
+	return n > 0;
+}
+
+static struct termios termios_orig,termios_now;
+
+static void termios_save() {
+	tcgetattr(0/*STDIN*/,&termios_orig);
+	termios_now = termios_orig;
+}
+
+static void termios_immediate_mode() {
+	termios_now.c_lflag &= ~(ICANON|ECHO|ECHOE|ECHOK|ECHONL|ECHOCTL);
+	tcsetattr(0/*STDIN*/,TCSANOW,&termios_now);
+}
+
+static void termios_restore() {
+	tcsetattr(0/*STDIN*/,TCSANOW,&termios_orig);
+}
+#endif
+
 int main() {
+	char chr;
+	int c;
+	int i;
+
+#if defined(TARGET_LINUX) && defined(__GNUC__)
+	termios_save();
+	termios_immediate_mode();
+#endif
+
+/* TEST 1----------------------------------------------------------*/
 	printf("You shouldn't see this text\n");
 	printf(VT_ESC "c");
 	printf("Normal text out\n");
@@ -40,9 +91,97 @@ int main() {
 	printf(VT_ESC "#4" "Double high text\n");
 	printf(VT_ESC "#5" "Normal text\n");
 
+	/* wait for user's conformation */
+	printf("Hit ENTER to continue, 'x' to stop\n");
+	do { c = getch(); } while (!(c == 13 || c == 10 || c == 'x'));
+	if (c == 'x') goto done;
+
+/* TEST 2----------------------------------------------------------*/
+	printf(VT_ESC "c");
+
+	printf(VT_ESC "[?7l"); /* <- disable line wrap */
+	printf("Line wrap enable/disable test. No wrap:"); fflush(stdout);
+	chr = '-'; for (i=0;i < 400;i++) write(1/*STDOUT*/,"-",1);
+	printf("\n");
+
+	printf(VT_ESC "[?7h"); /* <- enable line wrap */
+	printf("With wrap:"); fflush(stdout);
+	chr = '-'; for (i=0;i < (160-11);i++) write(1/*STDOUT*/,"-",1);
+	printf("*\n");
+
+	printf("\n");
+	printf("Normal text: " VT_ESC "(B" "abcdefghijklmnopqrstuvwxyz123456789\n");
+	printf("Graphics:    " VT_ESC "(0" "abcdefghijklmnopqrstuvwxyz123456789\n");
+	printf(VT_ESC "(B"); fflush(stdout);
+
+	/* wait for user's conformation */
+	printf("Hit ENTER to continue, 'x' to stop\n");
+	do { c = getch(); } while (!(c == 13 || c == 10 || c == 'x'));
+	if (c == 'x') goto done;
+
+/* TEST 3----------------------------------------------------------*/
+	printf(VT_ESC "c");
+
+	i = 0;
+	printf("Your terminal should be flashing now\n");
+	printf("Hit ENTER to continue, 'x' to stop\n");
+	do {
+		c = 0;
+		if (kbhit()) c = getch();
+#if defined(TARGET_LINUX)
+		usleep(100000);
+#elif defined(TARGET_WINDOWS)
+		{
+			DWORD a,b,delta;
+
+			b = GetCurrentTime();
+			do {
+# ifdef WIN_STDOUT_CONSOLE
+				_winvt_pump();
+				_gdivt_pause();
+# endif
+				a = GetCurrentTime();
+				delta = (a - b);
+			} while (delta < 100);
+		}
+#endif
+
+		if (i == 0) {
+			printf(VT_ESC "[?5h");
+			fflush(stdout);
+		}
+		else if (i == 10) {
+			printf(VT_ESC "[?5l");
+			fflush(stdout);
+		}
+
+		if ((++i) >= 20) i = 0;
+	} while (!(c == 13 || c == 10 || c == 'x'));
+	if (c == 'x') goto done;
+	printf(VT_ESC "[?5l");
+
+/* TEST 4----------------------------------------------------------*/
+	printf(VT_ESC "c");
+
+	printf("Hit ENTER to continue, 'x' to stop\n");
+	for (i=0;i < 25;i++) printf("Test row test row test row\n");
+	printf(VT_ESC "[4H");
+	printf(VT_ESC "[1L"); /* insert line at cursor */
+	printf(VT_ESC "-- INSERTED ROW --\n");
+
+	/* wait for user's conformation */
+	do { c = getch(); } while (!(c == 13 || c == 10 || c == 'x'));
+	if (c == 'x') goto done;
+
+done:	printf("Test program finished\n");
 #ifdef WIN_STDOUT_CONSOLE
 	_winvt_endloop_user_echo();
 #endif
+
+#if defined(TARGET_LINUX) && defined(__GNUC__)
+	termios_restore();
+#endif
+
 	return 0;
 }
 
