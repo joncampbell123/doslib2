@@ -21,12 +21,10 @@
  *      Insert Line (IL)
  *      Delete Line (DL)
  *      Insertion-Replacement Mode (IRM)
- *      Screen Alignment Display
  *
  *      http://www.vt100.net/docs/vt100-ug/chapter3.html
  *      Load LEDs
  *      Select Character Set
- *      Screen Alignment Display
  *      ANSI/VT52 mode
  *      Auto repeat mode
  *      Cursor Keys Mode
@@ -891,18 +889,41 @@ void _winvt_scrolldown() {
 }
 
 void _winvt_scrollup() {
-	unsigned int i;
+	unsigned int i,j;
 	HDC hdc;
 
 	assert(_this_console.scroll_bottom >= (_this_console.scroll_top+1));
 
 	hdc = GetDC(_this_console.hwndMain);
 	if (_this_console.myCaret) HideCaret(_this_console.hwndMain);
-	BitBlt(hdc,
-		0,_this_console.scroll_top * _this_console.monoSpaceFontHeight,
-		_this_console.conWidth * _this_console.monoSpaceFontWidth,
-		(_this_console.scroll_bottom - _this_console.scroll_top) * _this_console.monoSpaceFontHeight,
-		hdc,0,(_this_console.scroll_top + 1) * _this_console.monoSpaceFontHeight,SRCCOPY);
+
+	if (_this_console.scroll_mode) {
+		/* TODO: Use TOOLHELP.DLL library if possible */
+		/* TODO: Windows 3.0: VGA vertical retrace sync reading port 0x3DA */
+		/* TODO: Windows NT/2000/XP/Vista/etc: TOOLHELP.DLL or Win32 equiv. */
+		const DWORD rows_per_sec = 6UL * ((DWORD)_this_console.monoSpaceFontHeight);
+		DWORD bt = GetCurrentTime(),delta;
+
+		for (i=0;i < _this_console.monoSpaceFontHeight;i++) {
+			do {
+				delta = ((GetCurrentTime() - bt) * rows_per_sec) / 1000UL;
+			} while ((unsigned int)delta < i);
+
+			BitBlt(hdc,
+				0,_this_console.scroll_top * _this_console.monoSpaceFontHeight,
+				_this_console.conWidth * _this_console.monoSpaceFontWidth,
+				(((_this_console.scroll_bottom - _this_console.scroll_top) + 1) * _this_console.monoSpaceFontHeight) - 1,
+				hdc,0,(_this_console.scroll_top * _this_console.monoSpaceFontHeight) + 1,SRCCOPY);
+		}
+	}
+	else {
+		BitBlt(hdc,
+			0,_this_console.scroll_top * _this_console.monoSpaceFontHeight,
+			_this_console.conWidth * _this_console.monoSpaceFontWidth,
+			(_this_console.scroll_bottom - _this_console.scroll_top) * _this_console.monoSpaceFontHeight,
+			hdc,0,(_this_console.scroll_top + 1) * _this_console.monoSpaceFontHeight,SRCCOPY);
+	}
+
 	if (_this_console.myCaret) ShowCaret(_this_console.hwndMain);
 	ReleaseDC(_this_console.hwndMain,hdc);
 
@@ -1003,6 +1024,9 @@ void _winvt_on_esc_ls_hl(unsigned char set) {
 		what = _this_console.escape_argv[0];
 
 	switch (what) {
+		case 4: /* enable/disable "scroll mode" */
+			_this_console.scroll_mode = set;
+			break;
 		case 5: /* enable/disable "screen mode" reverse */
 			if (_this_console.screen_mode != set) {
 				_this_console.screen_mode = set;
@@ -1339,6 +1363,18 @@ int _winvt_putc(char c) {
 			_this_console.cursor_state.f.doublewide = 1;
 			_this_console.cursor_state.f.doublehigh = 0;
 			_this_console.cursor_state.f.doublehigh_bottomhalf = 0;
+		}
+		else if (c == '8') { /* fill the screen with 'E' for screen alignment testing purposes, Screen Alignment Display */
+			int i;
+
+			for (i=0;i < _this_console.conHeight*_this_console.conWidth;i++) {
+				_this_console.console[i].raw = 0;
+				_this_console.console[i].f.chr = 'E';
+			}
+			for (i=0;i < _this_console.conHeight;i++) {
+				_this_console.redraw[i].s = 0;
+				_this_console.redraw[i].e = _this_console.conWidth;
+			}
 		}
 
 		_winvt_setup_caret(&_this_console);
