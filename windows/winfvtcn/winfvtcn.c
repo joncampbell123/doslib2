@@ -196,7 +196,8 @@ typedef struct _winvt_console_ctx {
 	unsigned char		screen_mode:1;		/* <ESC>[?7h (set) reverse mode */
 	unsigned char		cursor_moved:1;
 	unsigned char		show_cursor:1;		/* <ESC>[?25h */
-	unsigned char		_unused1_:2;
+	unsigned char		origin_mode:1;		/* <ESC>[?6h */
+	unsigned char		_unused1_:1;
 
 	/* compatible DC and bitmap used for double-wide and double-high modes */
 	HBITMAP			tmpBMP,tmpBMPold;
@@ -386,6 +387,7 @@ void _vt_terminal_reset() { /* <ESC>c */
 	_this_console.line_wrap = 1;
 	_this_console.screen_mode = 0;
 	_this_console.show_cursor = 1;
+	_this_console.origin_mode = 0;
 	_this_console.cursor_state.f.charset = CHRSET_US;
 	_this_console.conX = 0;
 	_this_console.conY = 0;
@@ -865,8 +867,14 @@ void _winvt_redraw_all() {
 }
 
 void clip_cursor() {
-	if (_this_console.conY < _this_console.scroll_top) _this_console.conY = _this_console.scroll_top;
-	else if (_this_console.conY > _this_console.scroll_bottom) _this_console.conY = _this_console.scroll_bottom;
+	if (_this_console.origin_mode) {
+		if (_this_console.conY < _this_console.scroll_top) _this_console.conY = _this_console.scroll_top;
+		else if (_this_console.conY > _this_console.scroll_bottom) _this_console.conY = _this_console.scroll_bottom;
+	}
+	else {
+		if (_this_console.conY < 0) _this_console.conY = 0;
+		else if (_this_console.conY >= _this_console.conHeight) _this_console.conY = _this_console.conHeight - 1;
+	}
 
 	if (_this_console.conX < 0) _this_console.conX = 0;
 	else if (_this_console.conX >= _this_console.conWidth) _this_console.conX = _this_console.conWidth - 1;
@@ -1039,8 +1047,11 @@ void _winvt_newline() {
 	_this_console.cursor_state.f.doublewide = 0;
 	_this_console.cursor_state.f.doublehigh = 0;
 	_this_console.cursor_state.f.doublehigh_bottomhalf = 0;
-	if (_this_console.conY >= _this_console.scroll_bottom) {
+
+	if (_this_console.origin_mode && _this_console.conY > _this_console.scroll_bottom)
 		_this_console.conY = _this_console.scroll_bottom;
+
+	if (_this_console.conY == _this_console.scroll_bottom) {
 		_winvt_scrollup();
 		_gdivt_pause();
 	}
@@ -1091,6 +1102,12 @@ void _winvt_on_esc_ls_m() { /* <ESC>[m attribute */
 				break;
 			case 8:
 				_this_console.cursor_state.f.hidden = 1;
+				break;
+			case 21:
+				_this_console.cursor_state.f.bold = 0;
+				break;
+			case 27:
+				_this_console.cursor_state.f.reverse = 0;
 				break;
 			case 30: case 31: case 32: case 33: case 34: case 35: case 36: case 37:
 				_this_console.cursor_state.f.foreground_set = 1;
@@ -1143,6 +1160,7 @@ void _winvt_on_esc_ls_H() {
 		_this_console.escape_argv[_this_console.escape_argc++] = 1;
 
 	_this_console.conY = _this_console.escape_argv[0] - 1;
+	if (_this_console.origin_mode) _this_console.conY += _this_console.scroll_top;
 	_this_console.conX = _this_console.escape_argv[1] - 1;
 	_this_console.cursor_moved = 1;
 	clip_cursor();
@@ -1241,9 +1259,6 @@ void _winvt_on_esc_ls_J() {
 			}
 			break;
 		case 2:
-			_this_console.cursor_moved = 1;
-			_this_console.conX = 0;
-			_this_console.conY = 0;
 			_vt_erasescreen();
 			for (i=0;i < _this_console.conHeight;i++) {
 				_this_console.redraw[i].s = 0;
