@@ -24,19 +24,13 @@
  *
  *      http://www.vt100.net/docs/vt100-ug/chapter3.html
  *      Load LEDs
- *      Select Character Set
  *      ANSI/VT52 mode
  *      Auto repeat mode
  *      Cursor Keys Mode
  *      Column Mode (132-column)
  *      Keypad Application Mode
  *
- *      - Smooth scrolling
- *      - System to queue updates per-line (with start-end coords) rather than redrawing on the fly,
- *      - Redraw triggered when calling program calls "flush" or the idle function
- *      - Support and mapping for VT100 graphics characters
- *      - Support xterm 256-color escapes (#38 & #48)
- *      - Support m-code #39: default text color (#39 & #49) */
+ *      - Support xterm 256-color escapes (#38 & #48) */
 
 /* TODO: For arrow keys, function keys, etc. generate VT100 keyboard sequences */
 
@@ -201,7 +195,8 @@ typedef struct _winvt_console_ctx {
 	unsigned char		myCaretDoubleWide:1;
 	unsigned char		screen_mode:1;		/* <ESC>[?7h (set) reverse mode */
 	unsigned char		cursor_moved:1;
-	unsigned char		_unused1_:3;
+	unsigned char		show_cursor:1;		/* <ESC>[?25h */
+	unsigned char		_unused1_:2;
 
 	/* compatible DC and bitmap used for double-wide and double-high modes */
 	HBITMAP			tmpBMP,tmpBMPold;
@@ -331,6 +326,19 @@ int _winvt_kb_insert(struct _winvt_console_ctx FAR *ctx,char c) {
 	return 0;
 }
 
+int _winvt_kb_insert_escape(struct _winvt_console_ctx FAR *ctx,const char *str) {
+	int r;
+
+	if (_winvt_kb_insert(ctx,27))
+		return -1;
+
+	while (*str) {
+		if ((r=_winvt_kb_insert(ctx,*str++)) != 0) return r;
+	}
+
+	return 0;
+}
+
 void _winvt_sigint() {
 	void (*sig)(int x) = signal(SIGINT,SIG_DFL);
 	if (sig != SIG_IGN && sig != SIG_DFL) sig(SIGINT);
@@ -377,6 +385,7 @@ void _vt_terminal_reset() { /* <ESC>c */
 	_this_console.saved_cy = 0;
 	_this_console.line_wrap = 1;
 	_this_console.screen_mode = 0;
+	_this_console.show_cursor = 1;
 	_this_console.cursor_state.f.charset = CHRSET_US;
 	_this_console.conX = 0;
 	_this_console.conY = 0;
@@ -523,6 +532,7 @@ void _winvt_do_drawline(struct _winvt_console_ctx FAR *ctx,HDC hdc,unsigned int 
 				srow++;
 			}
 
+			SelectObject(hdc,cur.f.underscore ? ctx->monoSpaceFontUnderline : ctx->monoSpaceFont);
 			SetBkColor(hdc,((cur.f.reverse?1:0)^(ctx->screen_mode?1:0)) ? _vt_fgcolor(&cur) : _vt_bgcolor(&cur));
 			SetTextColor(hdc,(((cur.f.reverse||cur.f.hidden)?1:0)^(ctx->screen_mode?1:0)) ? _vt_bgcolor(&cur) : _vt_fgcolor(&cur));
 			TextOut(hdc,x * ctx->monoSpaceFontWidth,y * ctx->monoSpaceFontHeight,tmp,i);
@@ -610,6 +620,12 @@ WindowProcType_NoLoadDS _export _winvt_WindowProc(HWND hwnd,UINT message,WPARAM 
 		 *         causes Windows to send WM_SYSKEYDOWN/WM_SYSKEYUP. Somehow passing it
 		 *         down to DefWindowProc() solves this. */
 		return DefWindowProc(hwnd,message,wparam,lparam);
+	}
+	else if (message == WM_KEYDOWN) {
+		if (wparam == VK_LEFT) _winvt_kb_insert_escape(_ctx_console,"[D");
+		else if (wparam == VK_RIGHT) _winvt_kb_insert_escape(_ctx_console,"[C");
+		else if (wparam == VK_UP) _winvt_kb_insert_escape(_ctx_console,"[A");
+		else if (wparam == VK_DOWN) _winvt_kb_insert_escape(_ctx_console,"[B");
 	}
 	else if (message == WM_CHAR) {
 		if (wparam > 0 && wparam <= 126) {
@@ -779,8 +795,10 @@ void _winvt_pump() {
 }
 
 void _winvt_update_cursor() {
-	if (!_this_console.myCaret)
+	if (!_this_console.myCaret && _this_console.show_cursor)
 		_winvt_setup_caret(&_this_console);
+	else if (_this_console.myCaret && !_this_console.show_cursor)
+		_winvt_free_caret(&_this_console);
 
 	if (_this_console.myCaret) {
 		if (_this_console.console[(_this_console.conY*_this_console.conWidth)+_this_console.conX].f.doublewide != _this_console.myCaretDoubleWide) {
@@ -888,8 +906,61 @@ void _winvt_scrolldown() {
 			_this_console.cursor_state;
 }
 
+#if defined(TARGET_WINDOWS) && TARGET_BITS == 16
+# include <toolhelp.h>
+
+/* TODO: ToolHelp library utilization under Windows 3.1 */
+unsigned char toolhelp_attempted = 0;
+HMODULE toolhelp_dll = NULL;
+BOOL WINAPI (*toolhelp_timercount)(TIMERINFO FAR *f) = NULL;
+
+DWORD WINAPI ToolhelpReadTime() {
+	TIMERINFO ti;
+
+	if (toolhelp_timercount == NULL) return 0;
+	ti.dwSize = sizeof(ti);
+	if (!toolhelp_timercount(&ti)) return 0;
+	return ti.dwmsThisVM;
+}
+
+int ToolhelpLoad() {
+	UINT om;
+
+	/* NTS: Windows 3.0: Standard and Protected mode respect SetErrorMode.
+	 *      Windows 3.0 Real Mode however does not, and will show a
+	 *      prompt if we attempt to load TOOLHELP.DLL */
+	if (IsWindowsRealMode()) return 0;
+
+	/* OK, do it */
+	om = SetErrorMode(SEM_FAILCRITICALERRORS|SEM_NOOPENFILEERRORBOX);
+	toolhelp_dll = LoadLibrary("TOOLHELP.DLL");
+	SetErrorMode(om);
+	if (toolhelp_dll == NULL) return 0;
+	toolhelp_timercount = GetProcAddress(toolhelp_dll,"TIMERCOUNT");
+	return 1;
+}
+
+void ToolhelpUnload() {
+	if (toolhelp_dll != NULL) {
+		FreeLibrary(toolhelp_dll);
+		toolhelp_dll = NULL;
+	}
+	toolhelp_timercount = NULL;
+}
+
+int ToolhelpAvailable() {
+	if (!toolhelp_attempted) {
+		toolhelp_attempted = 1;
+		if (!ToolhelpLoad())
+			return 0;
+	}
+
+	return (toolhelp_dll != NULL) && (toolhelp_timercount != NULL);
+}
+#endif
+
 void _winvt_scrollup() {
-	unsigned int i,j;
+	unsigned int i;
 	HDC hdc;
 
 	assert(_this_console.scroll_bottom >= (_this_console.scroll_top+1));
@@ -901,12 +972,22 @@ void _winvt_scrollup() {
 		/* TODO: Use TOOLHELP.DLL library if possible */
 		/* TODO: Windows 3.0: VGA vertical retrace sync reading port 0x3DA */
 		/* TODO: Windows NT/2000/XP/Vista/etc: TOOLHELP.DLL or Win32 equiv. */
+		DWORD bt,delta,now;
 		const DWORD rows_per_sec = 6UL * ((DWORD)_this_console.monoSpaceFontHeight);
-		DWORD bt = GetCurrentTime(),delta;
+#if TARGET_BITS == 16
+		unsigned char useth = ToolhelpAvailable() ? 1 : 0;
+#else
+# define useth 0
+# define ToolhelpReadTime() (0)
+#endif
 
+		bt = useth ? ToolhelpReadTime() : GetCurrentTime();
 		for (i=0;i < _this_console.monoSpaceFontHeight;i++) {
+			_winvt_pump();
+
 			do {
-				delta = ((GetCurrentTime() - bt) * rows_per_sec) / 1000UL;
+				now = useth ? ToolhelpReadTime() : GetCurrentTime();
+				delta = ((now - bt) * rows_per_sec) / 1000UL;
 			} while ((unsigned int)delta < i);
 
 			BitBlt(hdc,
@@ -915,8 +996,15 @@ void _winvt_scrollup() {
 				(((_this_console.scroll_bottom - _this_console.scroll_top) + 1) * _this_console.monoSpaceFontHeight) - 1,
 				hdc,0,(_this_console.scroll_top * _this_console.monoSpaceFontHeight) + 1,SRCCOPY);
 		}
+
+#if TARGET_BITS == 16
+# undef useth
+# undef ToolhelpReadTime
+#endif
 	}
 	else {
+		_winvt_pump();
+
 		BitBlt(hdc,
 			0,_this_console.scroll_top * _this_console.monoSpaceFontHeight,
 			_this_console.conWidth * _this_console.monoSpaceFontWidth,
@@ -1008,9 +1096,13 @@ void _winvt_on_esc_ls_m() { /* <ESC>[m attribute */
 				_this_console.cursor_state.f.foreground_set = 1;
 				_this_console.cursor_state.f.foreground = c-30;
 				break;
+			case 39:_this_console.cursor_state.f.foreground_set = 0; /* unofficial "default text color" */
+				break;
 			case 40: case 41: case 42: case 43: case 44: case 45: case 46: case 47:
 				_this_console.cursor_state.f.background_set = 1;
 				_this_console.cursor_state.f.background = c-40;
+				break;
+			case 49:_this_console.cursor_state.f.background_set = 0; /* unofficial "default text color" */
 				break;
 		};
 	}
@@ -1038,6 +1130,10 @@ void _winvt_on_esc_ls_hl(unsigned char set) {
 			break;
 		case 7:	/* enable/disable line wrap */
 			_this_console.line_wrap = set;
+			break;
+		case 25: /* enable/disable cursor */
+			_this_console.show_cursor = set;
+			_this_console.cursor_moved = 1;
 			break;
 	};
 }
@@ -1218,8 +1314,8 @@ void _winvt_on_esc_ls_r() {
 	if (_this_console.escape_argv[1] >= _this_console.conHeight)
 		_this_console.escape_argv[1] = _this_console.conHeight - 1;
 
-	_this_console.scroll_top = _this_console.escape_argv[0];
-	_this_console.scroll_bottom = _this_console.escape_argv[1];
+	_this_console.scroll_top = _this_console.escape_argv[0] - 1;
+	_this_console.scroll_bottom = _this_console.escape_argv[1] - 1;
 	clip_cursor();
 }
 
@@ -1424,6 +1520,7 @@ int _winvt_putc(char c) {
 
 		if (_this_console.cursor_state.f.charset == CHRSET_GRAPHICS) {
 			if (c >= 'a' && c <= 'z') c = decvt_graphics_az[c-'a'];
+			else if (c == '`') c = 0x04;
 			else if (c == '~') c = 0xFA;
 		}
 
@@ -1432,18 +1529,21 @@ int _winvt_putc(char c) {
 
 		_this_console.cursor_moved = 1;
 		if (_this_console.conX < _this_console.conWidth) {
-			if (_this_console.redraw[_this_console.conY].s == 0 && _this_console.redraw[_this_console.conY].e == 0) {
-				_this_console.redraw[_this_console.conY].s = _this_console.conX;
-				_this_console.redraw[_this_console.conY].e = _this_console.conX+1;
-			}
-			else if (_this_console.redraw[_this_console.conY].s > _this_console.conX)
-				_this_console.redraw[_this_console.conY].s = _this_console.conX;
-			else if (_this_console.redraw[_this_console.conY].e <= _this_console.conX)
-				_this_console.redraw[_this_console.conY].e = _this_console.conX+1;
-
+			/* if the write is actually changing the contents THEN mark for update */
 			_this_console.cursor_state.f.chr = (unsigned char)c;
-			_this_console.console[(_this_console.conY*_this_console.conWidth)+_this_console.conX] =
-				_this_console.cursor_state;
+			if (1 || _this_console.console[(_this_console.conY*_this_console.conWidth)+_this_console.conX].raw != _this_console.cursor_state.raw) {
+				if (_this_console.redraw[_this_console.conY].s == 0 && _this_console.redraw[_this_console.conY].e == 0) {
+					_this_console.redraw[_this_console.conY].s = _this_console.conX;
+					_this_console.redraw[_this_console.conY].e = _this_console.conX+1;
+				}
+				else if (_this_console.redraw[_this_console.conY].s > _this_console.conX)
+					_this_console.redraw[_this_console.conY].s = _this_console.conX;
+				else if (_this_console.redraw[_this_console.conY].e <= _this_console.conX)
+					_this_console.redraw[_this_console.conY].e = _this_console.conX+1;
+
+				_this_console.console[(_this_console.conY*_this_console.conWidth)+_this_console.conX] =
+					_this_console.cursor_state;
+			}
 
 			if (step == 2) {
 				if ((_this_console.conX+1) < _this_console.conWidth) {
@@ -1654,6 +1754,10 @@ int WINMAINPROC _winvt_main_vtcon_entry(HINSTANCE hInstance,HINSTANCE hPrevInsta
 
 	DeleteObject(_this_console.monoSpaceFontUnderline);
 	_this_console.monoSpaceFontUnderline = NULL;
+
+#if TARGET_BITS == 16
+	ToolhelpUnload();
+#endif
 
 #if TARGET_BITS == 16
 	/* Real mode: undo our work above */

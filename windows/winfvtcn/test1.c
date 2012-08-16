@@ -173,6 +173,52 @@ int main() {
 	do { c = getch(); } while (!(c == 13 || c == 10 || c == 'x'));
 	if (c == 'x') goto done;
 
+/* TEST 5----------------------------------------------------------*/
+	printf(VT_ESC "c");
+
+	printf(VT_ESC "[1;1H"  "------------ Scrolling region test ---------------\n");
+	printf(VT_ESC "[24;1H" "^^^^^^^^^^^^ Scrolling region test ^^^^^^^^^^^^^^^\n");
+	printf(VT_ESC "[2;23r");
+	printf(VT_ESC "[2;1H");
+	for (i=0;i < 100;i++) printf("Line %d\n",i);
+	printf("The top and bottom lines should still be there"); fflush(stdout);
+
+	/* wait for user's conformation */
+	do { c = getch(); } while (!(c == 13 || c == 10 || c == 'x'));
+	if (c == 'x') goto done;
+
+/* TEST 5b----------------------------------------------------------*/
+	printf(VT_ESC "c");
+
+	printf(VT_ESC "[1;1H"  "-------Smooth Scrolling region test ---------\n");
+	printf(VT_ESC "[24;1H" "^^^^^^^Smooth Scrolling region test ^^^^^^^^^\n");
+	printf(VT_ESC "[2;23r");
+	printf(VT_ESC "[2;1H");
+	printf(VT_ESC "[?4h"); /* enable smooth scroll */
+	for (i=0;i < 100;i++) printf("Line %d\n",i);
+	printf("The top and bottom lines should still be there,\n");
+	printf("and the text should have scrolled by at 6 lines/second"); fflush(stdout);
+	printf(VT_ESC "[?4l"); /* disable smooth scroll */
+
+	/* wait for user's conformation */
+	do { c = getch(); } while (!(c == 13 || c == 10 || c == 'x'));
+	if (c == 'x') goto done;
+
+/* TEST 6----------------------------------------------------------*/
+	printf(VT_ESC "c");
+
+	printf(VT_ESC "[?25l" "You should NOT see the cursor now. Hit ENTER to continue\n");
+
+	/* wait for user's conformation */
+	do { c = getch(); } while (!(c == 13 || c == 10 || c == 'x'));
+	if (c == 'x') goto done;
+
+	printf(VT_ESC "[?25h" "Now you should see the cursor now.\n");
+
+	/* wait for user's conformation */
+	do { c = getch(); } while (!(c == 13 || c == 10 || c == 'x'));
+	if (c == 'x') goto done;
+
 done:	printf("Test program finished\n");
 #ifdef WIN_STDOUT_CONSOLE
 	_winvt_endloop_user_echo();
