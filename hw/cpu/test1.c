@@ -134,6 +134,10 @@ int main() {
 				cpuid_info->cpu_acpi_id_bits);
 		}
 	}
+	else if (cpu_type_and_mask != 0) {
+		/* FIXME: Dig out your ancient 386/486 systems and test that this code gets some actual values */
+		printf(" - CPU type=0x%02X maskrev=0x%02x\n",cpu_type_and_mask>>8,cpu_type_and_mask&0xFF);
+	}
 
 #ifdef WIN_STDOUT_CONSOLE
 	_win_endloop_user_echo();

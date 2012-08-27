@@ -345,3 +345,15 @@ TODO: Wouldn't it be cool if you made an alternate winfcon.c that rendered a col
       provided DEC VT100 escape code emulation? :)
 
 TODO: It turns out Watcom's linker will put debug info into the EXE if you put "DEBUG WATCOM ALL" in the linker directives
+
+-------------------------------------------------------------------------------------------
+TESTING: 286, 386 and 486 class code
+-------------------------------------------------------------------------------------------
+Get the USB floppy drive, and dig out the 286 laptop, the 386 laptop, and the 486 laptop, and
+test the code on them to make sure it works. Do what it takes for the 386/486 test code to
+get the type/model WORD, although the library should be written to do the reset-based methods
+only if the program cares THAT MUCH about that piece of info!
+
+The CPU library, if either CPUID or the other method get the type/model WORD, needs to then
+use it to detect a 386SX vs 386DX and set the memory limit value properly.
+

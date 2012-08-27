@@ -234,6 +234,7 @@ struct cpu_cpuid_info {
 extern signed char cpu_basic_level;
 extern signed char cpu_basic_fpu_level;
 extern unsigned short cpu_flags;
+extern uint16_t cpu_type_and_mask;
 
 extern struct cpu_cpuid_info* cpuid_info;
 

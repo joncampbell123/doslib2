@@ -18,6 +18,29 @@ signed char			cpu_basic_level = -1;
 signed char			cpu_basic_fpu_level = -1;
 unsigned short			cpu_flags = 0;
 struct cpu_cpuid_info*		cpuid_info = NULL;
+uint16_t			cpu_type_and_mask = 0;	/* on 386/486 systems without CPUID, this contains type and stepping value (DX) */
+	/* Possible values (if it worked):
+	 *
+	 *     0x03xx   386DX
+	 *     0x04xx   486
+	 *     0x05xx   Pentium
+	 *     0x23xx   386SX
+	 *     0x33xx   Intel i376
+	 *     0x43xx   386SL
+	 *     0xA3xx   IBM 386SLC
+	 *     0xA4xx   IBM 486SLC
+	 *
+	 *     0x0303   386 B1 to B10, Am386DX/DXL step A
+	 *     0x0305   Intel D0
+	 *     0x0308   Intel D1/D2/E1, Am386DX/DXL step B
+	 *
+	 *     0x2304   Intel A0
+	 *     0x2305   Intel B
+	 *     0x2308   Intel C/D1, Am386SX/SXL step A1
+	 *     0x2309   Intel 386CX/386EX/386SXstatic step A
+	 *
+	 *     For complete list see [http://www.youtube.com/watch?NR=1&feature=endscreen&v=DUiTZVinZEM]
+	 */
 
 /* CPUID function. To avoid redundant asm blocks */
 #if defined(__GNUC__)
@@ -157,8 +180,6 @@ static void probe_cpuid() {
 		else {
 			cpuid_info->phys_addr_bits = 32;
 			cpuid_info->virt_addr_bits = 32;
-			/* TODO: If possible, identify 386SX, which has a 24-bit phys addr limit */
-			/* TODO: If possible, identify 486SX, which has a 26-bit phys addr limit */
 		}
 
 		cpuid_info->guest_phys_addr_bits = cpuid_info->phys_addr_bits;
@@ -518,6 +539,43 @@ no_cpuid:		nop
 
 	if (cpu_flags & CPU_FLAG_CPUID)
 		probe_cpuid();
+
+	/* if the CPU does not provide CPUID, then try to get type/model ID value (386/486) */
+	if (!(cpu_flags & CPU_FLAG_CPUID)) {/* we can assume at least >= 386 here */
+#if !defined(__GNUC__) /* Not under Linux! */
+# if !defined(TARGET_WINDOWS) /* Not under Windows! */
+		/* take the safest route first and ask the BIOS */
+		__asm {
+			push	ax
+			xor	cx,cx
+			mov	ax,0xC910
+			int	15h
+			jc	nocando
+			cmp	ah,0x00		; if AH != 0x00 then it didnt work
+#if defined(__COMPACT__) || defined(__LARGE__) || defined(__HUGE__)
+			mov	ax,seg cpu_type_and_mask
+			mov	ds,ax
+#endif
+			mov	cpu_type_and_mask,cx
+			jnz	nocando
+nocando:		pop	ax
+		}
+# endif
+#endif
+
+		/* the phys/virt addr bits are not set by this point if probe_cpuid() is never executed.
+		 * so we need to set them to work 100% properly on pre-CPUID x86 processors */
+		cpuid_info->virt_addr_bits = 32;
+		/* TODO: It is said 386EX/386CX systems have 26-bit external addressing?? */
+		/* TODO: Is there anything we can do to identify some 486-class systems I have where
+		 *       address wraparound occurs every 64MB?? (26-bit address limit) */
+		if ((cpu_type_and_mask&0xFF00) == 0x23) /* Intel 386SX */
+			cpuid_info->phys_addr_bits = 24;
+		else
+			cpuid_info->phys_addr_bits = 32;
+
+		cpuid_info->guest_phys_addr_bits = cpuid_info->phys_addr_bits;
+	}
 }
 
 void probe_cpu() {
