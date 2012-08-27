@@ -357,3 +357,39 @@ only if the program cares THAT MUCH about that piece of info!
 The CPU library, if either CPUID or the other method get the type/model WORD, needs to then
 use it to detect a 386SX vs 386DX and set the memory limit value properly.
 
+------------------------
+* * * MS-DOS PORTS * * *
+------------------------
+This code should also incorporate external libraries, rewritten if necessary to compile under
+MS-DOS/Windows. Having these tools on a DOS rescue floppy would be awesome!
+
+   - zlib compression library
+   - GNU gzip/gunzip
+   - bzip2 library and command line utility
+   - xz/lzma library and command line utility (yeah I know expecting a 486 or Pentium class
+     system with 8-16MB of RAM to handle xz/lzma is nuts, but it's nice to have the option
+     should I need it on systems that have enough RAM to do it!)
+   - InfoZip zip and unzip programs
+   - ARJ/UNARJ (take ARJ linux code and port back to DOS)
+   - RAR/UNRAR (take RAR linux code and port back to DOS)
+   - UNACE (take linux "unace" and port to DOS)
+   - NASM (take their code, compile 32-bit DOS program, maybe even 16-bit real mode)
+   - YASM (port to DOS)
+   - GNU binutils (i386 ELF)
+   - GNU binutils (i386 DJGPP)
+   - GUN binutils (x86_64 ELF)
+   - LAME MP3 encoder (command line tool and library)
+   - madlib MPEG audio library
+   - ogg bitstream decoder
+   - vorbis codec
+   - speex codec
+   - FAAD AAC decoder
+   - FAAC AAC encoder
+   - toolame MP2 encoder
+   - twolame MP2 encoder
+   - FFMPEG library (will take a LONG time to port piece-by-piece!)
+   - Theora video codec
+   - Opus audio codec
+   - ZOO archiver port (from linux)
+   - LHArc archiver port (from linux)
+
