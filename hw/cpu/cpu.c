@@ -377,7 +377,7 @@ fin:		popa
 			 * "mov eax,cr0" would */
 			smsw	ax
 			and	al,1
-			shl	al,2			; (1 << 1) == 0x04 == CPU_FLAG_PROTMODE
+			shl	al,2			; (1 << 2) == 0x04 == CPU_FLAG_PROTMODE
 #if defined(__COMPACT__) || defined(__LARGE__) || defined(__HUGE__)
 			mov	bx,seg cpu_flags
 			mov	ds,bx
@@ -396,7 +396,7 @@ fin:		popa
 #  endif
 	if ((GetWinFlags()&(WF_ENHANCED|WF_STANDARD)) == 0) {
 		/* TODO: Is it even possible to run Windows real-mode under a v86 kernel?
-		 *       Such as, for example, running Windows 3.0 real mode under EMM386.EXE? */
+		 *       For example, is it possible to run Windows 3.0 real mode under EMM386.EXE? */
 		if (cpu_flags & CPU_FLAG_PROTMODE) cpu_flags |= CPU_FLAG_V86;
 	}
 /*================================ 16-bit DOS ============================*/
