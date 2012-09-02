@@ -1,0 +1,359 @@
+386ID	 -- Return The 386/486 Component Identifier
+
+The purpose of this program is to display the component and revision
+level of your 386 or later CPU.
+
+As you may already be aware, the 386 and 486 have a built-in mechanism
+which is the definitive marker of the chip's component and revision
+level.	For example, an Intel 386 CPU identifier of 0308 corresponds
+to the D1-step which is an external name applied to revision levels.
+Different revision levels represent different internal workings,
+usually when improvements are made.  In contrast, the 32-by-32
+multiply instruction error in the 386 was not corrected by a new
+revision level, only a more careful screening of existing chips.
+Chips with this correction are identified by a double sigma on the top
+of the chip.
+
+According to the Pentium Processor User's Manual, the component and
+revision level fields are split into three parts:  a stepping ID (bits
+0-3), a model field (bits 4-7), and a family field (bits 8-11).
+Although marked as reserved, bits 12-15 are used in other CPUs as a
+family member field.  For example, the 386 DX D1-step has a family
+member field value of 0h, a family field value of 3h, a model field
+value of 0h, and a stepping ID of 08h, yielding a value in DX of
+0308h.	Furthermore on 486 CPUs, a model type of 0 is used for 25 and
+33 MHz parts (040xh), 1 for 50 MHz parts (041xh), and 2 for 486/487 SX
+parts (042xh).
+
+Alas, until the Pentium Processor came along, a CPU's identifier is
+difficult to obtain.  Like a mole unaccustomed to the daylight, it
+surfaces briefly in the DX register when the system is reset and then
+disappears.  User code has but a slim chance to latch onto this
+slippery value.
+
+
+The Plan of Attack
+------------------
+
+The accompanying program attempts to obtain this value through one of
+several techniques.
+
+The first technique considered is to see if this CPU supports the
+CPUID instruction, and if so, use that to get the component ID.
+
+The second technique considered is to invoke the relatively unknown
+BIOS call to return the information.  If this call (AX=0C910h, INT
+15h) is supported by the BIOS, it returns the component ID in CX.
+
+The third technique considered is to shutdown the system in the
+usual way, and, upon regaining control, save the value in DX.  My
+experience is that this approach is only infrequently successful.  The
+problem is that by the time our program gains control to save DX, that
+register might have been clobbered by the BIOS code.
+
+The fourth technique considered provides a means by which our program
+can gain control after a system reset, but BEFORE the BIOS does!  To
+understand how this can happen, we must explain some of the inner
+workings of the system along with some digressions.
+
+
+The First Few Microseconds
+--------------------------
+
+After system reset, the initial value for CS:IP is F000:FFF0.  You
+might expect this means that the first instruction fetch is from the
+physical address 000FFFF0 = (CS shl 4) + IP.  However, at system reset
+time (and only then) the CPU artificially forces address lines A20
+through A31 high by initializing the base address in the invisible
+descriptor cache for CS to FFFF0000 as opposed to the expected
+000F0000 (CS shl 4).
+
+
+Descriptor Caches
+-----------------
+
+A descriptor cache is an optimization technique introduced in the
+80286 and continued into later processors.  It is different from both
+a disk cache and memory cache, although the intent in each case is the
+same:  to expend a small amount of effort in the beginning to achieve
+a benefit in the future many times over.
+
+In this case, the cache is a separate location on the CPU to store a
+summary of frequently accessed data.  In fact, it is more than just an
+optimization technique as it is relied upon by any program which
+switches from Real Mode (RM) to Protected Mode (PM).
+
+The cache is used by the CPU as follows:  whenever a program changes a
+segment register in RM or virtual 8086 mode (VM), or a selector in PM,
+the CPU calculates the actual linear address corresponding to the
+value and saves it on the chip in the cache for that register, along
+with other information about that register such as the access rights
+word.  Each segment/selector register as well as other frequently
+accessed data on the chip have a separate cache.  The terms segment
+and selector registers refer to the same items such as CS, DS, ES, FS,
+GS, and SS; the names simply reflect the different mode in which they
+are used -- segment for RM and VM, selector for PM.  In RM or VM the
+base address in the descriptor cache is set to the actual value times
+16.  In PM, the CPU looks up the selector in the appropriate (global
+or local) descriptor table and uses the base address in that table to
+set the base address in the descriptor cache.  Because this table
+lookup is somewhat more time-consuming in PM, descriptor caches
+actually have much greater value in that mode.	These caches are
+called invisible because although the CPU has full access to them,
+they can't be set or read directly by an application program.
+
+The first far jump or call resets the base address in the descriptor
+cache for CS at which time address lines A20 through A31 are no longer
+artifically held high.
+
+
+The First Fetch
+---------------
+
+Back to fetching the first instruction.  Because the descriptor cache
+for CS is FFFF0000, the first instruction fetch comes from the
+physical address FFFFFFF0 (using an IP of FFF0), that is 16 bytes
+below 4GB.  As we want this fetch to come from our system BIOS,
+vendors must decode the BIOS ROM at this address; typically they
+actually decode it at multiple locations including FFFF0000 (required)
+as well as 000F0000 (F000:0).  That is, the same physical ROM can be
+accessed from different physical addresses.
+
+
+Compatibility with 8086/8088 Programs
+-------------------------------------
+
+Now for a bit of history on how the IBM AT and later systems maintain
+a certain degree of compatibility with the 8086/8088 processors.  When
+these early CPUs encountered a segment and offset which together
+exceed the limit of its 20-bit address space (such as FFFF:0010 =
+00100000), they automatically wrap at one megabyte back down to zero.
+Thus FFFF:0010 is identical to 0:0, or more accurately, memory
+references to the former location are satisfied from the latter
+location.  When the IBM AT was designed to use a 80286 CPU, its
+architects faced a problem.  The newer processor was oriented more
+toward PM operation.  Consequently, it didn't automatically wrap
+addresses at 1MB, as that would defeat the purpose of having a
+continuous stream of RAM at 1MB and beyond.  Nonetheless, the AT's
+designers decided to emulate this odd behavior because they understood
+well the need for compatibility.  That is, there were (and still are)
+many programs which rely upon the 1MB wrap as it is called.
+
+Because the 8086/8088 processors have a 20-bit address space, they
+need address bits A0 to A19 only.  The maximum address which can be
+generated in RM (FFFF:FFFF) has 21 significant bits, that is, of the
+bits beyond A19 only A20 is non-zero.  The AT's designers realized
+that they could emulate the 1MB wrap by artificially forcing A20 to
+zero.  Thus the mechanism used to emulate this behavior and obtain
+compatibility is called the A20 gate.  Originally, it was controlled
+by a single bit in the output port byte (a kitchen sink catchall) of
+the 8042 PPI (Programmable Peripheral Interface) chip on the system
+board.	The two values of this bit correspond to the two states of the
+A20 gate.  The value zero means that A20 is forced to zero regardless
+of what address the CPU generates; a value of one means that A20 is
+untouched, that is, controlled by the CPU to have whatever value the
+CPU calculates.  In this way, with A20 disabled (forced to zero)
+although the CPU may generate an address of 00100000 when presented
+with FFFF:0010, the actual address the bus sees is 00000000.
+
+As a side note, the A20 gate has caused fits for several system
+designers.  When memory cache controllers were introduced into PC
+systems, some designers forgot about the A20 gate.  That is, they
+designed their systems such that (from a logical perspective) the
+sequence of control was from the CPU to the memory cache to the A20
+gate circuitry to the bus.  A problem occurs in the following sequence
+with (say) A20 enabled:  read from FFFF:0010 (thus putting the value
+at physical address 1MB into the cache), disable the A20 gate, and
+read again from FFFF:0010.  The program expects to get the second
+value from physical address zero (because A20 is now disabled), but if
+the memory cache controller doesn't know that the A20 gate has changed
+it will provide the CPU with the (incorrect) value from its memory
+cache for physical address 1MB.
+
+Moreover, consider what happens with the 486 CPU which has an onboard
+memory cache.  Without really having any choice, Intel decided to
+immortalize this behavior in silicon by defining an input pin (A20M#)
+on the 486 to allow external circuitry to control the state of the A20
+address line which the cache sees so that it would work correctly.
+
+One more digression about the A20 gate:  why is it so important to
+emulate the 1MB wrap?  Isn't this a problem that could be solved
+simply by more careful programming?  Yes, but it's too late.  Quite
+likely, your hard disk is infested with numerous programs which under
+certain circumstances will fail if the 1MB wrap weren't emulated.  The
+major perpetrator of this feature is the EXEPACK program as well as
+the corresponding option to the linker.  In particular, the code which
+EXEPACK prefixes onto your packed .EXE files is dependent upon the 1MB
+wrap.  In particular, if such a program is loaded with its code
+segment at 0FF0h or lower (essentially anywhere within the first 64KB)
+and the A20 gate is enabled (thus not emulating the 1MB wrap), the
+unpacking code fails with the message "Packed file is corrupt!".
+Moreover, MS-DOS 5.0 and later versions go to extra effort when
+loading a program to patch a packed .EXE file to avoid the 1MB wrap
+dependency.  This was down in MS-DOS 5.0 and not earlier versions
+because that was the first version which could free up enough low DOS
+memory (via DOS=HIGH) to allow a program to run below 64 KB and thus
+exacerbate the packed .EXE file bug.
+
+
+The First Fetch Continued
+-------------------------
+
+Now back to the A20 gate and fetching the first instruction.  When the
+system first powers on, the A20 gate is enabled (and the 1MB wrap is
+not emulated).	What happens if subsequently the system is reset after
+the A20 gate is disabled?  The CPU generates an instruction fetch from
+FFFFFFF0 but the A20 gate circuitry artifically pulls down address
+line A20.  Thus the bus fetches data from address FFEFFFF0 (that is,
+4GB - 1MB - 16).  Because this address typically corresponds not to
+memory but thin air, the data fetched is usually FF FF FF ...  which
+when interpreted by the CPU is an invalid opcode.  Hence, INT 06h (the
+Invalid Opcode interrupt) is signalled BEFORE the first instruction in
+the system BIOS is executed.  Thus, by placing our own INT 06h handler
+into the RM interrupt descriptor table, we can gain control
+immediately upon system reset and save the component ID before the
+BIOS can use that register for some other purpose.  After saving away
+the component ID, our INT 06h handler enables A20 and resets the
+system again at which point the first instruction is fetched from
+FFFFFFF0 as expected and the system BIOS begins execution.
+
+Note that this technique can fail.  In particular, some systems do not
+have what is called a fully-terminated bus.  That is, some systems
+return arbitrary data from addresses with which there is no
+corresponding memory (such as FFEFFFF0).  As the technique described
+above is dependent upon reading FF FF from such addresses, it can
+fail.  To detect this failure, we read two bytes from FFEFFFF0 and
+ensure that they are FF FF.  If not, we don't attempt a system
+shutdown with A20 disabled.
+
+A combination of all these techniques is used in 386ID.COM.  That is,
+first we try the CPOUD instruction and then the BIOS call.  Then we
+install an INT 06h handler, and shutdown the system.  The value of DX
+from either or both of the INT 06h handler or the system shutdown is
+captured and displayed.  This maximizes our chance of obtaining the
+elusive CPU identifier.  One or more of the following messages is
+displayed at the end:
+
+1.  The component ID is ____ from the CPUID instruction.
+2.  The component ID is ____ from the BIOS.
+3.  The component ID is ____ from the INT 06h handler (____:____).
+4.  The component ID is ____ from the type 0A shutdown.
+
+The address in the third message is that of the invalid opcode and
+should always be F000:FFF0, thus re-affirming the validity of the
+technique used.
+
+For reference, here's a partial list of component and revision levels
+for several 386 and 486 CPUs.  Note that, for 386 CPUs the family
+member field is not consecutive:  0h for the DX, 2h for the SX, and 4h
+for the SL.
+
+Comp	  Type	 Step
+---------------------
+0303	 386 DX   B1
+0305	 386 DX   D0
+0308	 386 DX   D1/D2/E1
+2304	 386 SX   A0
+2305	 386 SX   D0
+2308	 386 SX   D1
+43??	 386 SL   ??
+0400	 486 DX   A1
+0401	 486 DX   Bx
+0402	 486 DX   C0
+0404	 486 DX   D0
+0410	 486 DX   cAx
+0411	 486 DX   cBx
+0420	 486 SX   A0
+0433	 486 DX2-66
+
+
+If you find component IDs other than the ones above, please contact
+the author.
+
+
+Programming Notes
+-----------------
+
+This program does a lot, so don't be surprised if you don't understand
+everything at first.  Enabling and disabling A20 is not a simple task,
+complicated both by the several different ways system vendors have
+defined as well as the difficulty of dealing with a mostly
+undocumented interface (the keyboard controller, typically an 8042,
+and the keyboard chip, typically a 6805).  For simplicity, 386ID
+handles ISA/EISA and Micro Channel systems only.  There are many ways
+of gating A20, not all of which can be represented here.  If you have
+a problem running this program, try installing HIMEM.SYS (without
+EMM386) and try again.
+
+This program is driven by the need to shutdown the system, so we'll
+describe its operation from that viewpoint.  The various shutdowns and
+the trailing code are summarized as follows:
+
+1.  Type 0Ah (8259 not re-initialized):  Preparation up to this point
+includes ensuring we're on a 386 or later CPU, saving control
+registers to be restored later, installing interrupt handlers,
+splitting case depending upon the system type (ISA/EISA and Micro
+Channel), degating A20 (unless the bus is not fully terminated),
+disabling the interrupt mask register in the 8259, disabling the
+watchdog timer (if present), saving the original value of the shutdown
+byte, setting the shutdown return address, disabling NMI, and finally
+shutting down the processor.
+
+This shutdown has one purpose:	Save DX without executing 8259
+initialization code in case that code would clobber DX.
+
+
+2.  Type 05h (8259 re-initialized):  In preparation for this shutdown,
+we enable A20 to avoid a second INT 06h interrupt.  If we didn't
+signal INT 06h on the first try, there's no reason to expect this
+shutdown will have any better luck.
+
+
+3.  Second type 05h:  This shutdown is generated from within the
+Invalid Opcode handler after saving DX and re-enabling A20.
+
+
+4.  After the last shutdown, we disable A20 (presumably to its
+original state).  In any case, we enable NMI, restore the original
+value of the shutdown byte, as well as the original state of the 8259,
+and the INT 06h handler, and then display messages based upon what
+happened.
+
+
+To avoid cluttering up the main assembler file, most equates, records
+and structures have been relegated to include files of which there
+are several.
+
+One final note:  although you might expect to learn much more about
+this program by running it through your favorite debugger,
+unfortunately that's not practical because of the several system
+shutdowns it requires.	A 386 hardware debugger such as Periscope
+Model IV is invaluable when debugging programs such as this.
+
+
+
+Bob Smith -- bobs@digex.net
+
+Finally, a word of acknowledgement.  Thanks go to Jeff Bozbin formerly
+of Phoenix Technologies for explaining the role A20 plays in this
+sequence of events.
+
+
+For completeness, here are the possible error messages:
+
+様> The CPU is not an 80386 or later.
+    (Self-explanatory.)
+
+様> Unable to run from Virtual 8086 Mode.
+    (Because we need to shutdown the system, we need to start from
+     Real Mode.)
+
+様> Unable to disable the A20 line.
+    (There's a problem with the A20 gate that is hardware-related.)
+
+様> This system does not have a fully-terminated bus,
+    so we did not attempt system shutdown.
+    (We tried reading data from 4GB - 1MB - 16 (FFEFFFF0) and either
+     the call failed or the data returned wasn't FF FF).
+
+
