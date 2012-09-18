@@ -1,0 +1,10 @@
+
+lib_ext_zlib_libz=$(abs_top_srcdir)/build/ext/zlib/$(target_subdir)/lib/libz$(lib_suffix)
+lib_ext_zlib_libz_wlink=library $(lib_ext_zlib_libz)
+lib_ext_zlib_libz_dependencies=
+
+ifneq ($(lib_ext_zlib_libz),)
+$(lib_ext_zlib_libz):
+	$(MAKE) -C $(abs_top_srcdir)/ext/zlib --no-print-directory -$(MAKEFLAGS) all-targets
+endif
+
