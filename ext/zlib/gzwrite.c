@@ -100,7 +100,7 @@ local int gz_comp(state, flush)
         if (strm->avail_out == 0 || (flush != Z_NO_FLUSH &&
             (flush != Z_FINISH || ret == Z_STREAM_END))) {
             have = (unsigned)(strm->next_out - state->next);
-#if TARGET_BITS == 16 && defined(SMALL_MEDIUM) && defined(__WATCOMC__)
+#if TARGET_BITS == 16
 	    got = 0;
             if (have && (_dos_write(state->fd, state->next, have, (unsigned*)(&got)) != 0 ||
                          (unsigned)got != have)) {
@@ -349,7 +349,7 @@ int ZEXPORTVA gzprintf (gzFile file, const char *format, ...)
     state->in[size - 1] = 0;
     va_start(va, format);
 #if TARGET_BITS == 16 && (defined(__SMALL__) || defined(__MEDIUM__))
-    /* there is no vsprintf() that writes to a FAR pointer, so we have to vsprintf to a temp buffer */
+    /* there is no vsprintf() that writes to a ZLIB_FAR pointer, so we have to vsprintf to a temp buffer */
     len = vsnprintf((char*)__gzprintf_buffer,sizeof(__gzprintf_buffer),format,va);
     if (len != 0) _fmemcpy(state->in,__gzprintf_buffer,len);
     va_end(va);
@@ -562,7 +562,7 @@ int ZEXPORT gzclose_w(file)
     /* flush, free memory, and close file */
     ret += gz_comp(state, Z_FINISH);
     (void)deflateEnd(&(state->strm));
-#if TARGET_BITS == 16 && defined(SMALL_MEDIUM) && defined(__WATCOMC__)
+#if TARGET_BITS == 16
     _ffree(state->out);
     _ffree(state->in);
 #else

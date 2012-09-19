@@ -36,7 +36,7 @@ local int gz_load(state, buf, len, have)
     do {
 #if TARGET_BITS == 16 && (defined(__SMALL__) || defined(__MEDIUM__))
 	ret = -1;
-	if (_dos_read(state->fd, (unsigned char FAR*)buf + *have, len - *have, (unsigned*)(&ret)) != 0 || ret == 0)
+	if (_dos_read(state->fd, (unsigned char ZLIB_FAR*)buf + *have, len - *have, (unsigned*)(&ret)) != 0 || ret == 0)
 	    break;
 #else
         ret = read(state->fd, (unsigned char*)buf + *have, len - *have);
@@ -470,7 +470,7 @@ int ZEXPORT gzread(file, buf, len)
 
         /* update progress */
         len -= n;
-        buf = (char FAR *)buf + n;
+        buf = (char ZLIB_FAR *)buf + n;
         got += n;
         state->pos += n;
     } while (len);
@@ -552,8 +552,8 @@ int ZEXPORT gzungetc(c, file)
 
     /* slide output data if needed and insert byte before existing data */
     if (state->next == state->out) {
-        unsigned char FAR *src = state->out + state->have;
-        unsigned char FAR *dest = state->out + (state->size << 1);
+        unsigned char ZLIB_FAR *src = state->out + state->have;
+        unsigned char ZLIB_FAR *dest = state->out + (state->size << 1);
         while (src > state->out)
             *--dest = *--src;
         state->next = dest;
@@ -573,7 +573,7 @@ char * ZEXPORT gzgets(file, buf, len)
 {
     unsigned left, n;
     char *str;
-    unsigned char FAR *eol;
+    unsigned char ZLIB_FAR *eol;
     gz_statep state;
 
     /* check parameters and get internal structure */

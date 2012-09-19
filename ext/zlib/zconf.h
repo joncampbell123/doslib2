@@ -262,33 +262,6 @@
 #  endif
 #endif
 
-/* The following definitions for FAR are needed only for MSDOS mixed
- * model programming (small or medium model with some far allocations).
- * This was tested only with MSC; for other MSDOS compilers you may have
- * to define NO_MEMCPY in zutil.h.  If you don't need the mixed model,
- * just define FAR to be empty.
- */
-#ifdef SYS16BIT
-#  if defined(M_I86SM) || defined(M_I86MM)
-     /* MSC small or medium model */
-#    define SMALL_MEDIUM
-#    ifdef _MSC_VER
-#      define FAR _far
-#    else
-#      define FAR far
-#    endif
-#  endif
-#  if (defined(__SMALL__) || defined(__MEDIUM__))
-     /* Turbo C small or medium model */
-#    define SMALL_MEDIUM
-#    ifdef __BORLANDC__
-#      define FAR _far
-#    else
-#      define FAR far
-#    endif
-#  endif
-#endif
-
 #if defined(WINDOWS) || defined(WIN32)
    /* If building or using zlib as a DLL, define ZLIB_DLL.
     * This is not mandatory, but it offers a little performance increase.
@@ -348,27 +321,35 @@
 #  define FAR
 #endif
 
+/* avoid the need to fight with or redefine FAR,
+ * especially in cases (win386) where FAR is defined but we'd rather work with flat pointers */
+#if TARGET_BITS == 16
+# define ZLIB_FAR far
+#else
+# define ZLIB_FAR
+#endif
+
 #if !defined(__MACTYPES__)
 typedef unsigned char  Byte;  /* 8 bits */
 #endif
 typedef unsigned int   uInt;  /* 16 bits or more */
 typedef unsigned long  uLong; /* 32 bits or more */
 
-typedef Byte  FAR Bytef;
-typedef char  FAR charf;
-typedef int   FAR intf;
-typedef uInt  FAR uIntf;
-typedef uLong FAR uLongf;
+typedef Byte  ZLIB_FAR Bytef;
+typedef char  ZLIB_FAR charf;
+typedef int   ZLIB_FAR intf;
+typedef uInt  ZLIB_FAR uIntf;
+typedef uLong ZLIB_FAR uLongf;
 
 #ifdef STDC
-   typedef void const FAR *voidpcf;
+   typedef void const ZLIB_FAR *voidpcf;
    typedef void const *voidpc;
-   typedef void FAR   *voidpf;
+   typedef void ZLIB_FAR *voidpf;
    typedef void       *voidp;
 #else
-   typedef Byte const FAR *voidpcf;
+   typedef Byte const ZLIB_FAR *voidpcf;
    typedef Byte const *voidpc;
-   typedef Byte FAR   *voidpf;
+   typedef Byte ZLIB_FAR *voidpf;
    typedef Byte       *voidp;
 #endif
 

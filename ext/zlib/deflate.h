@@ -68,7 +68,7 @@ typedef struct ct_data_s {
         ush  dad;        /* father node in Huffman tree */
         ush  len;        /* length of bit string */
     } dl;
-} FAR ct_data;
+} ZLIB_FAR ct_data;
 
 #define Freq fc.freq
 #define Code fc.code
@@ -81,10 +81,10 @@ typedef struct tree_desc_s {
     ct_data *dyn_tree;           /* the dynamic tree */
     int     max_code;            /* largest code with non zero frequency */
     static_tree_desc *stat_desc; /* the corresponding static tree */
-} FAR tree_desc;
+} ZLIB_FAR tree_desc;
 
 typedef ush Pos;
-typedef Pos FAR Posf;
+typedef Pos ZLIB_FAR Posf;
 typedef unsigned IPos;
 
 /* A Pos is an index in the character window. We use short instead of int to
@@ -267,7 +267,7 @@ typedef struct internal_state {
      * updated to the new high water mark.
      */
 
-} FAR deflate_state;
+} ZLIB_FAR deflate_state;
 
 /* Output a byte on the stream.
  * IN assertion: there is enough room in pending_buf.

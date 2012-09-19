@@ -35,9 +35,9 @@
 /* compile with -Dlocal if your debugger can't find static symbols */
 
 typedef unsigned char  uch;
-typedef uch FAR uchf;
+typedef uch ZLIB_FAR uchf;
 typedef unsigned short ush;
-typedef ush FAR ushf;
+typedef ush ZLIB_FAR ushf;
 typedef unsigned long  ulg;
 
 extern const char * const z_errmsg[10]; /* indexed by 2-zlib_error */
@@ -226,7 +226,7 @@ extern const char * const z_errmsg[10]; /* indexed by 2-zlib_error */
 #  define HAVE_MEMCPY
 #endif
 #ifdef HAVE_MEMCPY
-#  ifdef SMALL_MEDIUM /* MSDOS small or medium model */
+#  if TARGET_BITS == 16
 #    define zmemchr _fmemchr
 #    define zmemcpy _fmemcpy
 #    define zmemcmp _fmemcmp

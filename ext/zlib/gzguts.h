@@ -113,7 +113,7 @@ typedef struct {
         /* zlib inflate or deflate stream */
     z_stream strm;          /* stream structure in-place (not a pointer) */
 } gz_state;
-typedef gz_state *gz_statep; /* FAR */
+typedef gz_state *gz_statep; /* ZLIB_FAR */
 
 /* shared functions */
 void ZLIB_INTERNAL gz_error OF((gz_statep, int, const char *));
