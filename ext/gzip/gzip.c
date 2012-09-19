@@ -2,7 +2,6 @@
  *
  * known bugs:
  *
- * - Winwa386 version crashes on shutdown (screen goes blank)
  * - Program does not correctly convert .tar -> .tgz on compression when running on 16-bit systems
  * - Program does not correctly detect cases where "file.tar" and "file.tar.gz" are both treated
  *   as "file.tar" on 16-bit systems. That corrupts the file, of course.

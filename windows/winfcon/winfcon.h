@@ -22,6 +22,8 @@
 # include <stdio.h>
 
 #ifndef WINFCON_SELF
+# undef getchar
+# define getchar _win_getch
 # define getch _win_getch
 # define kbhit _win_kbhit
 # define fprintf _win_fprintf

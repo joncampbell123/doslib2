@@ -3,158 +3,140 @@ ifdef target_subdir
 
 all-targets-abs-dirs: $(abs_exe_dir) $(abs_lib_dir) $(abs_obj_dir)
 
-gzip_objs=$(abs_obj_dir)/bits$(obj_suffix) $(abs_obj_dir)/deflate$(obj_suffix) $(abs_obj_dir)/inflate$(obj_suffix) $(abs_obj_dir)/lzw$(obj_suffix) $(abs_obj_dir)/trees$(obj_suffix) $(abs_obj_dir)/unlzh$(obj_suffix) $(abs_obj_dir)/unlzw$(obj_suffix) $(abs_obj_dir)/unpack$(obj_suffix) $(abs_obj_dir)/unzip$(obj_suffix) $(abs_obj_dir)/util$(obj_suffix) $(abs_obj_dir)/zip$(obj_suffix) $(abs_obj_dir)/yesno$(obj_suffix) $(abs_obj_dir)/getopt$(obj_suffix) $(abs_obj_dir)/getopt1$(obj_suffix)
+gzip_objs=$(abs_obj_dir)/bits$(obj_suffix) $(abs_obj_dir)/deflate$(obj_suffix) $(abs_obj_dir)/inflate$(obj_suffix) $(abs_obj_dir)/lzw$(obj_suffix) $(abs_obj_dir)/trees$(obj_suffix) $(abs_obj_dir)/unlzh$(obj_suffix) $(abs_obj_dir)/unlzw$(obj_suffix) $(abs_obj_dir)/unpack$(obj_suffix) $(abs_obj_dir)/unzip$(obj_suffix) $(abs_obj_dir)/util$(obj_suffix) $(abs_obj_dir)/zip$(obj_suffix) $(abs_obj_dir)/getopt$(obj_suffix) $(abs_obj_dir)/getopt1$(obj_suffix) $(abs_obj_dir)/yesno$(obj_suffix) $(abs_obj_dir)/gzip$(obj_suffix) 
+
+ifeq ($(TARGET_GUI_CONSOLE),1)
+GZIP_CFLAGS=$(CFLAGS_CONSOLE)
+GZIP_WCCFLAGS=$(WCCFLAGS_CONSOLE)
+else
+GZIP_CFLAGS=$(CFLAGS)
+GZIP_WCCFLAGS=$(WCCFLAGS)
+endif
 
 $(abs_obj_dir)/getopt1$(obj_suffix): getopt1.c
 ifeq ($(target_subdir),linux/host)
-	$(CC) $(CFLAGS) -I.. -I../.. -c -o $@ $^
+	$(CC) $(GZIP_CFLAGS) -I.. -I../.. -c -o $@ $^
 else
-	$(WCC) $(WCCFLAGS) -fo=$(abs_obj_dir)/.obj -i=.. -i=../.. $^
+	$(WCC) $(GZIP_WCCFLAGS) -fo=$(abs_obj_dir)/.obj -i=.. -i=../.. $^
 endif
 
 $(abs_obj_dir)/getopt$(obj_suffix): getopt.c
 ifeq ($(target_subdir),linux/host)
-	$(CC) $(CFLAGS) -I.. -I../.. -c -o $@ $^
+	$(CC) $(GZIP_CFLAGS) -I.. -I../.. -c -o $@ $^
 else
-	$(WCC) $(WCCFLAGS) -fo=$(abs_obj_dir)/.obj -i=.. -i=../.. $^
+	$(WCC) $(GZIP_WCCFLAGS) -fo=$(abs_obj_dir)/.obj -i=.. -i=../.. $^
 endif
 
 $(abs_obj_dir)/yesno$(obj_suffix): yesno.c
 ifeq ($(target_subdir),linux/host)
-	$(CC) $(CFLAGS) -I.. -I../.. -c -o $@ $^
+	$(CC) $(GZIP_CFLAGS) -I.. -I../.. -c -o $@ $^
 else
-	$(WCC) $(WCCFLAGS) -fo=$(abs_obj_dir)/.obj -i=.. -i=../.. $^
+	$(WCC) $(GZIP_WCCFLAGS) -fo=$(abs_obj_dir)/.obj -i=.. -i=../.. $^
 endif
 
 $(abs_obj_dir)/zip$(obj_suffix): zip.c
 ifeq ($(target_subdir),linux/host)
-	$(CC) $(CFLAGS) -I.. -I../.. -c -o $@ $^
+	$(CC) $(GZIP_CFLAGS) -I.. -I../.. -c -o $@ $^
 else
-	$(WCC) $(WCCFLAGS) -fo=$(abs_obj_dir)/.obj -i=.. -i=../.. $^
+	$(WCC) $(GZIP_WCCFLAGS) -fo=$(abs_obj_dir)/.obj -i=.. -i=../.. $^
 endif
 
 $(abs_obj_dir)/util$(obj_suffix): util.c
 ifeq ($(target_subdir),linux/host)
-	$(CC) $(CFLAGS) -I.. -I../.. -c -o $@ $^
+	$(CC) $(GZIP_CFLAGS) -I.. -I../.. -c -o $@ $^
 else
-	$(WCC) $(WCCFLAGS) -fo=$(abs_obj_dir)/.obj -i=.. -i=../.. $^
+	$(WCC) $(GZIP_WCCFLAGS) -fo=$(abs_obj_dir)/.obj -i=.. -i=../.. $^
 endif
 
 $(abs_obj_dir)/unzip$(obj_suffix): unzip.c
 ifeq ($(target_subdir),linux/host)
-	$(CC) $(CFLAGS) -I.. -I../.. -c -o $@ $^
+	$(CC) $(GZIP_CFLAGS) -I.. -I../.. -c -o $@ $^
 else
-	$(WCC) $(WCCFLAGS) -fo=$(abs_obj_dir)/.obj -i=.. -i=../.. $^
+	$(WCC) $(GZIP_WCCFLAGS) -fo=$(abs_obj_dir)/.obj -i=.. -i=../.. $^
 endif
 
 $(abs_obj_dir)/unpack$(obj_suffix): unpack.c
 ifeq ($(target_subdir),linux/host)
-	$(CC) $(CFLAGS) -I.. -I../.. -c -o $@ $^
+	$(CC) $(GZIP_CFLAGS) -I.. -I../.. -c -o $@ $^
 else
-	$(WCC) $(WCCFLAGS) -fo=$(abs_obj_dir)/.obj -i=.. -i=../.. $^
+	$(WCC) $(GZIP_WCCFLAGS) -fo=$(abs_obj_dir)/.obj -i=.. -i=../.. $^
 endif
 
 $(abs_obj_dir)/unlzw$(obj_suffix): unlzw.c
 ifeq ($(target_subdir),linux/host)
-	$(CC) $(CFLAGS) -I.. -I../.. -c -o $@ $^
+	$(CC) $(GZIP_CFLAGS) -I.. -I../.. -c -o $@ $^
 else
-	$(WCC) $(WCCFLAGS) -fo=$(abs_obj_dir)/.obj -i=.. -i=../.. $^
+	$(WCC) $(GZIP_WCCFLAGS) -fo=$(abs_obj_dir)/.obj -i=.. -i=../.. $^
 endif
 
 $(abs_obj_dir)/unlzh$(obj_suffix): unlzh.c
 ifeq ($(target_subdir),linux/host)
-	$(CC) $(CFLAGS) -I.. -I../.. -c -o $@ $^
+	$(CC) $(GZIP_CFLAGS) -I.. -I../.. -c -o $@ $^
 else
-	$(WCC) $(WCCFLAGS) -fo=$(abs_obj_dir)/.obj -i=.. -i=../.. $^
+	$(WCC) $(GZIP_WCCFLAGS) -fo=$(abs_obj_dir)/.obj -i=.. -i=../.. $^
 endif
 
 $(abs_obj_dir)/trees$(obj_suffix): trees.c
 ifeq ($(target_subdir),linux/host)
-	$(CC) $(CFLAGS) -I.. -I../.. -c -o $@ $^
+	$(CC) $(GZIP_CFLAGS) -I.. -I../.. -c -o $@ $^
 else
-	$(WCC) $(WCCFLAGS) -fo=$(abs_obj_dir)/.obj -i=.. -i=../.. $^
+	$(WCC) $(GZIP_WCCFLAGS) -fo=$(abs_obj_dir)/.obj -i=.. -i=../.. $^
 endif
 
 $(abs_obj_dir)/lzw$(obj_suffix): lzw.c
 ifeq ($(target_subdir),linux/host)
-	$(CC) $(CFLAGS) -I.. -I../.. -c -o $@ $^
+	$(CC) $(GZIP_CFLAGS) -I.. -I../.. -c -o $@ $^
 else
-	$(WCC) $(WCCFLAGS) -fo=$(abs_obj_dir)/.obj -i=.. -i=../.. $^
+	$(WCC) $(GZIP_WCCFLAGS) -fo=$(abs_obj_dir)/.obj -i=.. -i=../.. $^
 endif
 
 $(abs_obj_dir)/inflate$(obj_suffix): inflate.c
 ifeq ($(target_subdir),linux/host)
-	$(CC) $(CFLAGS) -I.. -I../.. -c -o $@ $^
+	$(CC) $(GZIP_CFLAGS) -I.. -I../.. -c -o $@ $^
 else
-	$(WCC) $(WCCFLAGS) -fo=$(abs_obj_dir)/.obj -i=.. -i=../.. $^
+	$(WCC) $(GZIP_WCCFLAGS) -fo=$(abs_obj_dir)/.obj -i=.. -i=../.. $^
 endif
 
 $(abs_obj_dir)/gzip$(obj_suffix): gzip.c
 ifeq ($(target_subdir),linux/host)
-	$(CC) $(CFLAGS) -I.. -I../.. -c -o $@ $^
+	$(CC) $(GZIP_CFLAGS) -I.. -I../.. -c -o $@ $^
 else
-	$(WCC) $(WCCFLAGS) -fo=$(abs_obj_dir)/.obj -i=.. -i=../.. $^
+	$(WCC) $(GZIP_WCCFLAGS) -fo=$(abs_obj_dir)/.obj -i=.. -i=../.. $^
 endif
 
 $(abs_obj_dir)/deflate$(obj_suffix): deflate.c
 ifeq ($(target_subdir),linux/host)
-	$(CC) $(CFLAGS) -I.. -I../.. -c -o $@ $^
+	$(CC) $(GZIP_CFLAGS) -I.. -I../.. -c -o $@ $^
 else
-	$(WCC) $(WCCFLAGS) -fo=$(abs_obj_dir)/.obj -i=.. -i=../.. $^
+	$(WCC) $(GZIP_WCCFLAGS) -fo=$(abs_obj_dir)/.obj -i=.. -i=../.. $^
 endif
 
 $(abs_obj_dir)/bits$(obj_suffix): bits.c
 ifeq ($(target_subdir),linux/host)
-	$(CC) $(CFLAGS) -I.. -I../.. -c -o $@ $^
+	$(CC) $(GZIP_CFLAGS) -I.. -I../.. -c -o $@ $^
 else
-	$(WCC) $(WCCFLAGS) -fo=$(abs_obj_dir)/.obj -i=.. -i=../.. $^
+	$(WCC) $(GZIP_WCCFLAGS) -fo=$(abs_obj_dir)/.obj -i=.. -i=../.. $^
 endif
 
 all_programs=$(abs_exe_dir)/gzip$(exe_suffix)
-ifeq ($(TARGET_GUI_CONSOLE),1)
-all_programs+=$(abs_exe_dir)/gzipc$(exe_suffix)
-endif
-
 all_programs=$(abs_exe_dir)/gunzip$(exe_suffix)
-ifeq ($(TARGET_GUI_CONSOLE),1)
-all_programs+=$(abs_exe_dir)/gunzipc$(exe_suffix)
-endif
 
 # we need: the windows winfcon library
 include $(abs_top_srcdir)/windows/winfcon/Makefile.dpl
 
 all-programs: $(all_programs)
 
-$(abs_exe_dir)/gunzip$(exe_suffix): $(abs_exe_dir)/gzip$(exe_suffix) $(abs_obj_dir)/gzip$(obj_suffix) $(gzip_objs)
+$(abs_exe_dir)/gunzip$(exe_suffix): $(abs_exe_dir)/gzip$(exe_suffix) $(gzip_objs)
 	@cp -vn $(abs_exe_dir)/gzip$(exe_suffix) $@
 
-$(abs_exe_dir)/gunzipc$(exe_suffix): $(abs_exe_dir)/gzipc$(exe_suffix) $(abs_obj_dir)/gzipc$(obj_suffix) $(gzip_objs)
-	@cp -vn $(abs_exe_dir)/gzipc$(exe_suffix) $@
-
-$(abs_exe_dir)/gzip$(exe_suffix): $(obj_win32s_compat) $(abs_obj_dir)/gzip$(obj_suffix) $(gzip_objs) $(lib_windows_winfcon) $(lib_windows_winfcon_dependencies)
-ifeq ($(target_subdir),linux/host)
-	$(CC) $(LDFLAGS) -o $@ $^
-else
-	@echo option quiet system $(WLINK_SYSTEM) $(WLINKFLAGS) $(WLINK_SEGMENTS) $(foreach x,$(filter %$(obj_suffix),$^),file "$(x)") $(lib_windows_winfcon_wlink) option map=$(abs_obj_dir)/gzip.map name $@ >$(abs_obj_dir)/gzip.cmd
-	$(WLINK) @$(abs_obj_dir)/gzip.cmd
-	#@rm -f $(abs_obj_dir)/gzip.cmd
- ifeq ($(TARGET_WINDOWS_WIN386),1)
-	@$(WIN386_EXE_TO_REX_IF_REX) $@
-	@$(WBIND) $@ -q -n
- endif
- ifneq ($(WIN16_NE_SETVER),)
-	$(WIN16_NE_SETVER) $@
- endif
-endif
-
 ifeq ($(TARGET_GUI_CONSOLE),1)
-$(abs_exe_dir)/gzipc$(exe_suffix): $(obj_win32s_compat) $(abs_obj_dir)/gzipc$(obj_suffix) $(gzip_objs) $(lib_ext_zlib_libz) $(lib_ext_zlib_libz_dependencies)
+$(abs_exe_dir)/gzip$(exe_suffix): $(obj_win32s_compat) $(gzip_objs) $(lib_ext_zlib_libz) $(lib_ext_zlib_libz_dependencies)
  ifeq ($(target_subdir),linux/host)
 	$(CC) $(LDFLAGS_CONSOLE) -o $@ $^
  else
-	@echo option quiet system $(WLINK_SYSTEM_CONSOLE) $(WLINKFLAGS_CONSOLE) $(WLINK_SEGMENTS_CONSOLE) $(foreach x,$(filter %$(obj_suffix),$^),file "$(x)") $(foreach x,$(filter %$(lib_suffix),$^),library "$(x)") $(lib_ext_zlib_libz_wlink) option map=$(abs_obj_dir)/gzipc.map name $@ >$(abs_obj_dir)/gzipc.cmd
-	$(WLINK) @$(abs_obj_dir)/gzipc.cmd
-	#@rm -f $(abs_obj_dir)/gzipc.cmd
+	@echo option quiet system $(WLINK_SYSTEM_CONSOLE) $(WLINKFLAGS_CONSOLE) $(WLINK_SEGMENTS_CONSOLE) $(foreach x,$(filter %$(obj_suffix),$^),file "$(x)") $(foreach x,$(filter %$(lib_suffix),$^),library "$(x)") $(lib_ext_zlib_libz_wlink) option map=$(abs_obj_dir)/gzip.map name $@ >$(abs_obj_dir)/gzip.cmd
+	$(WLINK) @$(abs_obj_dir)/gzip.cmd
+	#@rm -f $(abs_obj_dir)/gzip.cmd
   ifeq ($(TARGET_WINDOWS_WIN386),1)
 	@$(WIN386_EXE_TO_REX_IF_REX) $@
 	@$(WBIND) $@ -q -n
@@ -163,12 +145,21 @@ $(abs_exe_dir)/gzipc$(exe_suffix): $(obj_win32s_compat) $(abs_obj_dir)/gzipc$(ob
 	$(WIN16_NE_SETVER) $@
   endif
  endif
-
-$(abs_obj_dir)/gzipc$(obj_suffix): gzipc.c $(abs_obj_dir)/gzip$(obj_suffix)
+else
+$(abs_exe_dir)/gzip$(exe_suffix): $(obj_win32s_compat) $(gzip_objs) $(lib_windows_winfcon) $(lib_windows_winfcon_dependencies)
  ifeq ($(target_subdir),linux/host)
-	$(CC) $(CFLAGS_CONSOLE) -I.. -I../.. -c -o $@ $(filter %.c,$^)
+	$(CC) $(LDFLAGS) -o $@ $^
  else
-	$(WCC) $(WCCFLAGS_CONSOLE) -fo=$(abs_obj_dir)/.obj -i=.. -i=../.. $(filter %.c,$^)
+	@echo option quiet system $(WLINK_SYSTEM) $(WLINKFLAGS) $(WLINK_SEGMENTS) $(foreach x,$(filter %$(obj_suffix),$^),file "$(x)") $(lib_windows_winfcon_wlink) option map=$(abs_obj_dir)/gzip.map name $@ >$(abs_obj_dir)/gzip.cmd
+	$(WLINK) @$(abs_obj_dir)/gzip.cmd
+	#@rm -f $(abs_obj_dir)/gzip.cmd
+  ifeq ($(TARGET_WINDOWS_WIN386),1)
+	@$(WIN386_EXE_TO_REX_IF_REX) $@
+	@$(WBIND) $@ -q -n
+  endif
+  ifneq ($(WIN16_NE_SETVER),)
+	$(WIN16_NE_SETVER) $@
+  endif
  endif
 endif
 

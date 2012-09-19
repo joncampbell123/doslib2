@@ -619,6 +619,26 @@ int WINMAINPROC _win_main_con_entry(HINSTANCE hInstance,HINSTANCE hPrevInstance,
 	_win_WindowProc_MPI = MakeProcInstance((FARPROC)_win_WindowProc,hInstance);
 #endif
 
+#if TARGET_BITS == 16 || (TARGET_BITS == 32 && defined(TARGET_WINDOWS_WIN386))
+	/* Win386 buils: We HAVE to do this. Else code that prints to stderr will cause
+	 * Watcom 386 to crash and blank the screen */
+	if (isatty(0)) {
+		int fd = open("NUL",O_BINARY | O_RDONLY);
+		dup2(fd,0);
+		close(fd);
+	}
+	if (isatty(1)) {
+		int fd = open("NUL",O_BINARY | O_WRONLY);
+		dup2(fd,1);
+		close(fd);
+	}
+	if (isatty(2)) {
+		int fd = open("NUL",O_BINARY | O_WRONLY);
+		dup2(fd,2);
+		close(fd);
+	}
+#endif
+
 	/* clear the console */
 	memset(&_this_console,0,sizeof(_this_console));
 	memset(_this_console.console,' ',sizeof(_this_console.console));

@@ -1,0 +1,12 @@
+ISSUE: using fprintf/getchar/gets with standard I/O under Windows 3.1 Win386
+TARGETS: 16-bit Windows (win16), 32-bit Windows (win386)
+NOTED BY: Jonathan Campbell
+
+Win386 programs are generally able to make use of fopen/etc. however if they
+fprintf to stderr or attempt to read from stdin, Watcom's 386 extender crashes
+and dumps the screen to text mode.
+
+Workaround: don't use stdin/stdout/stderr or stdin/stdout/stderr IO handles.
+if you can't get your code to do that, then close the handles or open NUL
+and dup2() them over the standard I/O handles.
+

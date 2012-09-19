@@ -22,6 +22,20 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+/* we must map stdin reading to winfcon.
+ * NOTE: This fixes the bug where running this program under Windows 3.1 Win32s
+ *       causes the screen to suddenly go blank. Apparently reading STDIN from
+ *       a Win386 32-bit app causes the Watcom extender to flip out */
+#if defined(TARGET_WINDOWS)
+# include <windows.h>
+# include <windows/w32imphk/compat.h>
+# include <windows/apihelp.h>
+# if defined(TARGET_WINDOWS_GUI) && !defined(TARGET_WINDOWS_CONSOLE)
+#  define WINFCON_ENABLE 1
+#  include <windows/winfcon/winfcon.h>
+# endif
+#endif
+
 /* Return true if we read an affirmative line from standard input.
 
    Since this function uses stdin, it is suggested that the caller not
@@ -52,7 +66,7 @@ yesno (void)
      regex, and rpmatch.  */
   int c = getchar ();
   yes = (c == 'y' || c == 'Y');
-  while (c != '\n' && c != EOF)
+  while (c != 13 && c != 10 && c != EOF)
     c = getchar ();
 #endif
 
