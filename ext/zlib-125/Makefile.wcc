@@ -183,7 +183,7 @@ $(abs_exe_dir)/examplec$(exe_suffix): $(obj_win32s_compat) $(abs_obj_dir)/exampl
   endif
  endif
 
-$(abs_obj_dir)/examplec$(obj_suffix): example.c $(abs_obj_dir)/example$(obj_suffix)
+$(abs_obj_dir)/examplec$(obj_suffix): examplec.c $(abs_obj_dir)/example$(obj_suffix)
  ifeq ($(target_subdir),linux/host)
 	$(CC) $(CFLAGS_CONSOLE) -I.. -I../.. -c -o $@ $(filter %.c,$^)
  else
@@ -208,7 +208,7 @@ $(abs_exe_dir)/minigzic$(exe_suffix): $(obj_win32s_compat) $(abs_obj_dir)/minigz
   endif
  endif
 
-$(abs_obj_dir)/minigzic$(obj_suffix): minigzip.c $(abs_obj_dir)/minigzip$(obj_suffix)
+$(abs_obj_dir)/minigzic$(obj_suffix): minigzic.c $(abs_obj_dir)/minigzip$(obj_suffix)
  ifeq ($(target_subdir),linux/host)
 	$(CC) $(CFLAGS_CONSOLE) -I.. -I../.. -c -o $@ $(filter %.c,$^)
  else

@@ -9,11 +9,22 @@
 #define ZCONF_H
 
 #if TARGET_BITS == 16
+# include <dos.h>
+# include <malloc.h>
+# if defined(TARGET_WINDOWS)
+#  include <windows.h>
+# endif
 # define SYS16BIT
 # define MAXSEG_64K
 # define UNALIGNED_OK
 # define __MSDOS__
 # define MSDOS
+# define NOBYFOUR
+# define DYNAMIC_CRC_TABLE
+#elif TARGET_BITS == 32
+# if defined(TARGET_WINDOWS)
+#  include <windows.h>
+# endif
 #endif
 
 /*
@@ -343,12 +354,7 @@ typedef unsigned char  Byte;  /* 8 bits */
 typedef unsigned int   uInt;  /* 16 bits or more */
 typedef unsigned long  uLong; /* 32 bits or more */
 
-#if defined(SMALL_MEDIUM) && defined(_MSC_VER)
-   /* Borland C/C++ and some old MSC versions ignore FAR inside typedef */
-#  define Bytef Byte FAR
-#else
-   typedef Byte  FAR Bytef;
-#endif
+typedef Byte  FAR Bytef;
 typedef char  FAR charf;
 typedef int   FAR intf;
 typedef uInt  FAR uIntf;

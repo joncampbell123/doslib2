@@ -1,13 +1,18 @@
 
+# FIXME: win386 targets are 32-bit but still involve far pointers, doesn't compile right
+
 BUILD_dos16r=1
 BUILD_dos32p=1
-#BUILD_win16r=1
-#BUILD_win16p=1
-#BUILD_win16b=1
+BUILD_win16r=1
+BUILD_win16r_mm=large
+BUILD_win16p=1
+BUILD_win16p_mm=large
+BUILD_win16b=1
+BUILD_win16b_mm=large
 #BUILD_win386=1
-#BUILD_win32s=1
-#BUILD_win32=1
-#BUILD_linux_host=1
+BUILD_win32s=1
+BUILD_win32=1
+BUILD_linux_host=1
 
 -include ../../config.mak
 -include Makefile.wcc

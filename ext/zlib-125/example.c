@@ -18,6 +18,26 @@
 # include <i86.h>
 #endif
 
+#if defined(TARGET_WINDOWS)
+# include <windows.h>
+# include <windows/w32imphk/compat.h>
+# include <windows/apihelp.h>
+# if defined(TARGET_WINDOWS_GUI) && !defined(TARGET_WINDOWS_CONSOLE)
+#  define WINFCON_ENABLE 1
+#  define WINFCON_STOCK_WIN_MAIN 1
+#  include <windows/winfcon/winfcon.h>
+# endif
+#endif
+
+#if defined(WINFCON_ENABLE)
+static void __my_exit(int retc) {
+    printf(">>EXITED WITH CODE %d\n",retc);
+    _win_endloop_user_echo();
+    exit(retc);
+}
+# define exit(x) __my_exit(x)
+#endif
+
 #if defined(VMS) || defined(RISCOS)
 #  define TESTFILE "foo-gz"
 #else
@@ -56,7 +76,7 @@ void test_sync          OF((Byte *compr, uLong comprLen,
 void test_dict_deflate  OF((Byte *compr, uLong comprLen));
 void test_dict_inflate  OF((Byte *compr, uLong comprLen,
                             Byte *uncompr, uLong uncomprLen));
-int  main               OF((int argc, char *argv[]));
+int  main               OF((int argc, char *argv[], char *envp[]));
 
 /* ===========================================================================
  * Test compress() and uncompress()
@@ -516,9 +536,10 @@ void test_dict_inflate(compr, comprLen, uncompr, uncomprLen)
  * Usage:  example [output.gz  [input.gz]]
  */
 
-int main(argc, argv)
+int main(argc, argv, envp)
     int argc;
     char *argv[];
+    char *envp[];
 {
     Byte *compr, *uncompr;
     uLong comprLen = 10000*sizeof(int); /* don't overflow on MSDOS */
@@ -566,6 +587,10 @@ int main(argc, argv)
 
     free(compr);
     free(uncompr);
+
+#ifdef WIN_STDOUT_CONSOLE
+    _win_endloop_user_echo();
+#endif
 
     return 0;
 }
