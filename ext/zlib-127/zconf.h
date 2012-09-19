@@ -11,11 +11,20 @@
 #if TARGET_BITS == 16
 # include <dos.h>
 # include <malloc.h>
+# if defined(TARGET_WINDOWS)
+#  include <windows.h>
+# endif
 # define SYS16BIT
 # define MAXSEG_64K
 # define UNALIGNED_OK
 # define __MSDOS__
 # define MSDOS
+# define NOBYFOUR
+# define DYNAMIC_CRC_TABLE
+#elif TARGET_BITS == 32
+# if defined(TARGET_WINDOWS)
+#  include <windows.h>
+# endif
 #endif
 
 /*
@@ -291,7 +300,8 @@
  * to define NO_MEMCPY in zutil.h.  If you don't need the mixed model,
  * just define FAR to be empty.
  */
-#ifdef SYS16BIT
+#ifndef FAR
+# ifdef SYS16BIT
 #  if defined(M_I86SM) || defined(M_I86MM)
      /* MSC small or medium model */
 #    define SMALL_MEDIUM
@@ -310,6 +320,7 @@
 #      define FAR far
 #    endif
 #  endif
+# endif
 #endif
 
 #if defined(WINDOWS) || defined(WIN32)
@@ -506,6 +517,11 @@ typedef uLong FAR uLongf;
   #pragma map(inflate_table,"INTABL")
   #pragma map(inflate_fast,"INFA")
   #pragma map(inflate_copyright,"INCOPY")
+#endif
+
+#if defined(__WATCOMC__) && TARGET_BITS == 16 && defined(__COMPACT__)
+# define NO_GZCOMPRESS
+# define NO_GZIP
 #endif
 
 #endif /* ZCONF_H */

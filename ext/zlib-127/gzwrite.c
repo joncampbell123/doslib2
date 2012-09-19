@@ -19,7 +19,11 @@ local int gz_init(state)
     z_streamp strm = &(state->strm);
 
     /* allocate input buffer */
+#if TARGET_BITS == 16
+    state->in = _fmalloc(state->want);
+#else
     state->in = malloc(state->want);
+#endif
     if (state->in == NULL) {
         gz_error(state, Z_MEM_ERROR, "out of memory 1");
         return -1;
@@ -28,7 +32,11 @@ local int gz_init(state)
     /* only need output buffer and deflate state if compressing */
     if (!state->direct) {
         /* allocate output buffer */
+#if TARGET_BITS == 16
+        state->out = _fmalloc(state->want);
+#else
         state->out = malloc(state->want);
+#endif
         if (state->out == NULL) {
 #if TARGET_BITS == 16
 	    _ffree(state->in);
@@ -332,6 +340,10 @@ int ZEXPORT gzputs(file, str)
 #if defined(STDC) || defined(Z_HAVE_STDARG_H)
 #include <stdarg.h>
 
+#if TARGET_BITS == 16 && (defined(__SMALL__) || defined(__MEDIUM__))
+static unsigned char __gzprintf_buffer[1024];
+#endif
+
 /* -- see zlib.h -- */
 int ZEXPORTVA gzprintf (gzFile file, const char *format, ...)
 {
@@ -369,25 +381,32 @@ int ZEXPORTVA gzprintf (gzFile file, const char *format, ...)
     size = (int)(state->size);
     state->in[size - 1] = 0;
     va_start(va, format);
-#ifdef NO_vsnprintf
-#  ifdef HAS_vsprintf_void
+#if TARGET_BITS == 16 && (defined(__SMALL__) || defined(__MEDIUM__))
+    /* there is no vsprintf() that writes to a FAR pointer, so we have to vsprintf to a temp buffer */
+    len = vsnprintf((char*)__gzprintf_buffer,sizeof(__gzprintf_buffer),format,va);
+    if (len != 0) _fmemcpy(state->in,__gzprintf_buffer,len);
+    va_end(va);
+#else
+# ifdef NO_vsnprintf
+#   ifdef HAS_vsprintf_void
     (void)vsprintf((char *)(state->in), format, va);
     va_end(va);
     for (len = 0; len < size; len++)
         if (state->in[len] == 0) break;
-#  else
+#   else
     len = vsprintf((char *)(state->in), format, va);
     va_end(va);
-#  endif
-#else
-#  ifdef HAS_vsnprintf_void
+#   endif
+# else
+#   ifdef HAS_vsnprintf_void
     (void)vsnprintf((char *)(state->in), size, format, va);
     va_end(va);
     len = strlen((char *)(state->in));
-#  else
+#   else
     len = vsnprintf((char *)(state->in), size, format, va);
     va_end(va);
-#  endif
+#   endif
+# endif
 #endif
 
     /* check that printf() results fit in buffer */

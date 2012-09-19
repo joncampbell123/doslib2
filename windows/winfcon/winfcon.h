@@ -24,7 +24,7 @@
 #ifndef WINFCON_SELF
 # define getch _win_getch
 # define kbhit _win_kbhit
-# define fprintf __XXX_TODO_fprintf
+# define fprintf _win_fprintf
 # define printf _win_printf
 # define isatty _win_isatty
 # define write _win_write
@@ -43,6 +43,7 @@ void _win_endloop_user_echo();
 int _win_read(int fd,void *buf,int sz);
 size_t _win_printf(const char *fmt,...);
 int _win_write(int fd,const void *buf,int sz);
+size_t _win_fprintf(FILE *fp,const char *fmt,...);
 int _cdecl main(int argc,char **argv,char **envp);
 int WINMAINPROC _win_main_con_entry(HINSTANCE hInstance,HINSTANCE hPrevInstance,LPSTR lpCmdLine,int nCmdShow,int (_cdecl *_main_f)(int argc,char**,char**));
 

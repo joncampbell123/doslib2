@@ -14,7 +14,6 @@
  */
 
 /* @(#) $Id$ */
-
 #include "zlib.h"
 #include <stdio.h>
 
@@ -57,6 +56,17 @@
 #ifndef WIN32 /* unlink already in stdio.h for WIN32 */
   extern int unlink OF((const char *));
 #endif
+#endif
+
+#if defined(TARGET_WINDOWS)
+# include <windows.h>
+# include <windows/w32imphk/compat.h>
+# include <windows/apihelp.h>
+# if defined(TARGET_WINDOWS_GUI) && !defined(TARGET_WINDOWS_CONSOLE)
+#  define WINFCON_ENABLE 1
+#  define WINFCON_STOCK_WIN_MAIN 1
+#  include <windows/winfcon/winfcon.h>
+# endif
 #endif
 
 #if defined(UNDER_CE)
@@ -339,7 +349,7 @@ int  gz_compress_mmap OF((FILE   *in, gzFile out));
 void gz_uncompress    OF((gzFile in, FILE   *out));
 void file_compress    OF((char  *file, char *mode));
 void file_uncompress  OF((char  *file));
-int  main             OF((int argc, char *argv[]));
+int  main             OF((int argc, char *argv[], char *envp[]));
 
 /* ===========================================================================
  * Display error message and exit
@@ -537,9 +547,10 @@ void file_uncompress(file)
  *   -1 to -9 : compression level
  */
 
-int main(argc, argv)
+int main(argc, argv, envp)
     int argc;
     char *argv[];
+    char *envp[];
 {
     int copyout = 0;
     int uncompr = 0;
@@ -627,5 +638,8 @@ int main(argc, argv)
             }
         } while (argv++, --argc);
     }
+#ifdef WIN_STDOUT_CONSOLE
+    _win_endloop_user_echo();
+#endif
     return 0;
 }

@@ -1,14 +1,21 @@
 
+# FIXME: Win16 builds: for some reason the small, medium, and compact builds don't compile right
+# FIXME: Win386 builds: also don't compile right
+# FIXME: Win32s builds: runs, but doesn't show window, then causes Windows 3.1 to crash on shutdown.
+#                       runs correctly under Windows XP though.
+
 BUILD_dos16r=1
-#BUILD_dos16r_mm=small medium large huge #compact 
 BUILD_dos32p=1
-#BUILD_win16r=1
-#BUILD_win16p=1
-#BUILD_win16b=1
+BUILD_win16r=1
+BUILD_win16r_mm=large
+BUILD_win16p=1
+BUILD_win16p_mm=large
+BUILD_win16b=1
+BUILD_win16b_mm=large
 #BUILD_win386=1
-#BUILD_win32s=1
-#BUILD_win32=1
-#BUILD_linux_host=1
+BUILD_win32s=1
+BUILD_win32=1
+BUILD_linux_host=1
 
 -include ../../config.mak
 -include Makefile.wcc

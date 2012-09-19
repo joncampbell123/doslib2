@@ -567,6 +567,33 @@ size_t _win_printf(const char *fmt,...) {
 	return 0;
 }
 
+size_t _win_fprintf(FILE *fp,const char *fmt,...) {
+	va_list va;
+
+	va_start(va,fmt);
+	vsnprintf(temprintf,sizeof(temprintf)-1,fmt,va);
+	va_end(va);
+
+	if (fp == stdout || fp == stderr) {
+		int fX = _this_console.conX;
+		char *t;
+
+		t = temprintf;
+		if (*t != 0) {
+			while (*t != 0) {
+				if (*t == 13 || *t == 10) fX = 0;
+				_win_putc(*t++);
+			}
+			if (fX <= _this_console.conX) _win_redraw_line_row_partial(fX,_this_console.conX);
+			_win_update_cursor();
+		}
+
+		_win_pump();
+	}
+
+	return 0;
+}
+
 /* HACK: I don't know if real systems do this or QEMU is doing something wrong, but apparently if a program
  *       rapidly prints a lot of text under Windows 3.1 (like the RDTSC test program) it can cause the GDI
  *       to become 100% focused on TextOut() to the point not even the cursor updates when you move it, and
