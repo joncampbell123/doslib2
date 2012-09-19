@@ -1,3 +1,15 @@
+/* DOSLIB2
+ *
+ * known bugs:
+ *
+ * - Winwa386 version crashes on shutdown (screen goes blank)
+ * - Program does not correctly convert .tar -> .tgz on compression when running on 16-bit systems
+ * - Program does not correctly detect cases where "file.tar" and "file.tar.gz" are both treated
+ *   as "file.tar" on 16-bit systems. That corrupts the file, of course.
+ * - Win32s/Winwa386 builds need to call Windows message pump periodically from within this program's
+ *   compression routines to give the user a chance to cancel. Remember Windows 3.1 is a cooperative
+ *   multitasking system! */
+
 /* gzip (GNU zip) -- compress files with zip algorithm and 'compress' interface
 
    Copyright (C) 1999, 2001-2002, 2006-2007, 2009-2012 Free Software
