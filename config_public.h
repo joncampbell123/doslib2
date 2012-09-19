@@ -7,7 +7,6 @@
 #define ISP_UTILS_ENABLE_linux_host 1
 #define ISP_UTILS_ENABLE_mm_compact 1
 #define ISP_UTILS_ENABLE_mm_flat 1
-#define ISP_UTILS_ENABLE_mm_huge 1
 #define ISP_UTILS_ENABLE_mm_large 1
 #define ISP_UTILS_ENABLE_mm_medium 1
 #define ISP_UTILS_ENABLE_mm_small 1

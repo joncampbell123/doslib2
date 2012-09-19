@@ -51,6 +51,9 @@
 #define KBSIZE		256
 
 static char		_win_WindowProcClass[128];
+static char		program_name[256];
+static char*		argv[64]={NULL};
+static int		argc=0;
 
 /* If we stick all these variables in the data segment and reference
  * them directly, then we'll work from a single instance, but run into
@@ -606,7 +609,7 @@ void _gdi_pause() {
 	/* TODO: delay routines appropriate for Windows 3.0, Windows 3.1, Windows NT, etc. */
 }
 
-int WINMAINPROC _win_main_con_entry(HINSTANCE hInstance,HINSTANCE hPrevInstance,LPSTR lpCmdLine,int nCmdShow,int (_cdecl *_main_f)(int argc,char**,char**)) {
+int WINMAINPROC _win_main_con_entry(HINSTANCE hInstance,HINSTANCE hPrevInstance,LPSTR lpCmdLine,int nCmdShow,int (*_main_f)(int argc,char**,char**)) {
 	WNDCLASS wnd;
 	MSG msg;
 
@@ -658,18 +661,47 @@ int WINMAINPROC _win_main_con_entry(HINSTANCE hInstance,HINSTANCE hPrevInstance,
 
 /* Use the full path of our EXE image by default */
 	{
-		char title[256];
+		if (!GetModuleFileName(hInstance,program_name,sizeof(program_name)-1))
+			strcpy(program_name,"<unknown>");
 
-		if (!GetModuleFileName(hInstance,title,sizeof(title)-1))
-			strcpy(title,"<unknown>");
+		argv[0] = program_name;
+		argc = 1;
 
-		_this_console.hwndMain = CreateWindow(_win_WindowProcClass,title,
+		_this_console.hwndMain = CreateWindow(_win_WindowProcClass,program_name,
 			WS_OVERLAPPEDWINDOW,
 			CW_USEDEFAULT,CW_USEDEFAULT,
 			100,40,
 			NULL,NULL,
 			hInstance,NULL);
 	}
+
+/* then subdivide the command line into argv[] */
+	{
+		char FAR *p = lpCmdLine;
+		char tmp[256];
+		int i;
+
+		while (*p != 0) {
+			while (*p == ' ') p++;
+			if (*p == 0) break;
+
+			i=0;
+			while (*p) {
+				if (*p == ' ') break;
+				/* TODO: Args in quotes, copy until another quote */
+				if ((i+1) < sizeof(tmp)) tmp[i++] = *p;
+				p++;
+			}
+			tmp[i] = 0;
+
+			if (argc < 63) {
+				argv[argc] = malloc(i+1);
+				if (argv[argc] != NULL) memcpy(argv[argc],tmp,i+1);
+				argc++;
+			}
+		}
+	}
+	argv[argc] = NULL;
 
 	if (!_this_console.hwndMain) {
 		MessageBox(NULL,"Unable to create window","Oops!",MB_OK);
@@ -722,7 +754,7 @@ int WINMAINPROC _win_main_con_entry(HINSTANCE hInstance,HINSTANCE hPrevInstance,
 		SWP_NOMOVE);
 
 	if (setjmp(_this_console.exit_jmp) == 0)
-		_main_f(0,NULL,NULL); /* <- FIXME: We need to take the command line and generate argv[]. Also generate envp[] */
+		_main_f(argc,argv,NULL); /* <- FIXME: We need to take the command line and generate argv[]. Also generate envp[] */
 
 	if (!_this_console.userReqClose) {
 		_win_printf("\n<program terminated>");

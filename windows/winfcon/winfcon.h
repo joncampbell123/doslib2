@@ -45,11 +45,19 @@ size_t _win_printf(const char *fmt,...);
 int _win_write(int fd,const void *buf,int sz);
 size_t _win_fprintf(FILE *fp,const char *fmt,...);
 int _cdecl main(int argc,char **argv,char **envp);
-int WINMAINPROC _win_main_con_entry(HINSTANCE hInstance,HINSTANCE hPrevInstance,LPSTR lpCmdLine,int nCmdShow,int (_cdecl *_main_f)(int argc,char**,char**));
+int WINMAINPROC _win_main_con_entry(HINSTANCE hInstance,HINSTANCE hPrevInstance,LPSTR lpCmdLine,int nCmdShow,int (*_main_f)(int argc,char**,char**));
 
 extern HINSTANCE _win_hInstance;
 
 # ifdef WINFCON_STOCK_WIN_MAIN
+/* ARRRGH Watcom has a really bizarre issue with main.
+ * I guess it's some special function because when we try to function-call it
+ * the argc, argv[] coming from the WinMain gets all messed up!
+ *
+ * This hack is ugly, but it works */
+# define main _win_main
+int main(int argc, char **argv, char **envp);
+
 int WINMAINPROC WinMain(HINSTANCE hInstance,HINSTANCE hPrevInstance,LPSTR lpCmdLine,int nCmdShow) {
 	return _win_main_con_entry(hInstance,hPrevInstance,lpCmdLine,nCmdShow,main);
 }
