@@ -6,7 +6,7 @@
 #include "gzguts.h"
 
 /* Local functions */
-local int gz_load OF((gz_statep, unsigned char *, unsigned, unsigned *));
+local int gz_load OF((gz_statep, unsigned char FAR *, unsigned, unsigned *));
 local int gz_avail OF((gz_statep));
 local int gz_look OF((gz_statep));
 local int gz_decomp OF((gz_statep));
@@ -19,7 +19,7 @@ local int gz_skip OF((gz_statep, z_off64_t));
    read the number of bytes requested, depending on the type of descriptor. */
 local int gz_load(state, buf, len, have)
     gz_statep state;
-    unsigned char *buf;
+    unsigned char FAR *buf;
     unsigned len;
     unsigned *have;
 {
@@ -27,7 +27,12 @@ local int gz_load(state, buf, len, have)
 
     *have = 0;
     do {
+#if TARGET_BITS == 16
+	ret = -1;
+	_dos_read(state->fd, buf + *have, len - *have, (unsigned*)(&ret));
+#else
         ret = read(state->fd, buf + *have, len - *have);
+#endif
         if (ret <= 0)
             break;
         *have += ret;
@@ -58,7 +63,7 @@ local int gz_avail(state)
         return -1;
     if (state->eof == 0) {
         if (strm->avail_in) {       /* copy what's there to the start */
-            unsigned char *p = state->in, *q = strm->next_in;
+            unsigned char FAR *p = state->in, FAR *q = strm->next_in;
             unsigned n = strm->avail_in;
             do {
                 *p++ = *q++;
@@ -90,14 +95,26 @@ local int gz_look(state)
     /* allocate read buffers and inflate memory */
     if (state->size == 0) {
         /* allocate buffers */
+#if TARGET_BITS == 16
+        state->in = _fmalloc(state->want);
+        state->out = _fmalloc(state->want << 1);
+#else
         state->in = malloc(state->want);
         state->out = malloc(state->want << 1);
+#endif
         if (state->in == NULL || state->out == NULL) {
+#if TARGET_BITS == 16
+            if (state->out != NULL)
+                _ffree(state->out);
+            if (state->in != NULL)
+                _ffree(state->in);
+#else
             if (state->out != NULL)
                 free(state->out);
             if (state->in != NULL)
                 free(state->in);
-            gz_error(state, Z_MEM_ERROR, "out of memory");
+#endif
+            gz_error(state, Z_MEM_ERROR, "out of memory 1");
             return -1;
         }
         state->size = state->want;
@@ -109,10 +126,15 @@ local int gz_look(state)
         state->strm.avail_in = 0;
         state->strm.next_in = Z_NULL;
         if (inflateInit2(&(state->strm), 15 + 16) != Z_OK) {    /* gunzip */
+#if TARGET_BITS == 16
+            _ffree(state->out);
+            _ffree(state->in);
+#else
             free(state->out);
             free(state->in);
+#endif
             state->size = 0;
-            gz_error(state, Z_MEM_ERROR, "out of memory");
+            gz_error(state, Z_MEM_ERROR, "out of memory 2");
             return -1;
         }
     }
@@ -154,7 +176,11 @@ local int gz_look(state)
        space for gzungetc() */
     state->x.next = state->out;
     if (strm->avail_in) {
+#if TARGET_BITS == 16
+        _fmemcpy(state->x.next, strm->next_in, strm->avail_in);
+#else
         memcpy(state->x.next, strm->next_in, strm->avail_in);
+#endif
         state->x.have = strm->avail_in;
         strm->avail_in = 0;
     }
@@ -194,7 +220,7 @@ local int gz_decomp(state)
             return -1;
         }
         if (ret == Z_MEM_ERROR) {
-            gz_error(state, Z_MEM_ERROR, "out of memory");
+            gz_error(state, Z_MEM_ERROR, "out of memory 3");
             return -1;
         }
         if (ret == Z_DATA_ERROR) {              /* deflate stream invalid */
@@ -328,7 +354,11 @@ int ZEXPORT gzread(file, buf, len)
         /* first just try copying data from the output buffer */
         if (state->x.have) {
             n = state->x.have > len ? len : state->x.have;
+#if TARGET_BITS == 16
+            _fmemcpy(buf, state->x.next, n);
+#else
             memcpy(buf, state->x.next, n);
+#endif
             state->x.next += n;
             state->x.have -= n;
         }
@@ -460,8 +490,8 @@ int ZEXPORT gzungetc(c, file)
 
     /* slide output data if needed and insert byte before existing data */
     if (state->x.next == state->out) {
-        unsigned char *src = state->out + state->x.have;
-        unsigned char *dest = state->out + (state->size << 1);
+        unsigned char FAR *src = state->out + state->x.have;
+        unsigned char FAR *dest = state->out + (state->size << 1);
         while (src > state->out)
             *--dest = *--src;
         state->x.next = dest;
@@ -482,7 +512,7 @@ char * ZEXPORT gzgets(file, buf, len)
 {
     unsigned left, n;
     char *str;
-    unsigned char *eol;
+    unsigned char FAR *eol;
     gz_statep state;
 
     /* check parameters and get internal structure */
@@ -518,12 +548,20 @@ char * ZEXPORT gzgets(file, buf, len)
 
         /* look for end-of-line in current output buffer */
         n = state->x.have > left ? left : state->x.have;
+#if TARGET_BITS == 16
+        eol = _fmemchr(state->x.next, '\n', n);
+#else
         eol = memchr(state->x.next, '\n', n);
+#endif
         if (eol != NULL)
             n = (unsigned)(eol - state->x.next) + 1;
 
         /* copy through end-of-line, or remainder if not found */
+#if TARGET_BITS == 16
+        _fmemcpy(buf, state->x.next, n);
+#else
         memcpy(buf, state->x.next, n);
+#endif
         state->x.have -= n;
         state->x.next += n;
         state->x.pos += n;
@@ -577,13 +615,18 @@ int ZEXPORT gzclose_r(file)
     /* free memory and close file */
     if (state->size) {
         inflateEnd(&(state->strm));
+#if TARGET_BITS == 16
+        _ffree(state->out);
+        _ffree(state->in);
+#else
         free(state->out);
         free(state->in);
+#endif
     }
     err = state->err == Z_BUF_ERROR ? Z_BUF_ERROR : Z_OK;
     gz_error(state, Z_OK, NULL);
     free(state->path);
     ret = close(state->fd);
-    free(state);
+    free(file);
     return ret ? Z_ERRNO : err;
 }

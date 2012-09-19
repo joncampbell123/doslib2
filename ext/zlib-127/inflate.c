@@ -1271,7 +1271,7 @@ uInt dictLength;
 {
     struct inflate_state FAR *state;
     unsigned long dictid;
-    unsigned char *next;
+    unsigned char FAR *next;
     unsigned avail;
     int ret;
 

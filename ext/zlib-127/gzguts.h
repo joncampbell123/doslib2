@@ -154,8 +154,8 @@ typedef struct {
     char *path;             /* path or fd for error messages */
     unsigned size;          /* buffer size, zero if not allocated yet */
     unsigned want;          /* requested buffer size, default is GZBUFSIZE */
-    unsigned char *in;      /* input buffer */
-    unsigned char *out;     /* output buffer (double-sized when reading) */
+    Bytef *in;      /* input buffer */
+    Bytef *out;     /* output buffer (double-sized when reading) */
     int direct;             /* 0 if processing gzip, 1 if transparent */
         /* just for reading */
     int how;                /* 0: get header, 1: copy, 2: decompress */
@@ -174,7 +174,7 @@ typedef struct {
         /* zlib inflate or deflate stream */
     z_stream strm;          /* stream structure in-place (not a pointer) */
 } gz_state;
-typedef gz_state FAR *gz_statep;
+typedef gz_state *gz_statep;
 
 /* shared functions */
 void ZLIB_INTERNAL gz_error OF((gz_statep, int, const char *));

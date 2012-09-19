@@ -21,7 +21,7 @@ local int gz_init(state)
     /* allocate input buffer */
     state->in = malloc(state->want);
     if (state->in == NULL) {
-        gz_error(state, Z_MEM_ERROR, "out of memory");
+        gz_error(state, Z_MEM_ERROR, "out of memory 1");
         return -1;
     }
 
@@ -30,8 +30,12 @@ local int gz_init(state)
         /* allocate output buffer */
         state->out = malloc(state->want);
         if (state->out == NULL) {
+#if TARGET_BITS == 16
+	    _ffree(state->in);
+#else
             free(state->in);
-            gz_error(state, Z_MEM_ERROR, "out of memory");
+#endif
+            gz_error(state, Z_MEM_ERROR, "out of memory 2");
             return -1;
         }
 
@@ -42,9 +46,14 @@ local int gz_init(state)
         ret = deflateInit2(strm, state->level, Z_DEFLATED,
                            MAX_WBITS + 16, DEF_MEM_LEVEL, state->strategy);
         if (ret != Z_OK) {
+#if TARGET_BITS == 16
+	    _ffree(state->out);
+	    _ffree(state->in);
+#else
             free(state->out);
             free(state->in);
-            gz_error(state, Z_MEM_ERROR, "out of memory");
+#endif
+            gz_error(state, Z_MEM_ERROR, "out of memory 3");
             return -1;
         }
     }
@@ -81,7 +90,12 @@ local int gz_comp(state, flush)
 
     /* write directly if requested */
     if (state->direct) {
+#if TARGET_BITS == 16
+	got = -1;
+	_dos_write(state->fd, strm->next_in, strm->avail_in, (unsigned*)(&got));
+#else
         got = write(state->fd, strm->next_in, strm->avail_in);
+#endif
         if (got < 0 || (unsigned)got != strm->avail_in) {
             gz_error(state, Z_ERRNO, zstrerror());
             return -1;
@@ -98,11 +112,22 @@ local int gz_comp(state, flush)
         if (strm->avail_out == 0 || (flush != Z_NO_FLUSH &&
             (flush != Z_FINISH || ret == Z_STREAM_END))) {
             have = (unsigned)(strm->next_out - state->x.next);
+#if TARGET_BITS == 16
+	    if (have) {
+	    	got = -1;
+		_dos_write(state->fd, state->x.next, have, (unsigned*)(&got));
+		if ((unsigned)got != have) {
+		    gz_error(state, Z_ERRNO, zstrerror());
+		    return -1;
+		}
+	    }
+#else
             if (have && ((got = write(state->fd, state->x.next, have)) < 0 ||
                          (unsigned)got != have)) {
                 gz_error(state, Z_ERRNO, zstrerror());
                 return -1;
             }
+#endif
             if (strm->avail_out == 0) {
                 strm->avail_out = state->size;
                 strm->next_out = state->out;
@@ -148,7 +173,11 @@ local int gz_zero(state, len)
         n = GT_OFF(state->size) || (z_off64_t)state->size > len ?
             (unsigned)len : state->size;
         if (first) {
+#if TARGET_BITS == 16
+            _fmemset(state->in, 0, n);
+#else
             memset(state->in, 0, n);
+#endif
             first = 0;
         }
         strm->avail_in = n;
@@ -213,7 +242,11 @@ int ZEXPORT gzwrite(file, buf, len)
             n = state->size - strm->avail_in;
             if (n > len)
                 n = len;
+#if TARGET_BITS == 16
+            _fmemcpy(strm->next_in + strm->avail_in, buf, n);
+#else
             memcpy(strm->next_in + strm->avail_in, buf, n);
+#endif
             strm->avail_in += n;
             state->x.pos += n;
             buf = (char *)buf + n;
@@ -552,14 +585,22 @@ int ZEXPORT gzclose_w(file)
             ret = state->err;
         if (!state->direct) {
             (void)deflateEnd(&(state->strm));
+#if TARGET_BITS == 16
+            _ffree(state->out);
+#else
             free(state->out);
+#endif
         }
+#if TARGET_BITS == 16
+        _ffree(state->in);
+#else
         free(state->in);
+#endif
     }
     gz_error(state, Z_OK, NULL);
     free(state->path);
     if (close(state->fd) == -1)
         ret = Z_ERRNO;
-    free(state);
+    free(file);
     return ret;
 }

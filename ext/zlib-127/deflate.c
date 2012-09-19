@@ -329,7 +329,7 @@ int ZEXPORT deflateSetDictionary (strm, dictionary, dictLength)
     uInt str, n;
     int wrap;
     unsigned avail;
-    unsigned char *next;
+    unsigned char FAR *next;
 
     if (strm == Z_NULL || strm->state == Z_NULL || dictionary == Z_NULL)
         return Z_STREAM_ERROR;
