@@ -26,7 +26,7 @@
 # define getch _winvt_getch
 # define kbhit _winvt_kbhit
 # define fflush _winvt_fflush
-# define fprintf __XXX_TODO_fprintf
+# define fprintf _winvt_fprintf
 # define printf _winvt_printf
 # define isatty _winvt_isatty
 # define write _winvt_write
@@ -46,6 +46,7 @@ void _winvt_endloop_user_echo();
 int _winvt_read(int fd,void *buf,int sz);
 size_t _winvt_printf(const char *fmt,...);
 int _winvt_write(int fd,const void *buf,int sz);
+size_t _winvt_fprintf(FILE *fp,const char *fmt,...);
 void _winvt_update_cursor();
 void _winvt_redraw_changes();
 int _cdecl main(int argc,char **argv,char **envp);
