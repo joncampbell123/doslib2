@@ -8,6 +8,17 @@
 
 #include <misc/useful.h>
 
+/* Stupid watcom inline assembler */
+#if TARGET_BITS == 16
+# define TARGET_BITS_16 1
+#elif TARGET_BITS == 32
+# define TARGET_BITS_32 1
+#endif
+
+#if defined(TARGET_BITS_16) || (defined(TARGET_BITS_32) && (defined(TARGET_MSDOS) || defined(TARGET_WINDOWS_WIN386)))
+# define TARGET_CLI_STI_IS_SAFE
+#endif
+
 #pragma pack(push,1)
 struct cpu_cpuid_generic_block {
 	uint32_t		a,b,c,d;		/* EAX EBX ECX EDX */

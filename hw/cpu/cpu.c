@@ -439,9 +439,12 @@ fin:		popa
 # endif
 #else
 	/* a 386 will not allow setting the AC bit (bit 18) */
+	/* NTS: Inline assembly: #if TARGET_BITS == 16 doesn't work right, use only #ifdef */
+	/* NTS: Do NOT use cli/sti under 32-bit Windows targets. The NT kernel will fault us for it.
+	 *      Everyone expects 16-bit code to do it though */
 	__asm {
 		.386
-# if TARGET_BITS == 16
+# ifdef TARGET_CLI_STI_IS_SAFE
 		cli
 # endif
 		pushfd
@@ -451,7 +454,7 @@ fin:		popa
 		popf
 		pushf
 		pop	eax
-# if TARGET_BITS == 16
+# ifdef TARGET_CLI_STI_IS_SAFE
 		sti
 # endif
 		test	eax,0x40000
@@ -540,10 +543,17 @@ no_cpuid:		nop
 	if (cpu_flags & CPU_FLAG_CPUID)
 		probe_cpuid();
 
+#if defined(TARGET_WINDOWS)
+	if (!(cpu_flags & CPU_FLAG_CPUID)) {/* we can assume at least >= 386 here */
+		cpuid_info->virt_addr_bits = 32;
+		cpuid_info->phys_addr_bits = 32;
+		cpuid_info->guest_phys_addr_bits = 32;
+	}
+#else
 	/* if the CPU does not provide CPUID, then try to get type/model ID value (386/486) */
 	if (!(cpu_flags & CPU_FLAG_CPUID)) {/* we can assume at least >= 386 here */
-#if !defined(__GNUC__) /* Not under Linux! */
-# if !defined(TARGET_WINDOWS) /* Not under Windows! */
+# if !defined(__GNUC__) /* Not under Linux! */
+#  if !defined(TARGET_WINDOWS) /* Not under Windows! */
 		/* take the safest route first and ask the BIOS */
 		__asm {
 			push	ax
@@ -552,16 +562,16 @@ no_cpuid:		nop
 			int	15h
 			jc	nocando
 			cmp	ah,0x00		; if AH != 0x00 then it didnt work
-#if defined(__COMPACT__) || defined(__LARGE__) || defined(__HUGE__)
+#   if defined(__COMPACT__) || defined(__LARGE__) || defined(__HUGE__)
 			mov	ax,seg cpu_type_and_mask
 			mov	ds,ax
-#endif
+#   endif
 			mov	cpu_type_and_mask,cx
 			jnz	nocando
 nocando:		pop	ax
 		}
+#  endif
 # endif
-#endif
 
 		/* the phys/virt addr bits are not set by this point if probe_cpuid() is never executed.
 		 * so we need to set them to work 100% properly on pre-CPUID x86 processors */
@@ -576,6 +586,7 @@ nocando:		pop	ax
 
 		cpuid_info->guest_phys_addr_bits = cpuid_info->phys_addr_bits;
 	}
+#endif
 }
 
 void probe_cpu() {

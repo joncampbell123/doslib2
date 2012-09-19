@@ -1,0 +1,17 @@
+Applies to all platforms.
+
+#if defined(...) #ifdef and etc work normally in C/C++.
+However in an inline assembly block, only #ifdef works properly.
+
+Noted problem code:
+
+__asm {
+#if TARGET_BITS == 16
+... Code A
+#else
+... Code B
+#endif
+}
+
+Even when compiled with TARGET_BITS == 32, only Code A was assembled into the program
+
