@@ -137,7 +137,7 @@ local gzFile gz_open(path, fd, mode)
                 break;
 #endif
             case '+':       /* can't read and write at the same time */
-                free(state);
+                free((void*)state); /* NTS: This is OK despite "state" as FAR pointer we got it from malloc() */
                 return NULL;
             case 'b':       /* ignore -- will request binary anyway */
                 break;
@@ -172,14 +172,14 @@ local gzFile gz_open(path, fd, mode)
 
     /* must provide an "r", "w", or "a" */
     if (state->mode == GZ_NONE) {
-        free(state);
+        free((void*)state);
         return NULL;
     }
 
     /* can't force transparent read */
     if (state->mode == GZ_READ) {
         if (state->direct) {
-            free(state);
+            free((void*)state);
             return NULL;
         }
         state->direct = 1;      /* for empty file */
@@ -197,7 +197,7 @@ local gzFile gz_open(path, fd, mode)
         len = strlen(path);
     state->path = malloc(len + 1);
     if (state->path == NULL) {
-        free(state);
+        free((void*)state);
         return NULL;
     }
 #ifdef _WIN32
@@ -239,7 +239,7 @@ local gzFile gz_open(path, fd, mode)
         open(path, oflag, 0666));
     if (state->fd == -1) {
         free(state->path);
-        free(state);
+        free((void*)state);
         return NULL;
     }
     if (state->mode == GZ_APPEND)

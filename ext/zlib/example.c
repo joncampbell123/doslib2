@@ -568,7 +568,7 @@ int main(argc, argv)
      * data and to ensure that uncompr compresses well.
      */
     if (compr == Z_NULL || uncompr == Z_NULL) {
-        printf("out of memory\n");
+        printf("out of memory (compr=%p uncompr=%p)\n",compr,uncompr);
         exit(1);
     }
 

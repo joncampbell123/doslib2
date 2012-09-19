@@ -26,6 +26,10 @@
 # ifndef FAR
 #  define FAR far
 # endif
+
+# if defined(__SMALL__) || defined(__MEDIUM__)
+#  define SMALL_MEDIUM
+# endif
 #endif
 
 /*

@@ -58,7 +58,7 @@ local int gz_avail(state)
         return -1;
     if (state->eof == 0) {
         if (strm->avail_in) {       /* copy what's there to the start */
-            unsigned char *p = state->in, *q = strm->next_in;
+            unsigned char FAR *p = state->in, FAR *q = strm->next_in;
             unsigned n = strm->avail_in;
             do {
                 *p++ = *q++;
@@ -154,7 +154,11 @@ local int gz_look(state)
        space for gzungetc() */
     state->x.next = state->out;
     if (strm->avail_in) {
+#if TARGET_BITS == 16
+        _fmemcpy(state->x.next, strm->next_in, strm->avail_in);
+#else
         memcpy(state->x.next, strm->next_in, strm->avail_in);
+#endif
         state->x.have = strm->avail_in;
         strm->avail_in = 0;
     }
@@ -328,7 +332,11 @@ int ZEXPORT gzread(file, buf, len)
         /* first just try copying data from the output buffer */
         if (state->x.have) {
             n = state->x.have > len ? len : state->x.have;
+#if TARGET_BITS == 16
+            _fmemcpy(buf, state->x.next, n);
+#else
             memcpy(buf, state->x.next, n);
+#endif
             state->x.next += n;
             state->x.have -= n;
         }
@@ -482,7 +490,7 @@ char * ZEXPORT gzgets(file, buf, len)
 {
     unsigned left, n;
     char *str;
-    unsigned char *eol;
+    unsigned char FAR *eol;
     gz_statep state;
 
     /* check parameters and get internal structure */
@@ -518,12 +526,20 @@ char * ZEXPORT gzgets(file, buf, len)
 
         /* look for end-of-line in current output buffer */
         n = state->x.have > left ? left : state->x.have;
+#if TARGET_BITS == 16
+        eol = _fmemchr(state->x.next, '\n', n);
+#else
         eol = memchr(state->x.next, '\n', n);
+#endif
         if (eol != NULL)
             n = (unsigned)(eol - state->x.next) + 1;
 
         /* copy through end-of-line, or remainder if not found */
+#if TARGET_BITS == 16
+        _fmemcpy(buf, state->x.next, n);
+#else
         memcpy(buf, state->x.next, n);
+#endif
         state->x.have -= n;
         state->x.next += n;
         state->x.pos += n;
@@ -584,6 +600,6 @@ int ZEXPORT gzclose_r(file)
     gz_error(state, Z_OK, NULL);
     free(state->path);
     ret = close(state->fd);
-    free(state);
+    free(file);
     return ret ? Z_ERRNO : err;
 }
