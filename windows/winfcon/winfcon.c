@@ -591,7 +591,7 @@ size_t _win_fprintf(FILE *fp,const char *fmt,...) {
 		_win_pump();
 	}
 	else {
-		fwrite(fp,temprintf,strlen(temprintf));
+		fwrite(temprintf,1,strlen(temprintf),fp);
 	}
 
 	return 0;

@@ -1634,7 +1634,7 @@ size_t _winvt_fprintf(FILE *fp,const char *fmt,...) {
 		_winvt_pump();
 	}
 	else {
-		fwrite(fp,temprintf,strlen(temprintf));
+		fwrite(temprintf,1,strlen(temprintf),fp);
 	}
 
 	return 0;
