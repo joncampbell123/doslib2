@@ -3,11 +3,11 @@ ifdef target_subdir
 
 all-targets-abs-dirs: $(abs_exe_dir) $(abs_lib_dir) $(abs_obj_dir)
 
-lib_ext_zlib_libz=$(abs_lib_dir)/libz$(lib_suffix)
-lib_ext_zlib_libz_wlink=library $(lib_ext_zlib_libz)
-lib_ext_zlib_libz_dependencies=
+lib_ext_zlib_libz125=$(abs_lib_dir)/libz125$(lib_suffix)
+lib_ext_zlib_libz125_wlink=library $(lib_ext_zlib_libz125)
+lib_ext_zlib_libz125_dependencies=
 
-$(lib_ext_zlib_libz): $(abs_obj_dir)/adler32$(obj_suffix) $(abs_obj_dir)/compress$(obj_suffix) $(abs_obj_dir)/crc32$(obj_suffix) $(abs_obj_dir)/deflate$(obj_suffix) $(abs_obj_dir)/gzclose$(obj_suffix) $(abs_obj_dir)/gzlib$(obj_suffix) $(abs_obj_dir)/gzread$(obj_suffix) $(abs_obj_dir)/gzwrite$(obj_suffix) $(abs_obj_dir)/infback$(obj_suffix) $(abs_obj_dir)/inffast$(obj_suffix) $(abs_obj_dir)/inflate$(obj_suffix) $(abs_obj_dir)/inftrees$(obj_suffix) $(abs_obj_dir)/trees$(obj_suffix) $(abs_obj_dir)/uncompr$(obj_suffix) $(abs_obj_dir)/zutil$(obj_suffix)
+$(lib_ext_zlib_libz125): $(abs_obj_dir)/adler32$(obj_suffix) $(abs_obj_dir)/compress$(obj_suffix) $(abs_obj_dir)/crc32$(obj_suffix) $(abs_obj_dir)/deflate$(obj_suffix) $(abs_obj_dir)/gzclose$(obj_suffix) $(abs_obj_dir)/gzlib$(obj_suffix) $(abs_obj_dir)/gzread$(obj_suffix) $(abs_obj_dir)/gzwrite$(obj_suffix) $(abs_obj_dir)/infback$(obj_suffix) $(abs_obj_dir)/inffast$(obj_suffix) $(abs_obj_dir)/inflate$(obj_suffix) $(abs_obj_dir)/inftrees$(obj_suffix) $(abs_obj_dir)/trees$(obj_suffix) $(abs_obj_dir)/uncompr$(obj_suffix) $(abs_obj_dir)/zutil$(obj_suffix)
 ifeq ($(target_subdir),linux/host)
 	$(AR) r $@ $^
 else
@@ -134,11 +134,11 @@ include $(abs_top_srcdir)/windows/winfcon/Makefile.dpl
 
 all-programs: $(all_programs)
 
-$(abs_exe_dir)/example$(exe_suffix): $(obj_win32s_compat) $(abs_obj_dir)/example$(obj_suffix) $(lib_windows_winfcon) $(lib_windows_winfcon_dependencies) $(lib_ext_zlib_libz) $(lib_ext_zlib_libz_dependencies)
+$(abs_exe_dir)/example$(exe_suffix): $(obj_win32s_compat) $(abs_obj_dir)/example$(obj_suffix) $(lib_windows_winfcon) $(lib_windows_winfcon_dependencies) $(lib_ext_zlib_libz125) $(lib_ext_zlib_libz125_dependencies)
 ifeq ($(target_subdir),linux/host)
 	$(CC) $(LDFLAGS) -o $@ $^
 else
-	@echo option quiet system $(WLINK_SYSTEM) $(WLINKFLAGS) $(WLINK_SEGMENTS) $(foreach x,$(filter %$(obj_suffix),$^),file "$(x)") $(lib_windows_winfcon_wlink) $(lib_ext_zlib_libz_wlink) option map=$(abs_obj_dir)/example.map name $@ >$(abs_obj_dir)/example.cmd
+	@echo option quiet system $(WLINK_SYSTEM) $(WLINKFLAGS) $(WLINK_SEGMENTS) $(foreach x,$(filter %$(obj_suffix),$^),file "$(x)") $(lib_windows_winfcon_wlink) $(lib_ext_zlib_libz125_wlink) option map=$(abs_obj_dir)/example.map name $@ >$(abs_obj_dir)/example.cmd
 	$(WLINK) @$(abs_obj_dir)/example.cmd
 	#@rm -f $(abs_obj_dir)/example.cmd
  ifeq ($(TARGET_WINDOWS_WIN386),1)
@@ -150,11 +150,11 @@ else
  endif
 endif
 
-$(abs_exe_dir)/minigzip$(exe_suffix): $(obj_win32s_compat) $(abs_obj_dir)/minigzip$(obj_suffix) $(lib_windows_winfcon) $(lib_windows_winfcon_dependencies) $(lib_ext_zlib_libz) $(lib_ext_zlib_libz_dependencies)
+$(abs_exe_dir)/minigzip$(exe_suffix): $(obj_win32s_compat) $(abs_obj_dir)/minigzip$(obj_suffix) $(lib_windows_winfcon) $(lib_windows_winfcon_dependencies) $(lib_ext_zlib_libz125) $(lib_ext_zlib_libz125_dependencies)
 ifeq ($(target_subdir),linux/host)
 	$(CC) $(LDFLAGS) -o $@ $^
 else
-	@echo option quiet system $(WLINK_SYSTEM) $(WLINKFLAGS) $(WLINK_SEGMENTS) $(foreach x,$(filter %$(obj_suffix),$^),file "$(x)") $(lib_windows_winfcon_wlink) $(lib_ext_zlib_libz_wlink) option map=$(abs_obj_dir)/minigzip.map name $@ >$(abs_obj_dir)/minigzip.cmd
+	@echo option quiet system $(WLINK_SYSTEM) $(WLINKFLAGS) $(WLINK_SEGMENTS) $(foreach x,$(filter %$(obj_suffix),$^),file "$(x)") $(lib_windows_winfcon_wlink) $(lib_ext_zlib_libz125_wlink) option map=$(abs_obj_dir)/minigzip.map name $@ >$(abs_obj_dir)/minigzip.cmd
 	$(WLINK) @$(abs_obj_dir)/minigzip.cmd
 	#@rm -f $(abs_obj_dir)/minigzip.cmd
  ifeq ($(TARGET_WINDOWS_WIN386),1)
@@ -167,11 +167,11 @@ else
 endif
 
 ifeq ($(TARGET_GUI_CONSOLE),1)
-$(abs_exe_dir)/examplec$(exe_suffix): $(obj_win32s_compat) $(abs_obj_dir)/examplec$(obj_suffix) $(lib_ext_zlib_libz) $(lib_ext_zlib_libz_dependencies)
+$(abs_exe_dir)/examplec$(exe_suffix): $(obj_win32s_compat) $(abs_obj_dir)/examplec$(obj_suffix) $(lib_ext_zlib_libz125) $(lib_ext_zlib_libz125_dependencies)
  ifeq ($(target_subdir),linux/host)
 	$(CC) $(LDFLAGS_CONSOLE) -o $@ $^
  else
-	@echo option quiet system $(WLINK_SYSTEM_CONSOLE) $(WLINKFLAGS_CONSOLE) $(WLINK_SEGMENTS_CONSOLE) $(foreach x,$(filter %$(obj_suffix),$^),file "$(x)") $(foreach x,$(filter %$(lib_suffix),$^),library "$(x)") $(lib_ext_zlib_libz_wlink) option map=$(abs_obj_dir)/examplec.map name $@ >$(abs_obj_dir)/examplec.cmd
+	@echo option quiet system $(WLINK_SYSTEM_CONSOLE) $(WLINKFLAGS_CONSOLE) $(WLINK_SEGMENTS_CONSOLE) $(foreach x,$(filter %$(obj_suffix),$^),file "$(x)") $(foreach x,$(filter %$(lib_suffix),$^),library "$(x)") $(lib_ext_zlib_libz125_wlink) option map=$(abs_obj_dir)/examplec.map name $@ >$(abs_obj_dir)/examplec.cmd
 	$(WLINK) @$(abs_obj_dir)/examplec.cmd
 	#@rm -f $(abs_obj_dir)/examplec.cmd
   ifeq ($(TARGET_WINDOWS_WIN386),1)
@@ -192,11 +192,11 @@ $(abs_obj_dir)/examplec$(obj_suffix): examplec.c $(abs_obj_dir)/example$(obj_suf
 endif
 
 ifeq ($(TARGET_GUI_CONSOLE),1)
-$(abs_exe_dir)/minigzic$(exe_suffix): $(obj_win32s_compat) $(abs_obj_dir)/minigzic$(obj_suffix) $(lib_ext_zlib_libz) $(lib_ext_zlib_libz_dependencies)
+$(abs_exe_dir)/minigzic$(exe_suffix): $(obj_win32s_compat) $(abs_obj_dir)/minigzic$(obj_suffix) $(lib_ext_zlib_libz125) $(lib_ext_zlib_libz125_dependencies)
  ifeq ($(target_subdir),linux/host)
 	$(CC) $(LDFLAGS_CONSOLE) -o $@ $^
  else
-	@echo option quiet system $(WLINK_SYSTEM_CONSOLE) $(WLINKFLAGS_CONSOLE) $(WLINK_SEGMENTS_CONSOLE) $(foreach x,$(filter %$(obj_suffix),$^),file "$(x)") $(foreach x,$(filter %$(lib_suffix),$^),library "$(x)") $(lib_ext_zlib_libz_wlink) option map=$(abs_obj_dir)/minigzic.map name $@ >$(abs_obj_dir)/minigzic.cmd
+	@echo option quiet system $(WLINK_SYSTEM_CONSOLE) $(WLINKFLAGS_CONSOLE) $(WLINK_SEGMENTS_CONSOLE) $(foreach x,$(filter %$(obj_suffix),$^),file "$(x)") $(foreach x,$(filter %$(lib_suffix),$^),library "$(x)") $(lib_ext_zlib_libz125_wlink) option map=$(abs_obj_dir)/minigzic.map name $@ >$(abs_obj_dir)/minigzic.cmd
 	$(WLINK) @$(abs_obj_dir)/minigzic.cmd
 	#@rm -f $(abs_obj_dir)/minigzic.cmd
   ifeq ($(TARGET_WINDOWS_WIN386),1)
