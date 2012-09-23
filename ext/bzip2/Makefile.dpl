@@ -1,0 +1,10 @@
+
+lib_ext_bzip2_libbz2=$(abs_top_srcdir)/build/ext/bzip2/$(target_subdir)/lib/libbz2$(lib_suffix)
+lib_ext_bzip2_libbz2_wlink=library $(lib_ext_bzip2_libbz2)
+lib_ext_bzip2_libbz2_dependencies=
+
+ifneq ($(lib_ext_bzip2_libbz2),)
+$(lib_ext_bzip2_libbz2):
+	$(MAKE) -C $(abs_top_srcdir)/ext/zlib --no-print-directory -$(MAKEFLAGS) all-targets
+endif
+

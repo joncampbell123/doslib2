@@ -1,6 +1,6 @@
 -include ../config.mak
 
-SUBDIRS = zlib gzip
+SUBDIRS = zlib gzip bzip2
 ACLOCAL_AMFLAGS = 
 
 library_includedir = $(includedir)/doslib2/test

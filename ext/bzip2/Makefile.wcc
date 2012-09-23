@@ -1,0 +1,140 @@
+# This is a separate makefile because GNU automake interferes with GNU make conditionals
+ifdef target_subdir
+
+all-targets-abs-dirs: $(abs_exe_dir) $(abs_lib_dir) $(abs_obj_dir)
+
+lib_ext_bzip2_libbz2=$(abs_lib_dir)/libbz2$(lib_suffix)
+lib_ext_bzip2_libbz2_wlink=library $(lib_ext_bzip2_libbz2)
+lib_ext_bzip2_libbz2_dependencies=
+
+$(lib_ext_bzip2_libbz2): $(abs_obj_dir)/blocksort$(obj_suffix) $(abs_obj_dir)/huffman$(obj_suffix) $(abs_obj_dir)/crctable$(obj_suffix) $(abs_obj_dir)/randtable$(obj_suffix) $(abs_obj_dir)/compress$(obj_suffix) $(abs_obj_dir)/decompress$(obj_suffix) $(abs_obj_dir)/bzlib$(obj_suffix)
+ifeq ($(target_subdir),linux/host)
+	$(AR) r $@ $^
+else
+	$(WLIB) -q -b -c $@ $(foreach x,$^,-+$(x))
+endif
+
+ifeq ($(TARGET_GUI_CONSOLE),1)
+BZIP2_CFLAGS=$(CFLAGS_CONSOLE)
+BZIP2_WCCFLAGS=$(WCCFLAGS_CONSOLE)
+else
+BZIP2_CFLAGS=$(CFLAGS)
+BZIP2_WCCFLAGS=$(WCCFLAGS)
+endif
+
+$(abs_obj_dir)/bzip2recover$(obj_suffix): bzip2recover.c
+ifeq ($(target_subdir),linux/host)
+	$(CC) $(BZIP2_CFLAGS) -I.. -I../.. -c -o $@ $^
+else
+	$(WCC) $(BZIP2_WCCFLAGS) -fo=$(abs_obj_dir)/.obj -i=.. -i=../.. $^
+endif
+
+$(abs_obj_dir)/bzip2$(obj_suffix): bzip2.c
+ifeq ($(target_subdir),linux/host)
+	$(CC) $(BZIP2_CFLAGS) -I.. -I../.. -c -o $@ $^
+else
+	$(WCC) $(BZIP2_WCCFLAGS) -fo=$(abs_obj_dir)/.obj -i=.. -i=../.. $^
+endif
+
+$(abs_obj_dir)/blocksort$(obj_suffix): blocksort.c
+ifeq ($(target_subdir),linux/host)
+	$(CC) $(BZIP2_CFLAGS) -I.. -I../.. -c -o $@ $^
+else
+	$(WCC) $(BZIP2_WCCFLAGS) -fo=$(abs_obj_dir)/.obj -i=.. -i=../.. $^
+endif
+
+$(abs_obj_dir)/bzlib$(obj_suffix): bzlib.c
+ifeq ($(target_subdir),linux/host)
+	$(CC) $(BZIP2_CFLAGS) -I.. -I../.. -c -o $@ $^
+else
+	$(WCC) $(BZIP2_WCCFLAGS) -fo=$(abs_obj_dir)/.obj -i=.. -i=../.. $^
+endif
+
+$(abs_obj_dir)/compress$(obj_suffix): compress.c
+ifeq ($(target_subdir),linux/host)
+	$(CC) $(BZIP2_CFLAGS) -I.. -I../.. -c -o $@ $^
+else
+	$(WCC) $(BZIP2_WCCFLAGS) -fo=$(abs_obj_dir)/.obj -i=.. -i=../.. $^
+endif
+
+$(abs_obj_dir)/crctable$(obj_suffix): crctable.c
+ifeq ($(target_subdir),linux/host)
+	$(CC) $(BZIP2_CFLAGS) -I.. -I../.. -c -o $@ $^
+else
+	$(WCC) $(BZIP2_WCCFLAGS) -fo=$(abs_obj_dir)/.obj -i=.. -i=../.. $^
+endif
+
+$(abs_obj_dir)/decompress$(obj_suffix): decompress.c
+ifeq ($(target_subdir),linux/host)
+	$(CC) $(BZIP2_CFLAGS) -I.. -I../.. -c -o $@ $^
+else
+	$(WCC) $(BZIP2_WCCFLAGS) -fo=$(abs_obj_dir)/.obj -i=.. -i=../.. $^
+endif
+
+$(abs_obj_dir)/huffman$(obj_suffix): huffman.c
+ifeq ($(target_subdir),linux/host)
+	$(CC) $(BZIP2_CFLAGS) -I.. -I../.. -c -o $@ $^
+else
+	$(WCC) $(BZIP2_WCCFLAGS) -fo=$(abs_obj_dir)/.obj -i=.. -i=../.. $^
+endif
+
+$(abs_obj_dir)/randtable$(obj_suffix): randtable.c
+ifeq ($(target_subdir),linux/host)
+	$(CC) $(BZIP2_CFLAGS) -I.. -I../.. -c -o $@ $^
+else
+	$(WCC) $(BZIP2_WCCFLAGS) -fo=$(abs_obj_dir)/.obj -i=.. -i=../.. $^
+endif
+
+all_programs=$(abs_exe_dir)/bzip2$(exe_suffix)
+all_programs+=$(abs_exe_dir)/bunzip2$(exe_suffix)
+
+# we need: the windows winfcon library
+include $(abs_top_srcdir)/windows/winfcon/Makefile.dpl
+
+all-programs: $(all_programs)
+
+$(abs_exe_dir)/bunzip2$(exe_suffix): $(abs_exe_dir)/bzip2$(exe_suffix)
+	@cp -vn $(abs_exe_dir)/bzip2$(exe_suffix) $@
+
+ifeq ($(TARGET_GUI_CONSOLE),1)
+$(abs_exe_dir)/bzip2$(exe_suffix): $(abs_obj_dir)/bzip2$(obj_suffix) $(obj_win32s_compat) $(lib_ext_bzip2_libbz2) $(lib_ext_bzip2_libbz2_dependencies)
+ ifeq ($(target_subdir),linux/host)
+	$(CC) $(LDFLAGS_CONSOLE) -o $@ $^
+ else
+	@echo option quiet system $(WLINK_SYSTEM_CONSOLE) $(WLINKFLAGS_CONSOLE) $(WLINK_SEGMENTS_CONSOLE) $(foreach x,$(filter %$(obj_suffix),$^),file "$(x)") $(foreach x,$(filter %$(lib_suffix),$^),library "$(x)") $(lib_ext_bzip2_libbz2_wlink) option map=$(abs_obj_dir)/bzip2.map name $@ >$(abs_obj_dir)/bzip2.cmd
+	$(WLINK) @$(abs_obj_dir)/bzip2.cmd
+	#@rm -f $(abs_obj_dir)/bzip2.cmd
+  ifeq ($(TARGET_WINDOWS_WIN386),1)
+	@$(WIN386_EXE_TO_REX_IF_REX) $@
+	@$(WBIND) $@ -q -n
+  endif
+  ifneq ($(WIN16_NE_SETVER),)
+	$(WIN16_NE_SETVER) $@
+  endif
+ endif
+else
+$(abs_exe_dir)/bzip2$(exe_suffix): $(abs_obj_dir)/bzip2$(obj_suffix) $(obj_win32s_compat) $(lib_windows_winfcon) $(lib_windows_winfcon_dependencies) $(lib_ext_bzip2_libbz2) $(lib_ext_bzip2_libbz2_dependencies)
+ ifeq ($(target_subdir),linux/host)
+	$(CC) $(LDFLAGS) -o $@ $^
+ else
+	@echo option quiet system $(WLINK_SYSTEM) $(WLINKFLAGS) $(WLINK_SEGMENTS) $(foreach x,$(filter %$(obj_suffix),$^),file "$(x)") $(lib_windows_winfcon_wlink) $(lib_ext_bzip2_libbz2_wlink) option map=$(abs_obj_dir)/bzip2.map name $@ >$(abs_obj_dir)/bzip2.cmd
+	$(WLINK) @$(abs_obj_dir)/bzip2.cmd
+	#@rm -f $(abs_obj_dir)/bzip2.cmd
+  ifeq ($(TARGET_WINDOWS_WIN386),1)
+	@$(WIN386_EXE_TO_REX_IF_REX) $@
+	@$(WBIND) $@ -q -n
+  endif
+  ifneq ($(WIN16_NE_SETVER),)
+	$(WIN16_NE_SETVER) $@
+  endif
+ endif
+endif
+
+all-targets: all-targets-abs-dirs all-programs
+	@true
+
+clean-targets:
+	@rm -Rfv $(abs_exe_dir) $(abs_lib_dir) $(abs_obj_dir)
+
+endif
+

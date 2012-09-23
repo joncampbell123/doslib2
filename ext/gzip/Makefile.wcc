@@ -119,7 +119,7 @@ else
 endif
 
 all_programs=$(abs_exe_dir)/gzip$(exe_suffix)
-all_programs=$(abs_exe_dir)/gunzip$(exe_suffix)
+all_programs+=$(abs_exe_dir)/gunzip$(exe_suffix)
 
 # we need: the windows winfcon library
 include $(abs_top_srcdir)/windows/winfcon/Makefile.dpl
