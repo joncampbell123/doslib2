@@ -1,0 +1,32 @@
+# This is a separate makefile because GNU automake interferes with GNU make conditionals
+ifdef target_subdir
+
+all-targets-abs-dirs: $(abs_exe_dir) $(abs_lib_dir) $(abs_obj_dir)
+
+all_programs  = $(abs_exe_dir)/exit_ret.com
+all_programs += $(abs_exe_dir)/exit_20h.com
+all_programs += $(abs_exe_dir)/exit_f00.com
+all_programs += $(abs_exe_dir)/exit_f4c.com
+
+all-programs: $(all_programs)
+
+$(abs_exe_dir)/exit_ret.com: exit_ret.asm
+	$(NASM) -o $@ -f bin $(NASMFLAGS) $^
+
+$(abs_exe_dir)/exit_20h.com: exit_20h.asm
+	$(NASM) -o $@ -f bin $(NASMFLAGS) $^
+
+$(abs_exe_dir)/exit_f00.com: exit_f00.asm
+	$(NASM) -o $@ -f bin $(NASMFLAGS) $^
+
+$(abs_exe_dir)/exit_f4c.com: exit_f4c.asm
+	$(NASM) -o $@ -f bin $(NASMFLAGS) $^
+
+all-targets: all-targets-abs-dirs all-programs
+	@true
+
+clean-targets:
+	@rm -Rfv $(abs_exe_dir) $(abs_lib_dir) $(abs_obj_dir)
+
+endif
+

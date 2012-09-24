@@ -1,0 +1,6 @@
+* Exiting to DOS
+   exit_ret.com       Exit to DOS by RET to CS:0        [MS-DOS 1.0+]
+   exit_20h.com       Exit to DOS by INT 20h            [MS-DOS 1.0+]
+   exit_f00.com       Exit to DOS by INT 21h AH=0x00    [MS-DOS 1.0+]
+   exit_f4c.com       Exit to DOS by INT 21h AH=0x4C    [MS-DOS 2.0+]
+

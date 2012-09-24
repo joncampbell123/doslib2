@@ -160,6 +160,8 @@ ISP_AUTO_OPTION_DISABLED([windows-20],       [windows_20],       [Windows 2.0 ta
 ISP_AUTO_OPTION_DISABLED([windows-10],       [windows_10],       [Windows 1.0 targets])
 
 AC_CONFIG_FILES(Makefile)
+AC_CONFIG_FILES(dos/Makefile)
+AC_CONFIG_FILES(dos/asmexam/Makefile)
 AC_CONFIG_FILES(windows/Makefile)
 AC_CONFIG_FILES(windows/winfcon/Makefile)
 AC_CONFIG_FILES(windows/winfvtcn/Makefile)
