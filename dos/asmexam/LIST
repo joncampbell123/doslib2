@@ -3,4 +3,9 @@
    exit_20h.com       Exit to DOS by INT 20h            [MS-DOS 1.0+]
    exit_f00.com       Exit to DOS by INT 21h AH=0x00    [MS-DOS 1.0+]
    exit_f4c.com       Exit to DOS by INT 21h AH=0x4C    [MS-DOS 2.0+]
+* Standard I/O
+   int21_01.com       Read from STDIN with echo         [MS-DOS 1.0+]
+   int21_02.com       Read keyboard with INT 16h, write
+                      to STDOUT.                        [MS-DOS 1.0+]
+   int21_06.com       Direct console I/O                [MS-DOS 1.0+]
 

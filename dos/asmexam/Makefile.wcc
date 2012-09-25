@@ -9,6 +9,10 @@ all_programs += $(abs_exe_dir)/exit_f00.com
 all_programs += $(abs_exe_dir)/exit_f4c.com
 all_programs += $(abs_exe_dir)/int21_01.com
 all_programs += $(abs_exe_dir)/int21_02.com
+all_programs += $(abs_exe_dir)/int21_06.com
+all_programs += $(abs_exe_dir)/int21_07.com
+all_programs += $(abs_exe_dir)/int21_08.com
+all_programs += $(abs_exe_dir)/int21_09.com
 
 all-programs: $(all_programs)
 
@@ -28,6 +32,18 @@ $(abs_exe_dir)/int21_01.com: int21_01.asm
 	$(NASM) -o $@ -f bin $(NASMFLAGS) $^
 
 $(abs_exe_dir)/int21_02.com: int21_02.asm
+	$(NASM) -o $@ -f bin $(NASMFLAGS) $^
+
+$(abs_exe_dir)/int21_06.com: int21_06.asm
+	$(NASM) -o $@ -f bin $(NASMFLAGS) $^
+
+$(abs_exe_dir)/int21_07.com: int21_07.asm
+	$(NASM) -o $@ -f bin $(NASMFLAGS) $^
+
+$(abs_exe_dir)/int21_08.com: int21_08.asm
+	$(NASM) -o $@ -f bin $(NASMFLAGS) $^
+
+$(abs_exe_dir)/int21_09.com: int21_09.asm
 	$(NASM) -o $@ -f bin $(NASMFLAGS) $^
 
 all-targets: all-targets-abs-dirs all-programs
