@@ -8,4 +8,7 @@
    int21_02.com       Read keyboard with INT 16h, write
                       to STDOUT.                        [MS-DOS 1.0+]
    int21_06.com       Direct console I/O                [MS-DOS 1.0+]
+   int21_07.com       Direct console input              [MS-DOS 1.0+]
+   int21_08.com       Console input                     [MS-DOS 1.0+]
+   int21_09.com       Print string $-terminated         [MS-DOS 1.0+]
 
