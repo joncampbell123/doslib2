@@ -11,4 +11,6 @@
    int21_07.com       Direct console input              [MS-DOS 1.0+]
    int21_08.com       Console input                     [MS-DOS 1.0+]
    int21_09.com       Print string $-terminated         [MS-DOS 1.0+]
+   int21_0a.com       Buffered input                    [MS-DOS 1.0+]
+   int21_0b.com       STDIN status test                 [MS-DOS 1.0+]
 
