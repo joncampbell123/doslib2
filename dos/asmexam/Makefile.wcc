@@ -22,6 +22,7 @@ all_programs += $(abs_exe_dir)/fcb_open.com
 all_programs += $(abs_exe_dir)/fcb_opew.com
 all_programs += $(abs_exe_dir)/fcbcreat.com
 all_programs += $(abs_exe_dir)/fcbcrea2.com
+all_programs += $(abs_exe_dir)/fcb_ren.com
 
 all-programs: $(all_programs)
 
@@ -80,6 +81,9 @@ $(abs_exe_dir)/fcbcreat.com: fcbcreat.asm
 	$(NASM) -o $@ -f bin $(NASMFLAGS) $^
 
 $(abs_exe_dir)/fcbcrea2.com: fcbcrea2.asm
+	$(NASM) -o $@ -f bin $(NASMFLAGS) $^
+
+$(abs_exe_dir)/fcb_ren.com: fcb_ren.asm
 	$(NASM) -o $@ -f bin $(NASMFLAGS) $^
 
 all-txt: $(abs_exe_dir)/emm.txt

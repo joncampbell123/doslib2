@@ -22,4 +22,7 @@
                       print to STDOUT, and close        [MS-DOS 1.0+]
    fcb_opew.com       Open a file, random read/write
                       to modify initial bytes, close    [MS-DOS 1.0+]
+   fcbcreat.com       Create a file, write a record     [MS-DOS 1.0+]
+   fcbcrea2.com       Create a file, change record size
+                      and write record                  [MS-DOS 1.0+]
 
