@@ -17,6 +17,7 @@ all_programs += $(abs_exe_dir)/int21_0a.com
 all_programs += $(abs_exe_dir)/int21_0b.com
 all_programs += $(abs_exe_dir)/int21_0c.com
 all_programs += $(abs_exe_dir)/int21_0d.com
+all_programs += $(abs_exe_dir)/defdrive.com
 
 all-programs: $(all_programs)
 
@@ -60,6 +61,9 @@ $(abs_exe_dir)/int21_0c.com: int21_0c.asm
 	$(NASM) -o $@ -f bin $(NASMFLAGS) $^
 
 $(abs_exe_dir)/int21_0d.com: int21_0d.asm
+	$(NASM) -o $@ -f bin $(NASMFLAGS) $^
+
+$(abs_exe_dir)/defdrive.com: defdrive.asm
 	$(NASM) -o $@ -f bin $(NASMFLAGS) $^
 
 all-targets: all-targets-abs-dirs all-programs
