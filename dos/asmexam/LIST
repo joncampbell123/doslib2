@@ -27,4 +27,5 @@
                       and write record                  [MS-DOS 1.0+]
    fcb_ren.com        Rename file using FCB             [MS-DOS 1.0+]
    fcb_del.com        Delete file using FCB             [MS-DOS 1.0+]
+   fcb_dir.com        Enumerating files using FCB       [MS-DOS 1.0+]
 
