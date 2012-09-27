@@ -4,7 +4,7 @@
 ; Delete the label from the current disk.
 ; FIXME: MS-DOS 6.22: Neither this code or it's own LABEL utility is able to delete
 ;                     volume labels from floppy disks. But both work fine on the hard
-;                     drive. Weird... 
+;                     drive. This code works fine however from Windows 95 DOS mode. 
 ;--------------------------------------------------------------------------------------
 		bits 16			; 16-bit real mode
 		org 0x100		; DOS .COM executable starts at 0x100 in memory
