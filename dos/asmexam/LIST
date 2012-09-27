@@ -33,4 +33,5 @@
    fcbparse.com       Parse filename into FCB           [MS-DOS 1.0+]
    getlabel.com       Read and show volume label        [MS-DOS 1.0+]
    setlabel.com       Set volume label                  [MS-DOS 1.0+]
+   dellabel.com       Delete volume label               [MS-DOS 1.0+]
 

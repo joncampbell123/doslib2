@@ -30,6 +30,7 @@ all_programs += $(abs_exe_dir)/fcb_psp.com
 all_programs += $(abs_exe_dir)/fcbparse.com
 all_programs += $(abs_exe_dir)/getlabel.com
 all_programs += $(abs_exe_dir)/setlabel.com
+all_programs += $(abs_exe_dir)/dellabel.com
 
 all-programs: $(all_programs)
 
@@ -112,6 +113,9 @@ $(abs_exe_dir)/getlabel.com: getlabel.asm
 	$(NASM) -o $@ -f bin $(NASMFLAGS) $^
 
 $(abs_exe_dir)/setlabel.com: setlabel.asm
+	$(NASM) -o $@ -f bin $(NASMFLAGS) $^
+
+$(abs_exe_dir)/dellabel.com: dellabel.asm
 	$(NASM) -o $@ -f bin $(NASMFLAGS) $^
 
 all-txt: $(abs_exe_dir)/emm.txt

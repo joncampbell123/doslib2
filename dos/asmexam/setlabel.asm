@@ -1,7 +1,7 @@
 ;--------------------------------------------------------------------------------------
-; GETLABEL.COM
+; SETLABEL.COM
 ;
-; Read the label from the current disk 
+; Set the label from the current disk 
 ;--------------------------------------------------------------------------------------
 		bits 16			; 16-bit real mode
 		org 0x100		; DOS .COM executable starts at 0x100 in memory
