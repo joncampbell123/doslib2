@@ -20,4 +20,6 @@
 * File control blocks
    fcb_open.com       Open a file, read contents,
                       print to STDOUT, and close        [MS-DOS 1.0+]
+   fcb_opew.com       Open a file, random read/write
+                      to modify initial bytes, close    [MS-DOS 1.0+]
 
