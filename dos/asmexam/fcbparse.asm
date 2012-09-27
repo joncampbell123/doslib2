@@ -1,7 +1,7 @@
 ;--------------------------------------------------------------------------------------
-; FCB_PSP.COM
+; FCBPARSE.COM
 ; 
-; Show the first two FCBs in the Program Segment Prefix, if DOS initialized them
+; Demonstrates using INT 21h AH=0x29 PARSE FILENAME INTO FCB
 ;--------------------------------------------------------------------------------------
 		bits 16			; 16-bit real mode
 		org 0x100		; DOS .COM executable starts at 0x100 in memory
@@ -10,13 +10,31 @@
 
 		push	cs
 		pop	ds
+		push	cs
+		pop	es
 
-		mov	bx,0x5C
+		mov	si,0x81		; parse command line into FCB
+		mov	di,fcb
+		mov	ah,0x29
+		mov	al,0x01		; skip leading separators
+		int	21h
+		cmp	al,0xFF
+		jz	parse_fail
+
+		call	puthex
+
+		mov	ah,0x09
+		mov	dx,crlf
+		int	21h
+
+		mov	bx,fcb
 		call	puts_fcb
 
-		mov	bx,0x6C
-		call	puts_fcb
+		ret
 
+parse_fail:	mov	ah,0x09
+		mov	dx,str_parse_fail
+		int	21h
 		ret
 
 puts_fcb:	cld
@@ -55,14 +73,23 @@ putcd:		mov	ah,0x02
 		int	21h
 		ret
 
+; entry:
+;   AL = single-digit binary to print as hexadecimal
+puthex:		and	al,0xF
+		cmp	al,10
+		jb	puthexr
+		add	al,'A' - 10 - '0'
+puthexr:	add	al,'0'
+		mov	dl,al
+		call	putcd
+		ret
+
 		segment .data
 
+str_parse_fail:	db	'Parse fail'
 crlf:		db	13,10,'$'
 
 		segment .bss
 
 fcb:		resb	0x25
-
-; WARNING: We don't know how large DOS will make the record size, therefore this must be last!
-dta:		resb	0x100
 
