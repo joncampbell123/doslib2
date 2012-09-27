@@ -19,6 +19,7 @@ all_programs += $(abs_exe_dir)/int21_0c.com
 all_programs += $(abs_exe_dir)/int21_0d.com
 all_programs += $(abs_exe_dir)/defdrive.com
 all_programs += $(abs_exe_dir)/fcb_open.com
+all_programs += $(abs_exe_dir)/fcb_opew.com
 
 all-programs: $(all_programs)
 
@@ -68,6 +69,9 @@ $(abs_exe_dir)/defdrive.com: defdrive.asm
 	$(NASM) -o $@ -f bin $(NASMFLAGS) $^
 
 $(abs_exe_dir)/fcb_open.com: fcb_open.asm
+	$(NASM) -o $@ -f bin $(NASMFLAGS) $^
+
+$(abs_exe_dir)/fcb_opew.com: fcb_opew.asm
 	$(NASM) -o $@ -f bin $(NASMFLAGS) $^
 
 all-txt: $(abs_exe_dir)/emm.txt
