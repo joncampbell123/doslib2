@@ -25,4 +25,6 @@
    fcbcreat.com       Create a file, write a record     [MS-DOS 1.0+]
    fcbcrea2.com       Create a file, change record size
                       and write record                  [MS-DOS 1.0+]
+   fcb_ren.com        Rename file using FCB             [MS-DOS 1.0+]
+   fcb_del.com        Delete file using FCB             [MS-DOS 1.0+]
 
