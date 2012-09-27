@@ -61,19 +61,6 @@ l1e:
 		mov	cx,8+3
 		rep	movsb
 
-; if the name is empty, then delete the label
-		cmp	byte [fcb+8],' '
-		jnz	not_delete
-;------------DELETION-----------
-		mov	ah,0x13
-		mov	dx,fcb
-		int	21h
-		mov	dx,str_deleted
-		cmp	al,0x00
-		jz	delete_ok
-		mov	dx,str_del_fail
-delete_ok:	jmp	short common_str_err
-
 ; start by trying to rename the volume label
 not_delete:	mov	ah,0x17
 		mov	dx,fcbren
@@ -100,8 +87,6 @@ common_str_err:	mov	ah,0x09
 
 		segment .data
 
-str_deleted:	db	'Deleted$'
-str_del_fail:	db	'Delete failed$'
 str_renamed:	db	'Renamed$'
 str_created:	db	'Created$'
 str_create_fail:db	'Create failed$'

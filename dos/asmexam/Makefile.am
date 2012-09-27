@@ -29,7 +29,5 @@ clean:
 disk:
 	dd if=/dev/zero of=test.dsk bs=512 count=2880
 	mkfs.vfat test.dsk
-	mcopy -i test.dsk ../../build/windows/asmhello/win16r/10_086s/exe/hello.exe ::r10_086s.exe
-	mcopy -i test.dsk ../../build/windows/asmhello/win16r/20_086s/exe/hello.exe ::r20_086s.exe
-	mcopy -i test.dsk ../../build/windows/asmhello/win16r/30_086s/exe/hello.exe ::r30_086s.exe
+	for i in ../../build/dos/asmexam/dos16r/086c/exe/*.com; do mcopy -i test.dsk $$i ::; done
 
