@@ -15,6 +15,7 @@ all_programs += $(abs_exe_dir)/int21_08.com
 all_programs += $(abs_exe_dir)/int21_09.com
 all_programs += $(abs_exe_dir)/int21_0a.com
 all_programs += $(abs_exe_dir)/int21_0b.com
+all_programs += $(abs_exe_dir)/int21_0c.com
 
 all-programs: $(all_programs)
 
@@ -52,6 +53,9 @@ $(abs_exe_dir)/int21_0a.com: int21_0a.asm
 	$(NASM) -o $@ -f bin $(NASMFLAGS) $^
 
 $(abs_exe_dir)/int21_0b.com: int21_0b.asm
+	$(NASM) -o $@ -f bin $(NASMFLAGS) $^
+
+$(abs_exe_dir)/int21_0c.com: int21_0c.asm
 	$(NASM) -o $@ -f bin $(NASMFLAGS) $^
 
 all-targets: all-targets-abs-dirs all-programs
