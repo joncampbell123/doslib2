@@ -13,4 +13,6 @@
    int21_09.com       Print string $-terminated         [MS-DOS 1.0+]
    int21_0a.com       Buffered input                    [MS-DOS 1.0+]
    int21_0b.com       STDIN status test                 [MS-DOS 1.0+]
+   int21_0c.com       Buffered input (FLUSH)            [MS-DOS 1.0+]
+   int21_0d.com       Disk reset, flush                 [MS-DOS 1.0+]
 
