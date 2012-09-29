@@ -2,9 +2,12 @@
 ; DELLABEL.COM
 ;
 ; Delete the label from the current disk.
-; FIXME: MS-DOS 6.22: Neither this code or it's own LABEL utility is able to delete
-;                     volume labels from floppy disks. But both work fine on the hard
-;                     drive. This code works fine however from Windows 95 DOS mode. 
+;
+; Known issues:
+;    Microsoft MS-DOS 6.22:
+;       - A bug in the DOS kernel prevents deletion of volume labels from floppy disks.
+;         Neither this program nor MS-DOS's LABEL command is able to do it. Deletion
+;         from a hard disk works as expected.
 ;--------------------------------------------------------------------------------------
 		bits 16			; 16-bit real mode
 		org 0x100		; DOS .COM executable starts at 0x100 in memory
