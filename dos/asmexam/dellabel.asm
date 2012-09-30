@@ -5,9 +5,9 @@
 ;
 ; Known issues:
 ;    Microsoft MS-DOS 6.22:
-;       - A bug in the DOS kernel prevents deletion of volume labels from floppy disks.
-;         Neither this program nor MS-DOS's LABEL command is able to do it. Deletion
-;         from a hard disk works as expected.
+;        - A bug in the MS-DOS kernel prevents anyone (whether it's this program or it's
+;          own LABEL utility) from deleting the volume label if Windows 95 long filenames
+;          exist in the root directory.
 ;--------------------------------------------------------------------------------------
 		bits 16			; 16-bit real mode
 		org 0x100		; DOS .COM executable starts at 0x100 in memory
