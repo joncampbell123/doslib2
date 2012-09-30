@@ -28,7 +28,7 @@ version_ok:	mov	ah,0x32		; AH=0x32 GET DOS DRIVE PARAM BLOCK
 		jz	request_ok
 
 		mov	dx,str_req_fail
-		jmp	short common_str_error
+		jmp	common_str_error
 
 ; it worked! DOS set DS:BX to point at the DPB
 request_ok:	push	ds		; move DS to ES
@@ -86,6 +86,27 @@ request_ok:	push	ds		; move DS to ES
 		mov	cl,[es:bx+5]	; +0x05 shift count to convert clusters to sectors
 		mov	ax,0x200
 		shl	ax,cl
+		call	putdec16
+
+		mov	dx,crlf
+		call	common_str_print
+
+;----------- Reserved sectors
+		mov	dx,str_reserved
+		call	common_str_print
+
+		mov	ax,[es:bx+6]
+		call	putdec16
+
+		mov	dx,crlf
+		call	common_str_print
+
+;----------- # of FATs
+		mov	dx,str_fats
+		call	common_str_print
+
+		xor	ah,ah
+		mov	al,[es:bx+8]
 		call	putdec16
 
 		mov	dx,crlf
@@ -207,6 +228,8 @@ str_unit_number:db	'Unit: $'
 str_bytes_per_sector:db	'Bytes/sector: $'
 str_highest_sector_num_cl:db 'Highest sector number in a cluster: $'
 str_sectors_per_cluster_pow2:db 'Sectors/cluster: $'
+str_reserved:	db	'Reserved sectors: $'
+str_fats:	db	'Number of FATs: $'
 crlf:		db	13,10,'$'
 
 		segment .bss
