@@ -19,7 +19,7 @@
 		jae	version_ok
 
 		mov	dx,need_dos_version
-		jmp	common_str_error
+		call	common_str_print_crlf
 
 version_ok:	mov	ah,0x32		; AH=0x32 GET DOS DRIVE PARAM BLOCK
 		xor	dl,dl		; DL=0 default drive
@@ -107,6 +107,56 @@ request_ok:	push	ds		; move DS to ES
 
 		xor	ah,ah
 		mov	al,[es:bx+8]
+		call	putdec16
+
+		mov	dx,crlf
+		call	common_str_print
+
+;----------- # of root directory entries
+		mov	dx,str_root_dirents
+		call	common_str_print
+
+		mov	ax,[es:bx+9]
+		call	putdec16
+
+		mov	dx,crlf
+		call	common_str_print
+
+;----------- sector number of first user data sector
+		mov	dx,str_first_user_sector
+		call	common_str_print
+
+		mov	ax,[es:bx+11]
+		call	putdec16
+
+		mov	dx,crlf
+		call	common_str_print
+
+;----------- highest cluster number
+		mov	dx,str_highest_cluster
+		call	common_str_print
+
+		mov	ax,[es:bx+13]
+		call	putdec16
+
+		mov	dx,crlf
+		call	common_str_print
+
+;----------- sectors per fat
+		mov	dx,str_sectors_per_fat
+		call	common_str_print
+
+		mov	ax,[es:bx+15]
+		call	putdec16
+
+		mov	dx,crlf
+		call	common_str_print
+
+;----------- first directory sector
+		mov	dx,str_first_dir_sector
+		call	common_str_print
+
+		mov	ax,[es:bx+17]
 		call	putdec16
 
 		mov	dx,crlf
@@ -222,7 +272,7 @@ puthex8:	push	ax
 
 hexes:		db	'0123456789ABCDEF'
 str_req_fail:	db	'Request failed$'
-need_dos_version:db	'This version requires MS-DOS 4.0 or higher$'
+need_dos_version:db	'WARNING: This version assumes MS-DOS 4.0 or higher$'
 str_drive_number:db	'Drive: $'
 str_unit_number:db	'Unit: $'
 str_bytes_per_sector:db	'Bytes/sector: $'
@@ -230,6 +280,11 @@ str_highest_sector_num_cl:db 'Highest sector number in a cluster: $'
 str_sectors_per_cluster_pow2:db 'Sectors/cluster: $'
 str_reserved:	db	'Reserved sectors: $'
 str_fats:	db	'Number of FATs: $'
+str_root_dirents:db	'Number of root directory entries: $'
+str_first_user_sector:db 'First user sector number: $'
+str_highest_cluster:db	'Highest cluster number: $'
+str_sectors_per_fat:db	'Sectors per FAT: $'
+str_first_dir_sector:db	'First directory sector: $'
 crlf:		db	13,10,'$'
 
 		segment .bss
