@@ -162,6 +162,74 @@ request_ok:	push	ds		; move DS to ES
 		mov	dx,crlf
 		call	common_str_print
 
+;----------- device driver header
+		mov	dx,str_device_driver_header
+		call	common_str_print
+
+		mov	ax,[es:bx+19+2]
+		call	puthex16
+		mov	al,':'
+		call	putc
+		mov	ax,[es:bx+19]
+		call	puthex16
+
+		mov	dx,crlf
+		call	common_str_print
+
+;----------- media ID
+		mov	dx,str_media_id
+		call	common_str_print
+
+		mov	al,[es:bx+23]
+		call	puthex8
+
+		mov	dx,crlf
+		call	common_str_print
+
+;----------- disk accessed
+		mov	dx,str_disk_accessed
+		call	common_str_print
+
+		mov	al,[es:bx+24]
+		call	puthex8
+
+		mov	dx,crlf
+		call	common_str_print
+
+;----------- next PDB
+		mov	dx,str_next_pdb
+		call	common_str_print
+
+		mov	ax,[es:bx+25+2]
+		call	puthex16
+		mov	al,':'
+		call	putc
+		mov	ax,[es:bx+25]
+		call	puthex16
+
+		mov	dx,crlf
+		call	common_str_print
+
+;----------- cluster to start searching for free space
+		mov	dx,str_cluster_start_free_search
+		call	common_str_print
+
+		mov	ax,[es:bx+29]
+		call	putdec16
+
+		mov	dx,crlf
+		call	common_str_print
+
+;----------- free clusters (NTS: 0xFFFF means it doesn't know yet)
+		mov	dx,str_free_clusters
+		call	common_str_print
+
+		mov	ax,[es:bx+31]
+		call	putdec16
+
+		mov	dx,crlf
+		call	common_str_print
+
 ; EXIT to DOS
 exit:		mov	ax,0x4C00	; exit to DOS
 		int	21h
@@ -268,6 +336,14 @@ puthex8:	push	ax
 		pop	ax
 		ret
 
+;------------------------------------
+puthex16:	push	ax
+		xchg	al,ah
+		call	puthex8
+		pop	ax
+		call	puthex8
+		ret
+
 		segment .data
 
 hexes:		db	'0123456789ABCDEF'
@@ -285,6 +361,12 @@ str_first_user_sector:db 'First user sector number: $'
 str_highest_cluster:db	'Highest cluster number: $'
 str_sectors_per_fat:db	'Sectors per FAT: $'
 str_first_dir_sector:db	'First directory sector: $'
+str_device_driver_header:db 'Device driver header location: $'
+str_media_id:	db	'Media ID: $'
+str_disk_accessed:db	'Disk accessed: $'
+str_next_pdb:	db	'Next PDB location: $'
+str_cluster_start_free_search:db 'Cluster to start free space search at: $'
+str_free_clusters:db	'Free clusters: $'
 crlf:		db	13,10,'$'
 
 		segment .bss
