@@ -19,6 +19,8 @@
 		mov	es,[0x2C]	; load ENV segment
 		mov	ah,0x49		; AH=0x49 free memory
 		int	21h
+		xor	ax,ax		; and write 0x0000 over the segment value in our PSP
+		mov	[0x2C],ax	; to prevent memory analysis tools from trying to use an invalid segment
 
 		mov	ax,0x3100	; AH=0x31 terminate and stay resident AL=0x00 return code
 		lea	dx,[end_of_image+15] ; DX = number of paragraphs to keep resident
