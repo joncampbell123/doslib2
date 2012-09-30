@@ -37,4 +37,5 @@
    dellabel.com       Delete volume label               [MS-DOS 1.0+]
 * Other
    version.com        Display MS-DOS version            [MS-DOS 2.0+]
+   tsrnull.com        Terminate & Stay Resident         [MS-DOS 2.0+]
 
