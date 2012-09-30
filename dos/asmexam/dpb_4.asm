@@ -4,6 +4,9 @@
 ; Ask DOS for the Disk Parameter Block.
 ; Note the DPB changed slighly from version to version up until DOS 4.0/5.0, which is
 ; why this version specializes in DOS 4.0 or higher.
+;
+; See also:
+; http://www.ctyme.com/intr/rb-2724.htm
 ;--------------------------------------------------------------------------------------
 		bits 16			; 16-bit real mode
 		org 0x100		; DOS .COM executable starts at 0x100 in memory
