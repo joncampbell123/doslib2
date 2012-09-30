@@ -92,7 +92,7 @@ putdec8_ploop:	pop	ax
 
 		segment .data
 
-str_flag_state:	db	'Extended break flag state: $'
+str_flag_state:	db	'Extended break flag state WAS set to: $'
 crlf:		db	13,10,'$'
 
 		segment .bss
