@@ -36,6 +36,7 @@ all_programs += $(abs_exe_dir)/tsrnull.com
 all_programs += $(abs_exe_dir)/tsrnull2.com
 all_programs += $(abs_exe_dir)/dpb_4.com
 all_programs += $(abs_exe_dir)/extbrkch.com
+all_programs += $(abs_exe_dir)/extbrkc2.com
 
 all-programs: $(all_programs)
 
@@ -133,6 +134,9 @@ $(abs_exe_dir)/tsrnull2.com: tsrnull2.asm
 	$(NASM) -o $@ -f bin $(NASMFLAGS) $^
 
 $(abs_exe_dir)/extbrkch.com: extbrkch.asm
+	$(NASM) -o $@ -f bin $(NASMFLAGS) $^
+
+$(abs_exe_dir)/extbrkc2.com: extbrkc2.asm
 	$(NASM) -o $@ -f bin $(NASMFLAGS) $^
 
 $(abs_exe_dir)/dpb_4.com: dpb_4.asm

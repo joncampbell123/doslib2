@@ -1,8 +1,7 @@
 ;--------------------------------------------------------------------------------------
-; EXTBRKCH.COM
+; EXTBRKC2.COM
 ;
-; Read extended break flag.
-; If the user enters a '1' or '0' on the command line, it sets the flag as well.
+; Use get/set extended break flag
 ;--------------------------------------------------------------------------------------
 		bits 16			; 16-bit real mode
 		org 0x100		; DOS .COM executable starts at 0x100 in memory
@@ -17,16 +16,13 @@ ld1:		lodsb
 		cmp	al,' '
 		jz	ld1
 		cmp	al,0x0D
-		jz	show_flag
+		jz	ld_done
 
+ld_done:
 ; set the flag state. AL=ASCII char
 		sub	al,'0'
 		mov	dl,al
-		mov	ax,0x3301	; set extended break flag
-		int	21h
-
-; show the flag state
-show_flag:	mov	ax,0x3300	; get extended break flag
+		mov	ax,0x3302	; get/set extended break flag
 		int	21h
 
 		push	dx
