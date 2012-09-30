@@ -41,4 +41,5 @@
    dpb_4.com          Disk Parameter Block (DOS 4.0+)   [MS-DOS 4.0+]
    extbrkch.com       Extended break checking           [MS-DOS 2.0+]
    extbrkc2.com       Extended break checking           [MS-DOS 3.0+]
+   bootdrv.com        Get boot drive                    [MS-DOS 4.0+]
 
