@@ -2,6 +2,28 @@
 ; SETLABEL.COM
 ;
 ; Set the label from the current disk 
+;
+; Known issues:
+;    Microsoft MS-DOS 6.22:
+;        - If Windows 95 long filenames exist in the root directory, and they occur
+;          before the actual volume label or the disk never had a volume label, the DOS
+;          kernel will return on enumeration that LFN entry. Unfortunately, it will not
+;          allow this program to rename or delete the volume label.
+;
+;          In prior versions of this program, renaming would happen to work because we
+;          used the ????????.??? filename in the FCB rename block, but of course that's
+;          not wise to do because obviously we are then corrupting part of a long file
+;          name directory entry!
+;
+;    Windows NT/2000/XP/Vista/7/etc...:
+;        - This code will always announce that it created the volume label. Because
+;          NTVDM.EXE apparently does not allow renaming the volume label as true DOS
+;          dos.
+;
+;    DOSBox 0.74 emulator:
+;        - DOSBox ignores the volume bit, except to support returning the volume label.
+;          Attempting to create a volume label will instead create an empty file of that
+;          name.
 ;--------------------------------------------------------------------------------------
 		bits 16			; 16-bit real mode
 		org 0x100		; DOS .COM executable starts at 0x100 in memory
@@ -61,6 +83,39 @@ l1e:
 		mov	cx,8+3
 		rep	movsb
 
+; info is returned in the DTA, so set DTA location
+		mov	ah,0x1A		; AH=0x1A set DTA
+		mov	dx,dta
+		int	21h
+
+; enumerate to read the current volume label
+		cld
+		mov	si,fcbren
+		mov	di,fcbchk
+		mov	cx,0x2A/2
+		rep	movsw
+
+		mov	ah,0x11
+		mov	dx,fcbchk
+		int	21h			; find first
+fcb_scan:	cmp	al,0x00
+		jnz	not_rename		; on error, go to creation
+		cmp	byte [dta+6],0x08	; did we actually get a volume label?
+		jz	found_it		; if so, go to the renaming stage
+
+		mov	ah,0x12
+		mov	dx,fcbchk
+		int	21h			; find next. keep searching
+		jmp	short fcb_scan
+
+; we found the existing volume label. copy the name we found into the
+; rename FCB to ensure that's the only entry we change.
+found_it:	cld
+		mov	si,dta+7+1
+		mov	di,fcbren+7+1
+		mov	cx,11
+		rep	movsb
+
 ; start by trying to rename the volume label
 not_delete:	mov	ah,0x17
 		mov	dx,fcbren
@@ -94,8 +149,9 @@ str_crlf:	db	13,10,'$'
 
 		segment .bss
 
-fcb:		resb	0x2A		; for creation
-fcbren:		resb	0x2A		; for renaming
+fcb:		resb	0x30		; for creation
+fcbren:		resb	0x80		; for renaming
+fcbchk:		resb	0x30		; for checking
 
 ; WARNING: We don't know how large DOS will make the record size, therefore this must be last!
 dta:		resb	0x100

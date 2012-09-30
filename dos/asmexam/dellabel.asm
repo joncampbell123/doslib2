@@ -5,9 +5,13 @@
 ;
 ; Known issues:
 ;    Microsoft MS-DOS 6.22:
-;        - A bug in the MS-DOS kernel prevents anyone (whether it's this program or it's
-;          own LABEL utility) from deleting the volume label if Windows 95 long filenames
-;          exist in the root directory.
+;        - If Windows 95 "long filenames" exist in the root directory the DOS kernel
+;          will return the first long filename dirent as the volume label. For whatever
+;          reason, SETLABEL.COM is able to change the true volume label, and afterwards
+;          GETLABEL.COM sees the change, but deleting the volume label doesn't work.
+;          Neither this program nor MS-DOS's LABEL program is able to do it.
+;          Deleting the volume label works normally if the volume label is first in
+;          the root directory or Windows 95 long filenames are not present at all.
 ;--------------------------------------------------------------------------------------
 		bits 16			; 16-bit real mode
 		org 0x100		; DOS .COM executable starts at 0x100 in memory
@@ -47,6 +51,13 @@
 		mov	dx,str_no_label
 		cmp	al,0x00
 		jnz	short common_str_error
+
+; copy the result of enumeration into the FCB
+		cld
+		mov	si,dta
+		mov	di,fcb
+		mov	cx,11+1		; 8.3 name + drive byte
+		rep	movsb
 
 ; then delete the label
 		mov	ah,0x13		; AH=0x13 delete

@@ -2,6 +2,12 @@
 ; FCB_DIR2.COM
 ; 
 ; Enumerate files and folders in current directory using extended FCBs
+;
+; Known issues:
+;    Windows NT/2000/XP/Vista/7/etc...:
+;        - NTVDM.EXE does not emulate FCB findfirst/findnext AT ALL, except for minimal
+;          API emulation needed for DOS programs to read the volume label. This program
+;          will fail to enumerate anything when run in a Windows NT DOS box. 
 ;--------------------------------------------------------------------------------------
 		bits 16			; 16-bit real mode
 		org 0x100		; DOS .COM executable starts at 0x100 in memory
@@ -22,7 +28,7 @@
 
 ; make extended FCB
 		mov	byte [fcb],0xFF
-		mov	byte [fcb+6],0xFF	; match any attribute including volume labels
+		mov	byte [fcb+6],0xFF; match ANYTHING
 
 ; read the command line starting at CS:0x81 and copy into the FCB fields
 		mov	si,0x81

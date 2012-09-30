@@ -2,6 +2,20 @@
 ; GETLABEL.COM
 ;
 ; Read the label from the current disk 
+;
+; Known issues:
+;    Microsoft MS-DOS 6.22:
+;        - If Windows 95 long filenames exist in the root directory, and they occur
+;          before the actual volume label or the disk never had a volume label, the DOS
+;          kernel will return one of the LFN entries instead.
+;
+;          Ideally we could check the attribute byte for this (look for 0x0F) but MS-DOS
+;          seems to leave it set to 0x08 when returning it, so we really don't have any
+;          way to workaround the issue.
+;
+;    Windows NT/2000/XP/Vista/7/etc...:
+;        - GETLABEL.COM on an NTFS partition returns nonsense data, usually the first
+;          11 characters of the user's home directory path.
 ;--------------------------------------------------------------------------------------
 		bits 16			; 16-bit real mode
 		org 0x100		; DOS .COM executable starts at 0x100 in memory
