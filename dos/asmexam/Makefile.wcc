@@ -38,6 +38,7 @@ all_programs += $(abs_exe_dir)/dpb_4.com
 all_programs += $(abs_exe_dir)/extbrkch.com
 all_programs += $(abs_exe_dir)/extbrkc2.com
 all_programs += $(abs_exe_dir)/bootdrv.com
+all_programs += $(abs_exe_dir)/diskcap.com
 
 all-programs: $(all_programs)
 
@@ -141,6 +142,9 @@ $(abs_exe_dir)/extbrkc2.com: extbrkc2.asm
 	$(NASM) -o $@ -f bin $(NASMFLAGS) $^
 
 $(abs_exe_dir)/bootdrv.com: bootdrv.asm
+	$(NASM) -o $@ -f bin $(NASMFLAGS) $^
+
+$(abs_exe_dir)/diskcap.com: diskcap.asm
 	$(NASM) -o $@ -f bin $(NASMFLAGS) $^
 
 $(abs_exe_dir)/dpb_4.com: dpb_4.asm
