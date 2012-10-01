@@ -40,6 +40,7 @@ all_programs += $(abs_exe_dir)/extbrkc2.com
 all_programs += $(abs_exe_dir)/bootdrv.com
 all_programs += $(abs_exe_dir)/diskcap.com
 all_programs += $(abs_exe_dir)/diskcp95.com
+all_programs += $(abs_exe_dir)/switchr.com
 
 all-programs: $(all_programs)
 
@@ -143,6 +144,9 @@ $(abs_exe_dir)/extbrkc2.com: extbrkc2.asm
 	$(NASM) -o $@ -f bin $(NASMFLAGS) $^
 
 $(abs_exe_dir)/diskcp95.com: diskcp95.asm
+	$(NASM) -o $@ -f bin $(NASMFLAGS) $^
+
+$(abs_exe_dir)/switchr.com: switchr.asm
 	$(NASM) -o $@ -f bin $(NASMFLAGS) $^
 
 $(abs_exe_dir)/bootdrv.com: bootdrv.asm

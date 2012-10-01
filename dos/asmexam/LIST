@@ -45,4 +45,5 @@
    diskcap.com        Get disk capacity/free space      [MS-DOS 2.0+]
    diskcp95.com       Get disk capacity/free space
                         Windows 95 FAT32 method         [MS-DOS 7.0+/Windows 95 OSR2,98,ME]
+   switchr.com        Get/Set switch character          [MS-DOS 2.0+]
 
