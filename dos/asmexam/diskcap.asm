@@ -133,7 +133,7 @@ putdec16:	push	ax
 		div	bx
 		push	dx
 
-putdec16_loop:	test	ax,0xFFFF
+putdec16_loop:	or	ax,ax
 		jz	putdec16_pl
 		xor	dx,dx
 		inc	cx

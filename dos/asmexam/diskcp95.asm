@@ -91,19 +91,19 @@ err_str_exit:	call	puts
 ;         DS:DX = string to print as suffix
 edx_eax_bytes_to_units:
 		mov	di,str_suf_bytes	; assume by default, unit in bytes
-		test	edx,0xFFFFFFFF		; if EDX:EAX <= 0xFFFFFFFF then we can stop right here
+		or	edx,edx			; if EDX:EAX <= 0xFFFFFFFF then we can stop right here
 		jz	edx_eax_bytes_to_units_done
 
 		shrd	eax,edx,10		; EDX:EAX >>= 10
 		shr	edx,10
 		mov	di,str_suf_kbytes	; now it's in kilobytes
-		test	edx,0xFFFFFFFF		; small enough now?
+		or	edx,edx			; small enough now?
 		jz	edx_eax_bytes_to_units_done
 
 		shrd	eax,edx,10		; EDX:EAX >>= 10
 		shr	edx,10
 		mov	di,str_suf_mbytes	; now it's in megabytes
-		test	edx,0xFFFFFFFF		; small enough now?
+		or	edx,edx			; small enough now?
 		jz	edx_eax_bytes_to_units_done
 
 		shrd	eax,edx,10		; EDX:EAX >>= 10
@@ -152,7 +152,7 @@ putdec32:	push	eax
 		div	ebx
 		push	dx
 
-putdec32_loop:	test	eax,0xFFFFFFFF
+putdec32_loop:	or	eax,eax
 		jz	putdec32_pl
 		xor	edx,edx
 		inc	cx
