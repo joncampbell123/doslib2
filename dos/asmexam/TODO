@@ -1,5 +1,17 @@
 TODO: Additional undocumented commands
 
+INT 21h AH=0x39 mkdir (MS-DOS 2.0+)
+
+INT 21h AH=0x3A rmdir (MS-DOS 2.0+)
+
+INT 21h AH=0x3B chdir (MS-DOS 2.0+)
+
+INT 21h AH=0x3C create (MS-DOS 2.0+)
+
+INT 21h AH=0x3D open (MS-DOS 2.0+)
+
+INT 21h AH=0x41 delete (MS-DOS 2.0+)
+
 INT 21h AX=0x3307 DL=0/1 Windows 95 Set/Clear DOS_FLAG
 
 INT 21h AH=0x34 Get address of INDOS flag (MS-DOS 2.0+)
@@ -7,4 +19,12 @@ INT 21h AH=0x34 Get address of INDOS flag (MS-DOS 2.0+)
 INT 21h AX=0x5D06 Get address of DOS swappable data area (MS-DOS 3.0+)
 
 INT 21h AX=0x5D0B Get DOS swappable data areas (MS-DOS 4.0)
+
+INT 21h AX=0x3702 Specify \DEV\ prefix use (MS-DOS 2.0 and 3.3+)
+
+INT 21h AX=0x3800 Get country-specific information (MS-DOS 2.11+ code, MS-DOS 2.0-2.10 uses a different struct)
+
+INT 21h AX=0x3800 Get country-specific information (alternate version for MS-DOS 2.0-2.10)
+
+INT 21h AH=0x38 DX=0xFFFF Set country code (MS-DOS 3.0+)
 
