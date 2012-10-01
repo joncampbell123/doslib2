@@ -4,7 +4,7 @@
 ; Set the label from the current disk 
 ;
 ; Known issues:
-;    Microsoft MS-DOS 6.22:
+;    Microsoft MS-DOS 6.22, 3.3:
 ;        - If Windows 95 long filenames exist in the root directory, and they occur
 ;          before the actual volume label or the disk never had a volume label, the DOS
 ;          kernel will return on enumeration that LFN entry. Unfortunately, it will not
@@ -14,6 +14,10 @@
 ;          used the ????????.??? filename in the FCB rename block, but of course that's
 ;          not wise to do because obviously we are then corrupting part of a long file
 ;          name directory entry!
+;
+;    Microsoft MS-DOS 3.30:
+;        - If the volume label already exists, this code fails to attempt renaming it,
+;          and will fail to change it. You must delete the volume label then create it.
 ;
 ;    Windows NT/2000/XP/Vista/7/etc...:
 ;        - This code will always announce that it created the volume label. Because
