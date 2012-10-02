@@ -1,7 +1,7 @@
 ;--------------------------------------------------------------------------------------
-; RMDIR.COM
+; CHDIR.COM
 ;
-; Remove a directory
+; Change current directory
 ;--------------------------------------------------------------------------------------
 		bits 16			; 16-bit real mode
 		org 0x100		; DOS .COM executable starts at 0x100 in memory
@@ -31,9 +31,9 @@ ld1:		lodsb
 		call	puts
 		ret			; return to DOS
 
-; do the rmdir
+; do the mkdir
 do_mkdir:	mov	dx,si		; DS:DX = name of dir to make
-		mov	ah,0x3A		; AH=0x3A remove directory
+		mov	ah,0x3B		; AH=0x3B change directory
 		int	21h
 		mov	dx,str_ok
 		jnc	mkdir_ok	; CF=1 if error
@@ -52,7 +52,7 @@ puts:		mov	ah,0x09
 
 		segment .data
 
-str_ok:		db	'Removed$'
+str_ok:		db	'Done$'
 str_fail:	db	'Failed$'
 str_need_param:	db	'Need a directory name'
 crlf:		db	13,10,'$'
