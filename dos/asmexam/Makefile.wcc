@@ -44,6 +44,7 @@ all_programs += $(abs_exe_dir)/switchr.com
 all_programs += $(abs_exe_dir)/mkdir.com
 all_programs += $(abs_exe_dir)/rmdir.com
 all_programs += $(abs_exe_dir)/chdir.com
+all_programs += $(abs_exe_dir)/creat.com
 
 all-programs: $(all_programs)
 
@@ -168,6 +169,9 @@ $(abs_exe_dir)/rmdir.com: rmdir.asm
 	$(NASM) -o $@ -f bin $(NASMFLAGS) $^
 
 $(abs_exe_dir)/chdir.com: chdir.asm
+	$(NASM) -o $@ -f bin $(NASMFLAGS) $^
+
+$(abs_exe_dir)/creat.com: creat.asm
 	$(NASM) -o $@ -f bin $(NASMFLAGS) $^
 
 all-txt: $(abs_exe_dir)/emm.txt

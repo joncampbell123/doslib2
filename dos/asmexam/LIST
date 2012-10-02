@@ -48,4 +48,5 @@
    switchr.com        Get/Set switch character          [MS-DOS 2.0+]
    mkdir.com          Create subdirectory               [MS-DOS 2.0+]
    rmdir.com          Remove subdirectory               [MS-DOS 2.0+]
+   creat.com          Create a file                     [MS-DOS 2.0+]
 
