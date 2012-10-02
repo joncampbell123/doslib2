@@ -46,4 +46,6 @@
    diskcp95.com       Get disk capacity/free space
                         Windows 95 FAT32 method         [MS-DOS 7.0+/Windows 95 OSR2,98,ME]
    switchr.com        Get/Set switch character          [MS-DOS 2.0+]
+   mkdir.com          Create subdirectory               [MS-DOS 2.0+]
+   rmdir.com          Remove subdirectory               [MS-DOS 2.0+]
 

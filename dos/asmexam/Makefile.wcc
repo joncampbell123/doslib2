@@ -42,6 +42,7 @@ all_programs += $(abs_exe_dir)/diskcap.com
 all_programs += $(abs_exe_dir)/diskcp95.com
 all_programs += $(abs_exe_dir)/switchr.com
 all_programs += $(abs_exe_dir)/mkdir.com
+all_programs += $(abs_exe_dir)/rmdir.com
 
 all-programs: $(all_programs)
 
@@ -160,6 +161,9 @@ $(abs_exe_dir)/dpb_4.com: dpb_4.asm
 	$(NASM) -o $@ -f bin $(NASMFLAGS) $^
 
 $(abs_exe_dir)/mkdir.com: mkdir.asm
+	$(NASM) -o $@ -f bin $(NASMFLAGS) $^
+
+$(abs_exe_dir)/rmdir.com: rmdir.asm
 	$(NASM) -o $@ -f bin $(NASMFLAGS) $^
 
 all-txt: $(abs_exe_dir)/emm.txt
