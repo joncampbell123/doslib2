@@ -46,6 +46,8 @@
 		mov	ax,0x3306	; AH=0x33 AL=0x06 get REAL dos version (MS-DOS 5.0+)
 		int	21h		; returns BL,BH=major,minor version DL=revision DH=version flags
 
+		push	dx
+
 		mov	al,bl
 		call	putdec8		; print contents of BL
 
@@ -57,6 +59,8 @@
 
 		mov	dx,revstr
 		call	puts
+
+		pop	dx
 
 		mov	al,dl
 		call	putdec8		; print contents of DL
