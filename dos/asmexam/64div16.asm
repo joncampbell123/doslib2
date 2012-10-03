@@ -11,8 +11,8 @@
 		org 0x100		; DOS .COM executable starts at 0x100 in memory
 
 		mov	dx,0xAB54	; DX:CX:DX:AX = 12345678901234567890 = 0xAB54'A98C'EB1F'0AD2
-		mov	cx,0xA98C
-		mov	bx,0xEB1F
+		mov	cx,0xA98C	; It's likely NASM can't handle constants that large,
+		mov	bx,0xEB1F	; so don't try!
 		mov	ax,0x0AD2
 		call	putdec64
 
