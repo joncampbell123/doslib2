@@ -49,4 +49,8 @@
    mkdir.com          Create subdirectory               [MS-DOS 2.0+]
    rmdir.com          Remove subdirectory               [MS-DOS 2.0+]
    creat.com          Create a file                     [MS-DOS 2.0+]
+* Non DOS specific
+   32div16.com        Printing a 32-bit unsigned int    [MS-DOS 1.0+]
+                        using only 16-bit 8086
+                        instructions.
 

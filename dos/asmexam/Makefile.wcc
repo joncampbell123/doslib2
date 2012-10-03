@@ -45,6 +45,7 @@ all_programs += $(abs_exe_dir)/mkdir.com
 all_programs += $(abs_exe_dir)/rmdir.com
 all_programs += $(abs_exe_dir)/chdir.com
 all_programs += $(abs_exe_dir)/creat.com
+all_programs += $(abs_exe_dir)/32div16.com
 all_programs += $(abs_exe_dir)/openread.com
 
 all-programs: $(all_programs)
@@ -173,6 +174,9 @@ $(abs_exe_dir)/chdir.com: chdir.asm
 	$(NASM) -o $@ -f bin $(NASMFLAGS) $^
 
 $(abs_exe_dir)/creat.com: creat.asm
+	$(NASM) -o $@ -f bin $(NASMFLAGS) $^
+
+$(abs_exe_dir)/32div16.com: 32div16.asm
 	$(NASM) -o $@ -f bin $(NASMFLAGS) $^
 
 $(abs_exe_dir)/openread.com: openread.asm
