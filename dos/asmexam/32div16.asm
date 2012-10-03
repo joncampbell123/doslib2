@@ -70,12 +70,8 @@ putdec32_ploop:	pop	ax
 ; exit: DX:AX = result
 ;       BX = remainder
 ;
-;          [1][2]
 ;        __________
 ;     BX ) DX:AX     => DX:AX remainder BX
-;
-;       [1] = first WORD of dx_ax_div_res1
-;       [2] = second WORD of dx_ax_div_res1
 dx_ax_div:	push	dx
 		push	ax		; step #1: save DX:AX, then compute DX / BX
 		mov	ax,dx
@@ -93,5 +89,5 @@ dx_ax_div:	push	dx
 
 		section .bss
 
-dx_ax_div_tmp:	resw	2
+dx_ax_div_tmp:	resw	1
 
