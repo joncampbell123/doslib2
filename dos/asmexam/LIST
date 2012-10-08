@@ -60,4 +60,7 @@
    64div16.com        Printing a 64-bit unsigned int    [MS-DOS 1.0+]
                         using only 16-bit 8086
                         instructions.
+   32mul16.com        Multiply 32-bit unsigned int      [MS-DOS 1.0+]
+                        by 16-bit unsigned int only
+                        using 8086 instructions
 
