@@ -50,6 +50,7 @@ all_programs += $(abs_exe_dir)/32div16.com
 all_programs += $(abs_exe_dir)/64div16.com
 all_programs += $(abs_exe_dir)/openread.com
 all_programs += $(abs_exe_dir)/creaseek.com
+all_programs += $(abs_exe_dir)/creasee2.com
 
 all-programs: $(all_programs)
 
@@ -189,6 +190,9 @@ $(abs_exe_dir)/64div16.com: 64div16.asm
 	$(NASM) -o $@ -f bin $(NASMFLAGS) $^
 
 $(abs_exe_dir)/creaseek.com: creaseek.asm
+	$(NASM) -o $@ -f bin $(NASMFLAGS) $^
+
+$(abs_exe_dir)/creasee2.com: creasee2.asm
 	$(NASM) -o $@ -f bin $(NASMFLAGS) $^
 
 $(abs_exe_dir)/openread.com: openread.asm
