@@ -53,6 +53,7 @@ all_programs += $(abs_exe_dir)/creaseek.com
 all_programs += $(abs_exe_dir)/creasee2.com
 all_programs += $(abs_exe_dir)/creasee3.com
 all_programs += $(abs_exe_dir)/32mul16.com
+all_programs += $(abs_exe_dir)/64mul16.com
 
 all-programs: $(all_programs)
 
@@ -186,6 +187,9 @@ $(abs_exe_dir)/delete.com: delete.asm
 	$(NASM) -o $@ -f bin $(NASMFLAGS) $^
 
 $(abs_exe_dir)/32mul16.com: 32mul16.asm
+	$(NASM) -o $@ -f bin $(NASMFLAGS) $^
+
+$(abs_exe_dir)/64mul16.com: 64mul16.asm
 	$(NASM) -o $@ -f bin $(NASMFLAGS) $^
 
 $(abs_exe_dir)/32div16.com: 32div16.asm
