@@ -1,5 +1,5 @@
 ;--------------------------------------------------------------------------------------
-; CREASEE2.COM
+; CREASEE3.COM
 ;
 ; Create a file, lseek, write
 ; 
@@ -54,13 +54,7 @@ mkdir_ok:	mov	[filehandle],ax	; save the file handle returned by DOS
 		mov	dx,str_msg
 		int	21h
 
-		mov	ax,0x4200	; AH=0x42 lseek AL=0x00 SEEK_SET
-		mov	bx,[filehandle]
-		xor	cx,cx
-		xor	dx,dx		; CX:DX = 0
-		int	21h		; result = 0
-
-		mov	ax,0x4201	; AH=0x42 lseek AL=0x01 SEEK_CUR
+		mov	ax,0x4201	; AH=0x42 lseek AL=0x02 SEEK_END
 		mov	bx,[filehandle]
 		xor	cx,cx
 		mov	dx,0x1000	; CX:DX = offset 0x1000
