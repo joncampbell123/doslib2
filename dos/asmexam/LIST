@@ -51,6 +51,8 @@
    creat.com          Create a file                     [MS-DOS 2.0+]
    delete.com         Delete a file                     [MS-DOS 2.0+]
    creaseek.com       Create a file, lseek, write       [MS-DOS 2.0+]
+   creasee2.com       Create a file, lseek, write       [MS-DOS 2.0+]
+   creasee3.com       Create a file, lseek, write       [MS-DOS 2.0+]
 * Non DOS specific
    32div16.com        Printing a 32-bit unsigned int    [MS-DOS 1.0+]
                         using only 16-bit 8086
