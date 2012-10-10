@@ -63,6 +63,7 @@ all_programs += $(abs_exe_dir)/getcwd.com
 all_programs += $(abs_exe_dir)/exec.com
 all_programs += $(abs_exe_dir)/dup2.com
 all_programs += $(abs_exe_dir)/dup.com
+all_programs += $(abs_exe_dir)/dir.com
 
 all-programs: $(all_programs)
 
@@ -244,6 +245,9 @@ $(abs_exe_dir)/dup2.com: dup2.asm
 	$(NASM) -o $@ -f bin $(NASMFLAGS) $^
 
 $(abs_exe_dir)/dup.com: dup.asm
+	$(NASM) -o $@ -f bin $(NASMFLAGS) $^
+
+$(abs_exe_dir)/dir.com: dir.asm
 	$(NASM) -o $@ -f bin $(NASMFLAGS) $^
 
 all-txt: $(abs_exe_dir)/emm.txt
