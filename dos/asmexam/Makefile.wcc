@@ -58,6 +58,7 @@ all_programs += $(abs_exe_dir)/chattr_r.com
 all_programs += $(abs_exe_dir)/chattr_h.com
 all_programs += $(abs_exe_dir)/chattr_s.com
 all_programs += $(abs_exe_dir)/chattr_a.com
+all_programs += $(abs_exe_dir)/dup.com
 
 all-programs: $(all_programs)
 
@@ -224,6 +225,9 @@ $(abs_exe_dir)/chattr_s.com: chattr_s.asm
 	$(NASM) -o $@ -f bin $(NASMFLAGS) $^
 
 $(abs_exe_dir)/chattr_a.com: chattr_a.asm
+	$(NASM) -o $@ -f bin $(NASMFLAGS) $^
+
+$(abs_exe_dir)/dup.com: dup.asm
 	$(NASM) -o $@ -f bin $(NASMFLAGS) $^
 
 all-txt: $(abs_exe_dir)/emm.txt

@@ -57,6 +57,7 @@
    chattr_h.com       Set hidden attribute on file      [MS-DOS 2.0+]
    chattr_s.com       Set system attribute on file      [MS-DOS 2.0+]
    chattr_a.com       Set archive attribute on file     [MS-DOS 2.0+]
+   dup.com            Create a file, dup handle, write  [MS-DOS 2.0+]
 * Non DOS specific
    32div16.com        Printing a 32-bit unsigned int    [MS-DOS 1.0+]
                         using only 16-bit 8086
