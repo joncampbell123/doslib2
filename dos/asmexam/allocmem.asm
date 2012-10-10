@@ -41,6 +41,64 @@ com_resize_ok:	mov	dx,str_this_com
 		mov	dx,crlf
 		call	puts
 
+; ========================================================
+; Allocate block #1
+; ========================================================
+		mov	ah,0x48
+		mov	bx,144		; allocate 144 paragraphs (144 x 16 = 2304)
+		int	21h
+		jnc	com_alloc1_fail
+		xor	ax,ax
+com_alloc1_fail:mov	[block1],ax
+
+; ========================================================
+; print our block's segment on the console
+; ========================================================
+		mov	dx,str_block1
+		call	puts
+		mov	ax,[block1]
+		call	puthex16
+		mov	dx,crlf
+		call	puts
+
+; ========================================================
+; Allocate block #2
+; ========================================================
+		mov	ah,0x48
+		mov	bx,5000		; allocate 5000 paragraphs (5000 x 16 = 80000)
+		int	21h
+		jnc	com_alloc2_fail
+		xor	ax,ax
+com_alloc2_fail:mov	[block2],ax
+
+; ========================================================
+; Free block #1
+; ========================================================
+		mov	ah,0x49
+		mov	es,[block1]
+		int	21h		; free block #1
+		mov	word [block1],0
+
+; ========================================================
+; Allocate block #1 again
+; ========================================================
+		mov	ah,0x48
+		mov	bx,6000		; allocate 144 paragraphs (6000 x 16 = 96000)
+		int	21h
+		jnc	com_alloc1b_fail
+		xor	ax,ax
+com_alloc1b_fail:mov	[block1],ax
+
+; ========================================================
+; print our block's segment on the console
+; ========================================================
+		mov	dx,str_block2
+		call	puts
+		mov	ax,[block2]
+		call	puthex16
+		mov	dx,crlf
+		call	puts
+
 ; EXIT to DOS
 exit:		mov	ax,0x4C00	; exit to DOS
 		int	21h
@@ -101,10 +159,14 @@ puthex16:	push	ax
 hexes:		db	'0123456789ABCDEF'
 str_com_resize_fail:db	'COM resize fail$'
 str_this_com:	db	'This COM: $'
+str_block1:	db	'Block 1: $'
+str_block2:	db	'Block 2: $'
 crlf:		db	13,10,'$'
 
 		segment .bss
 
+block1:		resw	1
+block2:		resw	1
 
 ;-----------------------------------
 ENDOFIMAGE:	resb	1		; this offset is used by the program to know how large it is
