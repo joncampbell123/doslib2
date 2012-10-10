@@ -58,6 +58,7 @@ all_programs += $(abs_exe_dir)/chattr_r.com
 all_programs += $(abs_exe_dir)/chattr_h.com
 all_programs += $(abs_exe_dir)/chattr_s.com
 all_programs += $(abs_exe_dir)/chattr_a.com
+all_programs += $(abs_exe_dir)/allocmem.com
 all_programs += $(abs_exe_dir)/getcwd.com
 all_programs += $(abs_exe_dir)/dup2.com
 all_programs += $(abs_exe_dir)/dup.com
@@ -227,6 +228,9 @@ $(abs_exe_dir)/chattr_s.com: chattr_s.asm
 	$(NASM) -o $@ -f bin $(NASMFLAGS) $^
 
 $(abs_exe_dir)/chattr_a.com: chattr_a.asm
+	$(NASM) -o $@ -f bin $(NASMFLAGS) $^
+
+$(abs_exe_dir)/allocmem.com: allocmem.asm
 	$(NASM) -o $@ -f bin $(NASMFLAGS) $^
 
 $(abs_exe_dir)/getcwd.com: getcwd.asm

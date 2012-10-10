@@ -61,6 +61,8 @@
    dup2.com           Create a file, dup2 handle, write [MS-DOS 2.0+]
    chdir.com          Change working directory          [MS-DOS 2.0+]
    getcwd.com         Display working directory         [MS-DOS 2.0+]
+   allocmem.com       Show how a COM program can use the
+                      alloc/free/resize memory blocks   [MS-DOS 2.0+]
 * Non DOS specific
    32div16.com        Printing a 32-bit unsigned int    [MS-DOS 1.0+]
                         using only 16-bit 8086
