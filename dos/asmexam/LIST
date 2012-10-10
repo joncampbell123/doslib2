@@ -63,6 +63,8 @@
    getcwd.com         Display working directory         [MS-DOS 2.0+]
    allocmem.com       Show how a COM program can use the
                       alloc/free/resize memory blocks   [MS-DOS 2.0+]
+   exec.com           Use the EXEC call to run
+                      COMMAND.COM                       [MS-DOS 2.0+]
 * Non DOS specific
    32div16.com        Printing a 32-bit unsigned int    [MS-DOS 1.0+]
                         using only 16-bit 8086
