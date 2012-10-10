@@ -54,6 +54,7 @@ all_programs += $(abs_exe_dir)/creasee2.com
 all_programs += $(abs_exe_dir)/creasee3.com
 all_programs += $(abs_exe_dir)/32mul16.com
 all_programs += $(abs_exe_dir)/64mul16.com
+all_programs += $(abs_exe_dir)/chattr_r.com
 
 all-programs: $(all_programs)
 
@@ -208,6 +209,9 @@ $(abs_exe_dir)/creasee3.com: creasee3.asm
 	$(NASM) -o $@ -f bin $(NASMFLAGS) $^
 
 $(abs_exe_dir)/openread.com: openread.asm
+	$(NASM) -o $@ -f bin $(NASMFLAGS) $^
+
+$(abs_exe_dir)/chattr_r.com: chattr_r.asm
 	$(NASM) -o $@ -f bin $(NASMFLAGS) $^
 
 all-txt: $(abs_exe_dir)/emm.txt

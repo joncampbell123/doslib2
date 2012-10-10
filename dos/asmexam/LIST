@@ -53,6 +53,7 @@
    creaseek.com       Create a file, lseek, write       [MS-DOS 2.0+]
    creasee2.com       Create a file, lseek, write       [MS-DOS 2.0+]
    creasee3.com       Create a file, lseek, write       [MS-DOS 2.0+]
+   chattr_r.com       Set read only attribute on file   [MS-DOS 2.0+]
 * Non DOS specific
    32div16.com        Printing a 32-bit unsigned int    [MS-DOS 1.0+]
                         using only 16-bit 8086
@@ -66,4 +67,3 @@
    64mul16.com        Multiply 64-bit unsigned int      [MS-DOS 1.0+]
                         by 16-bit unsigned int only
                         using 8086 instructions
-
