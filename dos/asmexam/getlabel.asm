@@ -17,7 +17,7 @@
 ;        - GETLABEL.COM on an NTFS partition returns nonsense data, usually the first
 ;          11 characters of the user's home directory path.
 ;
-;    IBM PC-DOS 1.0
+;    IBM PC-DOS 1.0, 1.1
 ;        - The kernel does not understand extended FCBs, but will happily return the first
 ;          file it finds, usually COMMAND.COM
 ;--------------------------------------------------------------------------------------

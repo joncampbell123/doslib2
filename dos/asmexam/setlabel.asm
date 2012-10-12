@@ -29,7 +29,7 @@
 ;          Attempting to create a volume label will instead create an empty file of that
 ;          name.
 ;
-;    IBM PC-DOS 1.0
+;    IBM PC-DOS 1.0, 1.1
 ;        - The kernel does not understand extended FCBs, but will happily rename the
 ;          first file it finds, usually COMMAND.COM
 ;--------------------------------------------------------------------------------------

@@ -17,7 +17,7 @@ my $roots = int(($root_dir_size + 31) / 32);
 
 $x = system("dd if=/dev/zero of=__tmp__.dsk bs=512 count=320");
 die unless ($x == 0);
-$x = system("mkfs.vfat -s 1 -f 2 -F 12 -r $roots -R 1 __tmp__.dsk");
+$x = system("mkfs.vfat -s $sect_p_cluster -f 2 -F 12 -r $roots -R 1 __tmp__.dsk");
 die unless ($x == 0);
 
 open(R,"<","__tmp__.dsk") || die;
