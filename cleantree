@@ -23,4 +23,5 @@ find -name nul.err -delete
 find -name \*.cmd -delete
 find -name test.dsk -delete
 rm -f testiso.iso
+rm -fv dos/asmexam/test*.dsk
 
