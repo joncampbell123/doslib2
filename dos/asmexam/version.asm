@@ -17,6 +17,8 @@
 
 		mov	ax,0x3000	; AH=0x30 get version AL=0x00 return OEM ID in BH
 		int	21h		; returns AL,AH=major,minor version BL:CX 24-bit user serial BH=OEM ID
+					; NTS: MS-DOS 1.x does not support this call, but it also does not
+					;      change AX. So we can detect MS-DOS 1.0 by whether AX is still 0x3000.
 
 		call	putdec8		; print contents of AL
 
