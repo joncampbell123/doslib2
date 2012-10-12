@@ -16,6 +16,10 @@
 ;    Windows NT/2000/XP/Vista/7/etc...:
 ;        - GETLABEL.COM on an NTFS partition returns nonsense data, usually the first
 ;          11 characters of the user's home directory path.
+;
+;    IBM PC-DOS 1.0
+;        - The kernel does not understand extended FCBs, but will happily return the first
+;          file it finds, usually COMMAND.COM
 ;--------------------------------------------------------------------------------------
 		bits 16			; 16-bit real mode
 		org 0x100		; DOS .COM executable starts at 0x100 in memory

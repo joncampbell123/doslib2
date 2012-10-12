@@ -28,6 +28,10 @@
 ;        - DOSBox ignores the volume bit, except to support returning the volume label.
 ;          Attempting to create a volume label will instead create an empty file of that
 ;          name.
+;
+;    IBM PC-DOS 1.0
+;        - The kernel does not understand extended FCBs, but will happily rename the
+;          first file it finds, usually COMMAND.COM
 ;--------------------------------------------------------------------------------------
 		bits 16			; 16-bit real mode
 		org 0x100		; DOS .COM executable starts at 0x100 in memory

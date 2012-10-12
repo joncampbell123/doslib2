@@ -5,8 +5,8 @@
    exit_f4c.com       Exit to DOS by INT 21h AH=0x4C    [MS-DOS 2.0+]
 * Standard I/O
    int21_01.com       Read from STDIN with echo         [MS-DOS 1.0+]
-   int21_02.com       Read keyboard with INT 16h, write
-                      to STDOUT.                        [MS-DOS 1.0+]
+   int21_02.com       Read keyboard with INT 16h, write [MS-DOS 1.0+]
+                      to STDOUT.                       
    int21_06.com       Direct console I/O                [MS-DOS 1.0+]
    int21_07.com       Direct console input              [MS-DOS 1.0+]
    int21_08.com       Console input                     [MS-DOS 1.0+]
@@ -18,18 +18,18 @@
 * Default drive
    defdrive.com       Get/Set default drive             [MS-DOS 1.0+]
 * File control blocks
-   fcb_open.com       Open a file, read contents,
-                      print to STDOUT, and close        [MS-DOS 1.0+]
-   fcb_opew.com       Open a file, random read/write
-                      to modify initial bytes, close    [MS-DOS 1.0+]
+   fcb_open.com       Open a file, read contents,       [MS-DOS 1.0+]
+                      print to STDOUT, and close 
+   fcb_opew.com       Open a file, random read/write    [MS-DOS 1.0+]
+                      to modify initial bytes, close
    fcbcreat.com       Create a file, write a record     [MS-DOS 1.0+]
-   fcbcrea2.com       Create a file, change record size
-                      and write record                  [MS-DOS 1.0+]
+   fcbcrea2.com       Create a file, change record size [MS-DOS 1.0+]
+                      and write record                 
    fcb_ren.com        Rename file using FCB             [MS-DOS 1.0+]
    fcb_del.com        Delete file using FCB             [MS-DOS 1.0+]
    fcb_dir.com        Enumerating files using FCB       [MS-DOS 1.0+]
-   fcb_dir2.com       Enumerating files and folders
-                      using an extended FCB             [MS-DOS 2.0+]
+   fcb_dir2.com       Enumerating files and folders     [MS-DOS 2.0+]
+                      using an extended FCB        
    fcb_psp.com        Show the 1st & 2nd FCBs in the PSP[MS-DOS 1.0+]
    fcbparse.com       Parse filename into FCB           [MS-DOS 1.0+]
    getlabel.com       Read and show volume label        [MS-DOS 1.0+]
@@ -45,8 +45,8 @@
    extbrkc2.com       Extended break checking           [MS-DOS 3.0+]
    bootdrv.com        Get boot drive                    [MS-DOS 4.0+]
    diskcap.com        Get disk capacity/free space      [MS-DOS 2.0+]
-   diskcp95.com       Get disk capacity/free space
-                        Windows 95 FAT32 method         [MS-DOS 7.0+/Windows 95 OSR2,98,ME]
+   diskcp95.com       Get disk capacity/free space      [MS-DOS 7.0+/Windows 95 OSR2,98,ME]
+                        Windows 95 FAT32 method   
    switchr.com        Get/Set switch character          [MS-DOS 2.0+]
    mkdir.com          Create subdirectory               [MS-DOS 2.0+]
    rmdir.com          Remove subdirectory               [MS-DOS 2.0+]
@@ -63,12 +63,12 @@
    dup2.com           Create a file, dup2 handle, write [MS-DOS 2.0+]
    chdir.com          Change working directory          [MS-DOS 2.0+]
    getcwd.com         Display working directory         [MS-DOS 2.0+]
-   allocmem.com       Show how a COM program can use the
-                      alloc/free/resize memory blocks   [MS-DOS 2.0+]
-   exec.com           Use the EXEC call to run
-                      COMMAND.COM                       [MS-DOS 2.0+]
-   dir.com            List directory contents using
-                      findfirst/findnext                [MS-DOS 2.0+]
+   allocmem.com       Show how a COM program can use the[MS-DOS 2.0+]
+                      alloc/free/resize memory blocks   
+   exec.com           Use the EXEC call to run          [MS-DOS 2.0+]
+                      COMMAND.COM             
+   dir.com            List directory contents using     [MS-DOS 2.0+]
+                      findfirst/findnext           
    sverify.com        Set verify flag                   [MS-DOS 1.0+]
    gverify.com        Get verify flag                   [MS-DOS 2.0+]
    rename.com         Rename file (AH=0x56)             [MS-DOS 2.0+]

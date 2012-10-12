@@ -33,7 +33,14 @@ disk:
 	dd if=/dev/zero of=test720.dsk bs=512 count=1440
 	mkfs.vfat -r 256 test720.dsk
 	for i in ../../build/dos/asmexam/dos16r/086c/exe/*.com; do mcopy -i test720.dsk $$i ::; done
+#----- disk1
 	xz -c -d pcdos1bt.ref.xz >test160.dsk
 	./replace-bootsector-mkvfat.pl test160.dsk 0xFE 8 1 40 0x800 1
-	for i in ../../build/dos/asmexam/dos16r/086c/exe/*.com; do mcopy -i test160.dsk $$i ::; done
+	for i in `cat pcdos1bt.disk1`; do echo $$i; mcopy -i test160.dsk ../../build/dos/asmexam/dos16r/086c/exe/$$i ::; done
+	./replace-bootsector-other.pl test160.dsk pcdos1bt.ref.xz
+#----- disk2
+	xz -c -d pcdos1bt.ref.xz >test160d2.dsk
+	./replace-bootsector-mkvfat.pl test160d2.dsk 0xFE 8 1 40 0x800 1
+	for i in `cat pcdos1bt.disk2`; do echo $$i; mcopy -i test160d2.dsk ../../build/dos/asmexam/dos16r/086c/exe/$$i ::; done
+	./replace-bootsector-other.pl test160d2.dsk pcdos1bt.ref.xz
 
