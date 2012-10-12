@@ -68,6 +68,8 @@ all_programs += $(abs_exe_dir)/gverify.com
 all_programs += $(abs_exe_dir)/sverify.com
 all_programs += $(abs_exe_dir)/rename.com
 all_programs += $(abs_exe_dir)/getmtime.com
+all_programs += $(abs_exe_dir)/int2edir.com
+all_programs += $(abs_exe_dir)/int29str.com
 
 all-programs: $(all_programs)
 
@@ -264,6 +266,12 @@ $(abs_exe_dir)/rename.com: rename.asm
 	$(NASM) -o $@ -f bin $(NASMFLAGS) $^
 
 $(abs_exe_dir)/getmtime.com: getmtime.asm
+	$(NASM) -o $@ -f bin $(NASMFLAGS) $^
+
+$(abs_exe_dir)/int2edir.com: int2edir.asm
+	$(NASM) -o $@ -f bin $(NASMFLAGS) $^
+
+$(abs_exe_dir)/int29str.com: int29str.asm
 	$(NASM) -o $@ -f bin $(NASMFLAGS) $^
 
 all-txt: $(abs_exe_dir)/emm.txt

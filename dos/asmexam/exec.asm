@@ -12,6 +12,7 @@
 		pop	ds
 		push	cs
 		pop	es
+		mov	sp,stack_end-2
 
 ; ========================================================
 ; DOS gives this COM image all free memory (or the largest
@@ -79,6 +80,9 @@ str_fail:	db	'Failed',13,10,'$'
 str_ok:		db	'Exec OK',13,10,'$'
 
 		segment .bss
+
+stack_beg:	resb	0x400-1
+stack_end:	resb	1
 
 exec_fcb:	resb	24
 exec_pblk:	resb	0x14
