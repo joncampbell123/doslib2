@@ -68,10 +68,9 @@
    exec.com           Use the EXEC call to run          [MS-DOS 2.0+]
                       COMMAND.COM             
    dir.com            List directory contents using     [MS-DOS 2.0+]
-                      findfirst/findnext. Doesn't seem
-                      to work under MS-DOS/PC-DOS 2.0.
-   dir20.com          Alternate version of dir.com for  [MS-DOS 2.0+]
-                      MS-DOS 2.0 which uses ????????.???
+                      findfirst/findnext (*.*)
+   dir20.com          Alternate version of dir.com that [MS-DOS 2.0+]
+                      uses ????????.???
    sverify.com        Set verify flag                   [MS-DOS 1.0+]
    gverify.com        Get verify flag                   [MS-DOS 2.0+]
    rename.com         Rename file (AH=0x56)             [MS-DOS 2.0+]

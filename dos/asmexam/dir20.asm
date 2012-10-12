@@ -2,7 +2,7 @@
 ; DIR20.COM
 ; 
 ; Enumerate files and folders in current directory using AH=0x4E/0x4F. Uses ????????.???
-; instead of *.* which makes it work with MS-DOS/PC-DOS 2.0
+; instead of *.*.
 ;--------------------------------------------------------------------------------------
 		bits 16			; 16-bit real mode
 		org 0x100		; DOS .COM executable starts at 0x100 in memory
