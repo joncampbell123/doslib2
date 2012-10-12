@@ -1,17 +1,5 @@
 TODO: Additional undocumented commands
 
-INT 21h AH=0x39 mkdir (MS-DOS 2.0+)
-
-INT 21h AH=0x3A rmdir (MS-DOS 2.0+)
-
-INT 21h AH=0x3B chdir (MS-DOS 2.0+)
-
-INT 21h AH=0x3C create (MS-DOS 2.0+)
-
-INT 21h AH=0x3D open (MS-DOS 2.0+)
-
-INT 21h AH=0x41 delete (MS-DOS 2.0+)
-
 INT 21h AX=0x3307 DL=0/1 Windows 95 Set/Clear DOS_FLAG
 
 INT 21h AH=0x34 Get address of INDOS flag (MS-DOS 2.0+)
