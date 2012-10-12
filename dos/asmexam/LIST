@@ -69,6 +69,7 @@
                       findfirst/findnext                [MS-DOS 2.0+]
    sverify.com        Set verify flag                   [MS-DOS 1.0+]
    gverify.com        Get verify flag                   [MS-DOS 2.0+]
+   rename.com         Rename file (AH=0x56)             [MS-DOS 2.0+]
 * Non DOS specific
    32div16.com        Printing a 32-bit unsigned int    [MS-DOS 1.0+]
                         using only 16-bit 8086
