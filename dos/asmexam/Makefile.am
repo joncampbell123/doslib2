@@ -43,13 +43,20 @@ disk-pcdos11:
 	for i in `cat pcdos11bt.disk1`; do echo $$i; mcopy -i test320_11.dsk ../../build/dos/asmexam/dos16r/086c/exe/$$i ::; done
 	./replace-bootsector-other.pl test320_11.dsk pcdos11bt.ref.xz
 
-disk:
-	dd if=/dev/zero of=test.dsk bs=512 count=2880
-	mkfs.vfat test.dsk
-	for i in ../../build/dos/asmexam/dos16r/086c/exe/*.com; do mcopy -i test.dsk $$i ::; done
+disk720:
 	dd if=/dev/zero of=test720.dsk bs=512 count=1440
 	mkfs.vfat -r 256 test720.dsk
 	for i in ../../build/dos/asmexam/dos16r/086c/exe/*.com; do mcopy -i test720.dsk $$i ::; done
 
-disk-all: disk disk-pcdos10 disk-pcdos11
+disk360:
+	dd if=/dev/zero of=test360.dsk bs=512 count=720
+	mkfs.vfat -r 256 test360.dsk
+	for i in ../../build/dos/asmexam/dos16r/086c/exe/*.com; do mcopy -i test360.dsk $$i ::; done
+
+disk:
+	dd if=/dev/zero of=test.dsk bs=512 count=2880
+	mkfs.vfat test.dsk
+	for i in ../../build/dos/asmexam/dos16r/086c/exe/*.com; do mcopy -i test.dsk $$i ::; done
+
+disk-all: disk disk-pcdos10 disk-pcdos11 disk720 disk360
 
