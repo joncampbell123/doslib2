@@ -50,8 +50,12 @@ disk720:
 
 disk360:
 	dd if=/dev/zero of=test360.dsk bs=512 count=720
-	mkfs.vfat -r 256 test360.dsk
-	for i in ../../build/dos/asmexam/dos16r/086c/exe/*.com; do mcopy -i test360.dsk $$i ::; done
+	mkfs.vfat -r $$((0xE00/32)) test360.dsk
+	for i in `cat disk360.disk1`; do echo $$i; mcopy -i test360.dsk ../../build/dos/asmexam/dos16r/086c/exe/$$i ::; done
+#------ disk2
+	dd if=/dev/zero of=test360d2.dsk bs=512 count=720
+	mkfs.vfat -r $$((0xE00/32)) test360d2.dsk
+	for i in `cat disk360.disk2`; do echo $$i; mcopy -i test360d2.dsk ../../build/dos/asmexam/dos16r/086c/exe/$$i ::; done
 
 disk:
 	dd if=/dev/zero of=test.dsk bs=512 count=2880
