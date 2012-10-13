@@ -78,6 +78,7 @@
    int2edir.com       Use INT 2Eh to execute DIR        [MS-DOS 2.0+]
    int29str.com       Using INT 29h to print out        [MS-DOS 2.0+]
    ctrlbrk.com        Proof of concept hooking CTRL+C   [MS-DOS 1.0+]
+   createmp.com       Create temporary file             [MS-DOS 3.0+]
 * Non DOS specific
    32div16.com        Printing a 32-bit unsigned int    [MS-DOS 1.0+]
                         using only 16-bit 8086
