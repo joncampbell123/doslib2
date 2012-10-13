@@ -16,3 +16,5 @@ INT 21h AX=0x3800 Get country-specific information (alternate version for MS-DOS
 
 INT 21h AH=0x38 DX=0xFFFF Set country code (MS-DOS 3.0+)
 
+INT 21h AH=0x5C FLOCK Lock/unlock region of file (MS-DOS 3.0+)
+
