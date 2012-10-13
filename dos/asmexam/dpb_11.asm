@@ -6,6 +6,11 @@
 ;
 ; See also:
 ; http://www.ctyme.com/intr/rb-2594.htm
+;
+; Known issues:
+;    - PC-DOS 1.0
+;        PC-DOS 1.0 as far as I can tell doesn't change DS:BX on return from AH=0x1F INT 21h.
+;        So the printout is meaningless. Works fine on PC-DOS 1.1.
 ;--------------------------------------------------------------------------------------
 		bits 16			; 16-bit real mode
 		org 0x100		; DOS .COM executable starts at 0x100 in memory
@@ -23,7 +28,10 @@
 		mov	dx,need_dos_version
 		call	common_str_print_crlf
 
-version_ok:	mov	ah,0x1F		; AH=0x1F GET DRIVE PARAM BLOCK
+version_ok:	xor	ax,ax
+		mov	ds,ax
+		xor	bx,bx
+		mov	ah,0x1F		; AH=0x1F GET DRIVE PARAM BLOCK
 		int	21h
 					; <- NTS: DOS 2.0 and later return AL=0 on success.
 					;         MS-DOS 1.x however does NOT set AL=0.
