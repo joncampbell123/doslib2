@@ -55,7 +55,9 @@ mkdir_ok:	mov	[filehandle],ax	; save the file handle returned by DOS
 
 ; EXIT to DOS
 exit:		ret
-exit_err:	mov	dx,crlf
+exit_err:	mov	ah,0x09
+		int	21h
+		mov	dx,crlf
 		call	puts
 		jmp	short exit
 

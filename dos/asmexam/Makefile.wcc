@@ -72,6 +72,7 @@ all_programs += $(abs_exe_dir)/int2edir.com
 all_programs += $(abs_exe_dir)/int29str.com
 all_programs += $(abs_exe_dir)/createmp.com
 all_programs += $(abs_exe_dir)/tsrndos1.com
+all_programs += $(abs_exe_dir)/creados3.com
 all_programs += $(abs_exe_dir)/ctrlbrk.com
 all_programs += $(abs_exe_dir)/dir20.com
 
@@ -282,6 +283,9 @@ $(abs_exe_dir)/tsrndos1.com: tsrndos1.asm
 	$(NASM) -o $@ -f bin $(NASMFLAGS) $^
 
 $(abs_exe_dir)/createmp.com: createmp.asm
+	$(NASM) -o $@ -f bin $(NASMFLAGS) $^
+
+$(abs_exe_dir)/creados3.com: creados3.asm
 	$(NASM) -o $@ -f bin $(NASMFLAGS) $^
 
 $(abs_exe_dir)/ctrlbrk.com: ctrlbrk.asm

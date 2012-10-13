@@ -1,7 +1,7 @@
 ;--------------------------------------------------------------------------------------
-; CREATEMP.COM
+; CREADOS3.COM
 ;
-; Create a temporary file, lseek, write
+; Create a file, lseek, write
 ; 
 ; CAUTION: On an actual DOS install involving the FAT filesystem, the lseek+write will
 ;          reveal contents from previously deleted clusters. Unlike Windows NT or
@@ -16,18 +16,29 @@
 		push	cs
 		pop	ds
 
-; form the temporary name "base": the path + \ + 13 zeros
-		cld
-		mov	di,filename
-		mov	cx,16/2
-		xor	ax,ax
-		rep	stosw
-		mov	byte [filename],0x2E	; <- form '.\' + 13 zeros to make temp file in current directory
-		mov	byte [filename+1],0x5C
+; read the command line, skip leading whitespace
+		mov	si,0x81
+ld1:		lodsb
+		cmp	al,' '
+		jz	ld1
+		dec	si
+
+; and then NUL-terminate the line
+		mov	bl,[0x80]
+		xor	bh,bh
+		add	bl,0x81
+		mov	byte [bx],0
+
+; SI is still the (now ASCIIZ) string
+		cmp	byte [si],0	; is it NULL-length?
+		jnz	do_mkdir
+		mov	dx,str_need_param
+		call	puts
+		ret			; return to DOS
 
 ; do the file creation
-do_mkdir:	mov	dx,filename	; DS:DX = name of dir to make
-		mov	ah,0x5A		; AH=0x5A create temporary file
+do_mkdir:	mov	dx,si		; DS:DX = name of dir to make
+		mov	ah,0x5B		; AH=0x5B create file (will fail if it exists)
 		mov	cx,0		; CX=file attributes
 		int	21h
 		jnc	mkdir_ok	; CF=1 if error
@@ -36,12 +47,6 @@ do_mkdir:	mov	dx,filename	; DS:DX = name of dir to make
 		jmp	short exit_err
 
 mkdir_ok:	mov	[filehandle],ax	; save the file handle returned by DOS
-
-		; show the file name
-		mov	si,filename
-		call	putsz
-		mov	dx,crlf
-		call	puts
 
 		mov	ah,0x40		; AH=0x40 write to handle
 		mov	bx,[filehandle]
@@ -78,27 +83,11 @@ puts:		mov	ah,0x09
 		int	21h
 		ret
 
-;------------------------------------
-putsz:		push	si
-		push	ax
-		push	dx
-		cld
-putsz1:		lodsb
-		or	al,al
-		jz	putsz1e
-		mov	dl,al
-		mov	ah,0x02
-		int	21h
-		jmp	short putsz1
-putsz1e:	pop	dx
-		pop	ax
-		pop	si
-		ret
-
 		segment .data
 
 str_ok:		db	'Created$'
 str_fail:	db	'Failed$'
+str_need_param:	db	'Need a file name'
 crlf:		db	13,10,'$'
 str_msg:	db	'Hello world',13,10
 str_msg_len	equ	13
@@ -106,5 +95,4 @@ str_msg_len	equ	13
 		segment .bss
 
 filehandle:	resw	1
-filename:	resb	16
 
