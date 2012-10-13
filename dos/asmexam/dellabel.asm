@@ -13,10 +13,9 @@
 ;          Deleting the volume label works normally if the volume label is first in
 ;          the root directory or Windows 95 long filenames are not present at all.
 ;
-;    IBM PC-DOS 1.0, 1.1
-;        - The kernel does not understand extended FCBs, but will happily delete the
-;          first file it finds---ironically, that is usually COMMAND.COM on our test
-;          disks.
+;    IBM/MS-DOS 1.x:
+;        - DOS 1.x does not understand volume labels. Running this program will instead
+;          delete the first file in the directory, which is probably not what you want.
 ;--------------------------------------------------------------------------------------
 		bits 16			; 16-bit real mode
 		org 0x100		; DOS .COM executable starts at 0x100 in memory

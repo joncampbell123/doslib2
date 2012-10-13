@@ -32,9 +32,9 @@
                       using an extended FCB        
    fcb_psp.com        Show the 1st & 2nd FCBs in the PSP[MS-DOS 1.0+]
    fcbparse.com       Parse filename into FCB           [MS-DOS 1.0+]
-   getlabel.com       Read and show volume label        [MS-DOS 1.0+]
-   setlabel.com       Set volume label                  [MS-DOS 1.0+]
-   dellabel.com       Delete volume label               [MS-DOS 1.0+]
+   getlabel.com       Read and show volume label        [MS-DOS 2.0+]
+   setlabel.com       Set volume label                  [MS-DOS 2.0+]
+   dellabel.com       Delete volume label               [MS-DOS 2.0+]
 * Other
    version.com        Display MS-DOS version            [MS-DOS 2.0+]
    tsrnull.com        Terminate & Stay Resident         [MS-DOS 2.0+]

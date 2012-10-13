@@ -29,9 +29,9 @@
 ;          Attempting to create a volume label will instead create an empty file of that
 ;          name.
 ;
-;    IBM PC-DOS 1.0, 1.1
-;        - The kernel does not understand extended FCBs, but will happily rename the
-;          first file it finds, usually COMMAND.COM
+;    IBM/MS-DOS 1.x:
+;        - DOS 1.x does not understand volume labels. Running this program will instead
+;          rename the first file in the directory, which is probably not what you want.
 ;--------------------------------------------------------------------------------------
 		bits 16			; 16-bit real mode
 		org 0x100		; DOS .COM executable starts at 0x100 in memory
