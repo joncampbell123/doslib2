@@ -1,11 +1,11 @@
 ;--------------------------------------------------------------------------------------
-; DPB_3.COM
+; DPB_2.COM
 ;
 ; Ask DOS for the Disk Parameter Block.
-; This assumes the MS-DOS 3.x version.
+; This assumes the MS-DOS 1.x version.
 ;
 ; See also:
-; http://www.ctyme.com/intr/rb-2724.htm
+; http://www.ctyme.com/intr/rb-2594.htm
 ;--------------------------------------------------------------------------------------
 		bits 16			; 16-bit real mode
 		org 0x100		; DOS .COM executable starts at 0x100 in memory
@@ -15,22 +15,19 @@
 		push	cs
 		pop	ds
 
-		mov	ah,0x30
+		mov	ax,0x3000
 		int	21h		; GET DOS VERSION
-		cmp	al,3		; must be DOS 3.x
+		cmp	ax,0x3000	; must be DOS 1.x (doesn't change AX)
 		je	version_ok
 
 		mov	dx,need_dos_version
 		call	common_str_print_crlf
 
-version_ok:	mov	ah,0x32		; AH=0x32 GET DOS DRIVE PARAM BLOCK
-		xor	dl,dl		; DL=0 default drive
+version_ok:	mov	ah,0x1F		; AH=0x1F GET DRIVE PARAM BLOCK
 		int	21h
-		cmp	al,0		; did it succeed?
-		jz	request_ok
-
-		mov	dx,str_req_fail
-		jmp	common_str_error
+					; <- NTS: DOS 2.0 and later return AL=0 on success.
+					;         MS-DOS 1.x however does NOT set AL=0.
+					;         I don't know if it's possible to detect failure, if it happens.
 
 ; it worked! DOS set DS:BX to point at the DPB
 request_ok:	push	ds		; move DS to ES
@@ -38,24 +35,24 @@ request_ok:	push	ds		; move DS to ES
 		push	cs		; restore DS == CS
 		pop	ds
 
-;----------- DRIVE
-		mov	dx,str_drive_number
+;----------- UNIT
+		mov	dx,str_unit_number
 		call	common_str_print
 
-		mov	al,[es:bx]	; +0x00 drive number
-		add	al,'A'
-		call	putc
+		mov	al,[es:bx]	; +0x00 sequential device id
+		xor	ah,ah
+		call	putdec16
 
 		mov	dx,crlf
 		call	common_str_print
 
-;----------- UNIT WITHIN DRIVER
-		mov	dx,str_unit_number
+;----------- DRIVE
+		mov	dx,str_drive_number
 		call	common_str_print
 
-		mov	al,[es:bx+1]	; +0x01 unit within device driver
-		xor	ah,ah
-		call	putdec16
+		mov	al,[es:bx+1]	; +0x01 drive number
+		add	al,'A'
+		call	putc
 
 		mov	dx,crlf
 		call	common_str_print
@@ -165,76 +162,18 @@ request_ok:	push	ds		; move DS to ES
 		mov	dx,crlf
 		call	common_str_print
 
-;----------- device driver header
-		mov	dx,str_device_driver_header
+;----------- address of allocation table (FIXME: Disk address? Memory address?)
+		mov	dx,str_allocation_table_addr
 		call	common_str_print
 
-		mov	ax,[es:bx+18+2]
-		call	puthex16
-		mov	al,':'
-		call	putc
 		mov	ax,[es:bx+18]
-		call	puthex16
-
-		mov	dx,crlf
-		call	common_str_print
-
-;----------- media ID
-		mov	dx,str_media_id
-		call	common_str_print
-
-		mov	al,[es:bx+22]
-		call	puthex8
-
-		mov	dx,crlf
-		call	common_str_print
-
-;----------- disk accessed
-		mov	dx,str_disk_accessed
-		call	common_str_print
-
-		mov	al,[es:bx+23]
-		call	puthex8
-
-		mov	dx,crlf
-		call	common_str_print
-
-;----------- next PDB
-		mov	dx,str_next_pdb
-		call	common_str_print
-
-		mov	ax,[es:bx+24+2]
-		call	puthex16
-		mov	al,':'
-		call	putc
-		mov	ax,[es:bx+24]
-		call	puthex16
-
-		mov	dx,crlf
-		call	common_str_print
-
-;----------- cluster to start searching for free space
-		mov	dx,str_cluster_start_free_search
-		call	common_str_print
-
-		mov	ax,[es:bx+28]
-		call	putdec16
-
-		mov	dx,crlf
-		call	common_str_print
-
-;----------- free clusters (NTS: 0xFFFF means it doesn't know yet)
-		mov	dx,str_free_clusters
-		call	common_str_print
-
-		mov	ax,[es:bx+30]
 		call	putdec16
 
 		mov	dx,crlf
 		call	common_str_print
 
 ; EXIT to DOS
-exit:		mov	ax,0x4C00	; exit to DOS
+exit:		mov	ax,0x0000	; exit to DOS
 		int	21h
 		hlt
 
@@ -351,7 +290,7 @@ puthex16:	push	ax
 
 hexes:		db	'0123456789ABCDEF'
 str_req_fail:	db	'Request failed$'
-need_dos_version:db	'WARNING: This version assumes MS-DOS 3.x$'
+need_dos_version:db	'WARNING: This version assumes MS-DOS 1.1$'
 str_drive_number:db	'Drive: $'
 str_unit_number:db	'Unit: $'
 str_bytes_per_sector:db	'Bytes/sector: $'
@@ -364,12 +303,8 @@ str_first_user_sector:db 'First user sector number: $'
 str_highest_cluster:db	'Highest cluster number: $'
 str_sectors_per_fat:db	'Sectors per FAT: $'
 str_first_dir_sector:db	'First directory sector: $'
-str_device_driver_header:db 'Device driver header location: $'
-str_media_id:	db	'Media ID: $'
-str_disk_accessed:db	'Disk accessed: $'
-str_next_pdb:	db	'Next PDB location: $'
-str_cluster_start_free_search:db 'Cluster to start free space search at: $'
-str_free_clusters:db	'Free clusters: $'
+str_allocation_table_addr:db 'Allocation table address: $'
+str_cwd:	db	'Current working directory: $'
 crlf:		db	13,10,'$'
 
 		segment .bss

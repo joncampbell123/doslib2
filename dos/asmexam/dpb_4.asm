@@ -87,7 +87,7 @@ request_ok:	push	ds		; move DS to ES
 		call	common_str_print
 
 		mov	cl,[es:bx+5]	; +0x05 shift count to convert clusters to sectors
-		mov	ax,0x200
+		mov	ax,1
 		shl	ax,cl
 		call	putdec16
 
