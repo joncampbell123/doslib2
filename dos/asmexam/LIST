@@ -49,7 +49,9 @@
    bootdrv.com        Get boot drive                    [MS-DOS 4.0+]
    diskcap.com        Get disk capacity/free space      [MS-DOS 2.0+]
    diskcp95.com       Get disk capacity/free space      [MS-DOS 7.0+/Windows 95 OSR2,98,ME]
-                        Windows 95 FAT32 method   
+                        Windows 95 FAT32 method
+   creat4gb.com       Create a file almost 4GB large    [MS-DOS 7.0+/Windows 95 OSR2,98,ME]
+                        on FAT32 drive
    switchr.com        Get/Set switch character          [MS-DOS 2.0+]
    mkdir.com          Create subdirectory               [MS-DOS 2.0+]
    rmdir.com          Remove subdirectory               [MS-DOS 2.0+]
@@ -83,6 +85,7 @@
    ctrlbrk.com        Proof of concept hooking CTRL+C   [MS-DOS 1.0+]
    createmp.com       Create temporary file             [MS-DOS 3.0+]
    creados3.com       Create a file, lseek, write       [MS-DOS 3.0+]
+   creados4.com       Create a file, lseek, write       [MS-DOS 4.0+]
    truname.com        Canonicalize filename/path        [MS-DOS 3.0+]
    pspseg2.com        Show current PSP segment          [MS-DOS 2.0+]
    pspseg3.com        Show current PSP segment          [MS-DOS 3.0+]
