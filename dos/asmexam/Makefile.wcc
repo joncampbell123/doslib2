@@ -78,6 +78,7 @@ all_programs += $(abs_exe_dir)/tsrndos1.com
 all_programs += $(abs_exe_dir)/creados3.com
 all_programs += $(abs_exe_dir)/creados4.com
 all_programs += $(abs_exe_dir)/creat4gb.com
+all_programs += $(abs_exe_dir)/creat4g2.com
 all_programs += $(abs_exe_dir)/ctrlbrk.com
 all_programs += $(abs_exe_dir)/truname.com
 all_programs += $(abs_exe_dir)/dir20.com
@@ -309,6 +310,9 @@ $(abs_exe_dir)/creados4.com: creados4.asm
 	$(NASM) -o $@ -f bin $(NASMFLAGS) $^
 
 $(abs_exe_dir)/creat4gb.com: creat4gb.asm
+	$(NASM) -o $@ -f bin $(NASMFLAGS) $^
+
+$(abs_exe_dir)/creat4g2.com: creat4g2.asm
 	$(NASM) -o $@ -f bin $(NASMFLAGS) $^
 
 $(abs_exe_dir)/ctrlbrk.com: ctrlbrk.asm

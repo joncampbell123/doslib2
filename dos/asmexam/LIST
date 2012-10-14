@@ -52,6 +52,17 @@
                         Windows 95 FAT32 method
    creat4gb.com       Create a file almost 4GB large    [MS-DOS 7.0+/Windows 95 OSR2,98,ME]
                         on FAT32 drive
+   creat4g2.com       Create a file almost 4GB large    [MS-DOS 7.0+/Windows 95 OSR2,98,ME]
+                        on FAT32 drive, WITHOUT using
+                        the extended create flag needed
+                        to do so. This is intented to
+                        show that for older DOS programs
+                        the kernel will limit the file
+                        size to 2GB. On an actual Win95
+                        OSR2 install the kernel simply
+                        rejects our attempt and the
+                        resulting file is only 13 bytes
+                        large.
    switchr.com        Get/Set switch character          [MS-DOS 2.0+]
    mkdir.com          Create subdirectory               [MS-DOS 2.0+]
    rmdir.com          Remove subdirectory               [MS-DOS 2.0+]

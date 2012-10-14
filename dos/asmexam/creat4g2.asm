@@ -1,18 +1,16 @@
 ;--------------------------------------------------------------------------------------
-; CREAT4GB.COM
+; CREAT4G2.COM
 ;
 ; Create a file, lseek, write. This one creates a file that is just under 4GB on
-; FAT32 drives, where standard (older) DOS APIs limit the file size to 2GB.
+; FAT32 drives, where standard (older) DOS APIs limit the file size to 2GB. This
+; version deliberately leaves the "FAT32 extended file size" flag unset to show
+; that the DOS kernel will limit file sizes to 2GB unless newer programs explicitly
+; indicate they support FAT32 4GB file sizes.
 ;
-; Please note that the lseek() will fail and you will get a 13-byte file anyway
-; if you do not have sufficient free disk space for a 0xF000'0000 byte long file.
-; If you run it on MS-DOS 7.0 or earlier (without FAT32) the file will be 13 bytes
-; long because pre-FAT32 kernels treat the SEEK_SET offset as a signed 32-bit
-; integer, which is clamped to zero internally.
-;
-; Running this program will cause a LOT of disk activity because the DOS kernel must
-; allocate a lot of clusters to satisfy the lseek request due to the fact that FAT/FAT32
-; does not support sparse files.
+; In fact the file created by this program will only be 13 bytes large because, for
+; legacy compatability, the DOS 7.0 kernel will treat it as signed even for SEEK_SET
+; and will seek back to 0 instead, and we'll only end up writing "Hello world" twice
+; over itself at the start of the file.
 ; 
 ; CAUTION: On an actual DOS install involving the FAT filesystem, the lseek+write will
 ;          reveal contents from previously deleted clusters. Unlike Windows NT or
@@ -31,7 +29,9 @@
 ;
 ;           It seems Microsoft corrected this bug starting with Windows 95 OSR2, and
 ;           will correctly prevent creating such files on FAT12 and FAT16 drives while
-;           allowing it for FAT32 drives.
+;           allowing it for FAT32 drives. However since this program deliberately does
+;           NOT use the FAT32 enable flag, Windows 95 OSR2 will still not allow us to
+;           lseek to 0xF000'0000 to create a 4GB file.
 ;--------------------------------------------------------------------------------------
 		bits 16			; 16-bit real mode
 		org 0x100		; DOS .COM executable starts at 0x100 in memory
@@ -65,7 +65,7 @@ ld1:		lodsb
 do_mkdir:				; DS:SI = name of dir to make
 		mov	ax,0x6C00	; AH=0x6C extended create file
 		mov	bl,0x02		; BL=read/write compatible sharing
-		mov	bh,0x30		; BH=return error rather than INT 24h, enable FAT32 4GB file size (bit 4)
+		mov	bh,0x20		; BH=return error rather than INT 24h
 		xor	dh,dh
 		mov	dl,0x10		; DL=create if not exist, fail if exist
 		mov	cx,0		; CX=file attributes
@@ -83,7 +83,7 @@ mkdir_ok:	mov	[filehandle],ax	; save the file handle returned by DOS
 		mov	dx,str_msg
 		int	21h
 
-		mov	ax,0x4201	; AH=0x42 lseek AL=0x02 SEEK_END
+		mov	ax,0x4201	; AH=0x42 lseek AL=0x02 SEEK_END. This will fail
 		mov	bx,[filehandle]
 		mov	cx,0xF000
 		mov	dx,0x0000	; CX:DX = offset 0xF000'0000
