@@ -31,9 +31,10 @@ l1e:
 		int	21h
 		jnc	reset_ok	; CF=0 if OK
 		; OR.... it seems Windows 95 returns with AX=0x7100 and CF=1
-		; whatever the fuck that means...
+		; when running in pure DOS mode, this function only available
+		; when the graphcial part of Windows 95 is actie
 		cmp	ax,0x7100
-		jz	reset_ok
+		jz	need_win95_gui
 
 		mov	dx,str_failed
 		call	puts
@@ -44,6 +45,10 @@ reset_ok:
 ; EXIT to DOS
 exit:		ret
 
+need_win95_gui:	mov	dx,str_need_win95_gui
+		call	puts
+		ret
+
 ;------------------------------------
 puts:		mov	ah,0x09
 		int	21h
@@ -52,6 +57,7 @@ puts:		mov	ah,0x09
 		segment .data
 
 str_failed:	db	'Failed: ',13,10,'$'
+str_need_win95_gui:db	'This wont work unless from within a Windows 95 DOS box',13,10,'$'
 
 		segment .bss
 
