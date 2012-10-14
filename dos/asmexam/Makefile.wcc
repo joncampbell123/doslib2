@@ -84,6 +84,7 @@ all_programs += $(abs_exe_dir)/truname.com
 all_programs += $(abs_exe_dir)/dir20.com
 all_programs += $(abs_exe_dir)/pspseg2.com
 all_programs += $(abs_exe_dir)/pspseg3.com
+all_programs += $(abs_exe_dir)/reset95.com
 
 all-programs: $(all_programs)
 
@@ -325,6 +326,9 @@ $(abs_exe_dir)/pspseg2.com: pspseg2.asm
 	$(NASM) -o $@ -f bin $(NASMFLAGS) $^
 
 $(abs_exe_dir)/pspseg3.com: pspseg3.asm
+	$(NASM) -o $@ -f bin $(NASMFLAGS) $^
+
+$(abs_exe_dir)/reset95.com: reset95.asm
 	$(NASM) -o $@ -f bin $(NASMFLAGS) $^
 
 $(abs_exe_dir)/dir20.com: dir20.asm

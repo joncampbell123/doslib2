@@ -100,6 +100,7 @@
    truname.com        Canonicalize filename/path        [MS-DOS 3.0+]
    pspseg2.com        Show current PSP segment          [MS-DOS 2.0+]
    pspseg3.com        Show current PSP segment          [MS-DOS 3.0+]
+   reset95.com        Reset drive                       [MS-DOS 7.0+]
 * Non DOS specific
    32div16.com        Printing a 32-bit unsigned int    [MS-DOS 1.0+]
                         using only 16-bit 8086
