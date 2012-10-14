@@ -11,10 +11,12 @@
 ;
 ; Bugs & Issues:
 ;     MS-DOS 6.22
+;     MS-DOS 5.0
 ;         - The DOS kernel correctly prevents this program from seeking to 0xF0000000
 ;           on the hard drive (220MB) capacity, yet allows this program to apparently
-;           create a 4GB file on a floppy disk?!?. And SCANDISK.EXE doesn't seem to have
-;           a problem with it.
+;           create a 4GB file on a floppy disk?!?. SCANDISK.EXE doesn't seem to have
+;           a problem with it either. CHKDSK.EXE however, correctly detects the problem
+;           and will truncate it down to 512 bytes if run with the /F (fix) switch.
 ;--------------------------------------------------------------------------------------
 		bits 16			; 16-bit real mode
 		org 0x100		; DOS .COM executable starts at 0x100 in memory
