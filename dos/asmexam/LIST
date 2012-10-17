@@ -112,6 +112,7 @@
    lfnren.com         Long filename rename              [MS-DOS 7.0+/Windows 95,98,ME]
    lfntrue.com        Long filename canonicalize path   [MS-DOS 7.0+/Windows 95,98,ME]
    lfnshort.com       Long filename get short name      [MS-DOS 7.0+/Windows 95,98,ME]
+   lfnlong.com        Get long filename from short      [MS-DOS 7.0+/Windows 95,98,ME]
 * Non DOS specific
    32div16.com        Printing a 32-bit unsigned int    [MS-DOS 1.0+]
                         using only 16-bit 8086
