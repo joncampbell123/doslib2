@@ -101,6 +101,12 @@
    pspseg2.com        Show current PSP segment          [MS-DOS 2.0+]
    pspseg3.com        Show current PSP segment          [MS-DOS 3.0+]
    reset95.com        Reset drive                       [MS-DOS 7.0+]
+* Windows 95 Long File Names
+   lfnmkdir.com       Long filename mkdir               [MS-DOS 7.0+/Windows 95,98,ME]
+   lfnrmdir.com       Long filename rmdir               [MS-DOS 7.0+/Windows 95,98,ME]
+   lfnchdir.com       Long filename chdir               [MS-DOS 7.0+/Windows 95,98,ME]
+   lfndel.com         Long filename delete              [MS-DOS 7.0+/Windows 95,98,ME]
+   lfndel2.com        Long filename delete w/ wildcards [MS-DOS 7.0+/Windows 95,98,ME]
 * Non DOS specific
    32div16.com        Printing a 32-bit unsigned int    [MS-DOS 1.0+]
                         using only 16-bit 8086

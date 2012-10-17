@@ -85,6 +85,11 @@ all_programs += $(abs_exe_dir)/dir20.com
 all_programs += $(abs_exe_dir)/pspseg2.com
 all_programs += $(abs_exe_dir)/pspseg3.com
 all_programs += $(abs_exe_dir)/reset95.com
+all_programs += $(abs_exe_dir)/lfnmkdir.com
+all_programs += $(abs_exe_dir)/lfnrmdir.com
+all_programs += $(abs_exe_dir)/lfnchdir.com
+all_programs += $(abs_exe_dir)/lfndel2.com
+all_programs += $(abs_exe_dir)/lfndel.com
 
 all-programs: $(all_programs)
 
@@ -332,6 +337,21 @@ $(abs_exe_dir)/reset95.com: reset95.asm
 	$(NASM) -o $@ -f bin $(NASMFLAGS) $^
 
 $(abs_exe_dir)/dir20.com: dir20.asm
+	$(NASM) -o $@ -f bin $(NASMFLAGS) $^
+
+$(abs_exe_dir)/lfnmkdir.com: lfnmkdir.asm
+	$(NASM) -o $@ -f bin $(NASMFLAGS) $^
+
+$(abs_exe_dir)/lfnrmdir.com: lfnrmdir.asm
+	$(NASM) -o $@ -f bin $(NASMFLAGS) $^
+
+$(abs_exe_dir)/lfnchdir.com: lfnchdir.asm
+	$(NASM) -o $@ -f bin $(NASMFLAGS) $^
+
+$(abs_exe_dir)/lfndel.com: lfndel.asm
+	$(NASM) -o $@ -f bin $(NASMFLAGS) $^
+
+$(abs_exe_dir)/lfndel2.com: lfndel2.asm
 	$(NASM) -o $@ -f bin $(NASMFLAGS) $^
 
 all-txt: $(abs_exe_dir)/emm.txt
