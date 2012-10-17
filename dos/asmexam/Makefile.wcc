@@ -98,6 +98,7 @@ all_programs += $(abs_exe_dir)/lfnlong.com
 all_programs += $(abs_exe_dir)/lfnshort.com
 all_programs += $(abs_exe_dir)/lfncreat.com
 all_programs += $(abs_exe_dir)/lfncr4gb.com
+all_programs += $(abs_exe_dir)/lfncr4g2.com
 
 all-programs: $(all_programs)
 
@@ -360,6 +361,9 @@ $(abs_exe_dir)/lfnshort.com: lfnshort.asm
 	$(NASM) -o $@ -f bin $(NASMFLAGS) $^
 
 $(abs_exe_dir)/lfncreat.com: lfncreat.asm
+	$(NASM) -o $@ -f bin $(NASMFLAGS) $^
+
+$(abs_exe_dir)/lfncr4g2.com: lfncr4g2.asm
 	$(NASM) -o $@ -f bin $(NASMFLAGS) $^
 
 $(abs_exe_dir)/lfncr4gb.com: lfncr4gb.asm

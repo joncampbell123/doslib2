@@ -1,8 +1,11 @@
 ;--------------------------------------------------------------------------------------
-; CREAT4GB.COM
+; LFNCR4G2.COM
 ;
 ; Create a file, lseek, write. This one creates a file that is just under 4GB on
-; FAT32 drives, where standard (older) DOS APIs limit the file size to 2GB.
+; FAT32 drives, where standard (older) DOS APIs limit the file size to 2GB. We purposely
+; do NOT set the 4GB enable bit in this one to show what happens, which within a DOS Box
+; in Windows 9x/ME, limits the program to 2GB and emulates older DOS lseek behavior of
+; treating the SEEK_SET offset as signed.
 ;
 ; Please note that the lseek() will fail and you will get a 13-byte file anyway
 ; if you do not have sufficient free disk space for a 0xF000'0000 byte long file.
@@ -14,28 +17,13 @@
 ; allocate a lot of clusters to satisfy the lseek request due to the fact that FAT/FAT32
 ; does not support sparse files.
 ;
-; Also note that for whatever reason, this will succeed in creating a large file in
-; pure DOS mode, but will not succeed in an actual Windows 95/98/ME DOS box (you have
-; to use the Windows 95 Long Filename version of open/create to do that).
-; 
+; Also note that like any Long Filename API call the function is not available in pure
+; DOS mode, you must start Windows and bring up a DOS box to use the API call used here.
+;
 ; CAUTION: On an actual DOS install involving the FAT filesystem, the lseek+write will
 ;          reveal contents from previously deleted clusters. Unlike Windows NT or
 ;          Linux, DOS makes no attempt to zero clusters when it allocates them to
 ;          satisfy the lseek() request.
-;
-; Bugs & Issues:
-;     MS-DOS 7.0 (Windows 95)
-;     MS-DOS 6.22
-;     MS-DOS 5.0
-;         - The DOS kernel correctly prevents this program from seeking to 0xF0000000
-;           on the hard drive (220MB) capacity, yet allows this program to apparently
-;           create a 4GB file on a floppy disk?!?. SCANDISK.EXE doesn't seem to have
-;           a problem with it either. CHKDSK.EXE however, correctly detects the problem
-;           and will truncate it down to 512 bytes if run with the /F (fix) switch.
-;
-;           It seems Microsoft corrected this bug starting with Windows 95 OSR2, and
-;           will correctly prevent creating such files on FAT12 and FAT16 drives while
-;           allowing it for FAT32 drives.
 ;--------------------------------------------------------------------------------------
 		bits 16			; 16-bit real mode
 		org 0x100		; DOS .COM executable starts at 0x100 in memory
@@ -67,9 +55,9 @@ ld1:		lodsb
 
 ; do the file creation
 do_mkdir:				; DS:SI = name of dir to make
-		mov	ax,0x6C00	; AH=0x6C extended create file
+		mov	ax,0x716C	; AH=0x716C extended create file using long filename
 		mov	bl,0x02		; BL=read/write compatible sharing
-		mov	bh,0x30		; BH=return error rather than INT 24h, enable FAT32 4GB file size (bit 4)
+		mov	bh,0x20		; BH=return error rather than INT 24h
 		xor	dh,dh
 		mov	dl,0x10		; DL=create if not exist, fail if exist
 		mov	cx,0		; CX=file attributes

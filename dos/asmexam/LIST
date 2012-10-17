@@ -115,6 +115,10 @@
    lfnlong.com        Get long filename from short      [MS-DOS 7.0+/Windows 95,98,ME]
    lfncreat.com       Create a file with long filename  [MS-DOS 7.0+/Windows 95,98,ME]
    lfncr4gb.com       Create long filename 4GB FAT32    [MS-DOS 7.0+/Windows 95 OSR2,98,ME]
+   lfncr4g2.com       Create long filename 4GB FAT32    [MS-DOS 7.0+/Windows 95 OSR2,98,ME]
+                      and don't set 4GB FAT32 bit, to
+                      show that setting the bit is
+                      required to get FAT32 4GB support
 * Non DOS specific
    32div16.com        Printing a 32-bit unsigned int    [MS-DOS 1.0+]
                         using only 16-bit 8086

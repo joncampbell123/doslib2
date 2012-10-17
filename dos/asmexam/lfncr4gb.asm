@@ -13,25 +13,21 @@
 ; Running this program will cause a LOT of disk activity because the DOS kernel must
 ; allocate a lot of clusters to satisfy the lseek request due to the fact that FAT/FAT32
 ; does not support sparse files.
+;
+; Also note that within a Windows 9x/ME DOS box this API call is the ONLY way for a
+; DOS program to open/create files up to 4GB. For whatever reason INT 21h AH=0x6C only
+; permits a 4GB limit from pure DOS mode. This means that if you intend for your code
+; to work in either environment and you want 4GB file size FAT32 support, your code must
+; use INT 21h AX=0x716C in a Windows DOS box and INT 21h AH=0x6C in pure DOS mode, which
+; of course means your code has to go about detecting whether Windows is running.
+;
+; Also note that like any Long Filename API call the function is not available in pure
+; DOS mode, you must start Windows and bring up a DOS box to use the API call used here.
 ; 
 ; CAUTION: On an actual DOS install involving the FAT filesystem, the lseek+write will
 ;          reveal contents from previously deleted clusters. Unlike Windows NT or
 ;          Linux, DOS makes no attempt to zero clusters when it allocates them to
 ;          satisfy the lseek() request.
-;
-; Bugs & Issues:
-;     MS-DOS 7.0 (Windows 95)
-;     MS-DOS 6.22
-;     MS-DOS 5.0
-;         - The DOS kernel correctly prevents this program from seeking to 0xF0000000
-;           on the hard drive (220MB) capacity, yet allows this program to apparently
-;           create a 4GB file on a floppy disk?!?. SCANDISK.EXE doesn't seem to have
-;           a problem with it either. CHKDSK.EXE however, correctly detects the problem
-;           and will truncate it down to 512 bytes if run with the /F (fix) switch.
-;
-;           It seems Microsoft corrected this bug starting with Windows 95 OSR2, and
-;           will correctly prevent creating such files on FAT12 and FAT16 drives while
-;           allowing it for FAT32 drives.
 ;--------------------------------------------------------------------------------------
 		bits 16			; 16-bit real mode
 		org 0x100		; DOS .COM executable starts at 0x100 in memory
