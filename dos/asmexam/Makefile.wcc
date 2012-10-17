@@ -90,6 +90,7 @@ all_programs += $(abs_exe_dir)/lfnrmdir.com
 all_programs += $(abs_exe_dir)/lfnchdir.com
 all_programs += $(abs_exe_dir)/lfndel2.com
 all_programs += $(abs_exe_dir)/lfndel.com
+all_programs += $(abs_exe_dir)/lfncwd.com
 
 all-programs: $(all_programs)
 
@@ -346,6 +347,9 @@ $(abs_exe_dir)/lfnrmdir.com: lfnrmdir.asm
 	$(NASM) -o $@ -f bin $(NASMFLAGS) $^
 
 $(abs_exe_dir)/lfnchdir.com: lfnchdir.asm
+	$(NASM) -o $@ -f bin $(NASMFLAGS) $^
+
+$(abs_exe_dir)/lfncwd.com: lfncwd.asm
 	$(NASM) -o $@ -f bin $(NASMFLAGS) $^
 
 $(abs_exe_dir)/lfndel.com: lfndel.asm
