@@ -1,7 +1,7 @@
 ;--------------------------------------------------------------------------------------
-; LFNTRUE.COM
+; LFNSHORT.COM
 ;
-; Convert file/path to "true name" using Windows 95 long filenames
+; Convert file/path to "short name" using Windows 95 long filenames
 ;--------------------------------------------------------------------------------------
 		bits 16			; 16-bit real mode
 		org 0x100		; DOS .COM executable starts at 0x100 in memory
@@ -43,8 +43,8 @@ ld1:		lodsb
 ; do it
 do_mkdir:				; DS:SI = name of dir to convert
 		mov	di,truname	; ES:DI = 261-byte buffer to put truename into
-		xor	cx,cx		; CH=subst expansion CL=function 0x00
-		mov	ax,0x7160	; Truename - Canonicalize filename or path
+		mov	cx,0x0001	; CH=subst expansion CL=function 0x01
+		mov	ax,0x7160	; Truename - get short 8.3 name
 		int	21h
 		jnc	mkdir_ok	; CF=1 if error
 
