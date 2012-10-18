@@ -99,6 +99,7 @@ all_programs += $(abs_exe_dir)/lfnshort.com
 all_programs += $(abs_exe_dir)/lfncreat.com
 all_programs += $(abs_exe_dir)/lfncr4gb.com
 all_programs += $(abs_exe_dir)/lfncr4g2.com
+all_programs += $(abs_exe_dir)/lfnsname.com
 
 all-programs: $(all_programs)
 
@@ -388,6 +389,9 @@ $(abs_exe_dir)/lfndel.com: lfndel.asm
 	$(NASM) -o $@ -f bin $(NASMFLAGS) $^
 
 $(abs_exe_dir)/lfndel2.com: lfndel2.asm
+	$(NASM) -o $@ -f bin $(NASMFLAGS) $^
+
+$(abs_exe_dir)/lfnsname.com: lfnsname.asm
 	$(NASM) -o $@ -f bin $(NASMFLAGS) $^
 
 all-txt: $(abs_exe_dir)/emm.txt
