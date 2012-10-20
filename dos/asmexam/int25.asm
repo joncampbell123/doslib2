@@ -4,6 +4,10 @@
 ; INT 25h absolute disk read. Read the first sector.
 ; This will only work on disks smaller than 32MB. Under MS-DOS reads will fail if the
 ; disk is 32MB or larger.
+;
+; WARNING: You can modify this code to write to the disk, but be aware Windows 95/98/ME
+;          requires you to "lock" the volume first. If you do not, the DOS kernel will
+;          halt the system with an error message.
 ;--------------------------------------------------------------------------------------
 		bits 16			; 16-bit real mode
 		org 0x100		; DOS .COM executable starts at 0x100 in memory

@@ -1,8 +1,8 @@
 ;--------------------------------------------------------------------------------------
-; INT25_32.COM
+; INT25f32.COM
 ;
-; INT 25h absolute disk read. Read the first sector. DOS 3.31+ version for partitions
-; larger than 32MB.
+; INT 21h AX=7305 FAT32 equivalent of INT 25h absolute disk read offered by
+; Windows 95 OSR2, Windows 98 & ME. It also works from pure DOS mode.
 ;
 ; WARNING: You can modify this code to write to the disk, but be aware Windows 95/98/ME
 ;          requires you to "lock" the volume first. If you do not, the DOS kernel will
@@ -19,18 +19,20 @@
 		mov	ah,0x19
 		int	21h		; get current drive
 
+		; notice: this is the same packet format used by INT 25h CX=0xFFFF
 		mov	word [packet+0],0 ; sector number (DWORD), set to 0
 		mov	word [packet+2],0 
 		mov	word [packet+4],2 ; number of sectors (WORD), set to 2
 		mov	word [packet+6],buffer ; SEG:OFF transfer address
 		mov	word [packet+8],cs
 
-		mov	[segsp],sp	; save SP, int 25h doesn't return properly
-					; AL=drive (from AH=0x19)
+		mov	dl,al		; DL = drive number (1=A, 2=B, where AH=0x19 returned 0=A, 1=B)
+		inc	dl
+		mov	ax,0x7305
 		mov	cx,0xFFFF	; >= 32MB partition version
 		mov	bx,packet	; DS:BX = packet
-		int	25h
-		mov	sp,[segsp]	; restore SP. INT 25h does not return properly.
+		mov	si,0		; we're reading data (set bit 0 to 1 to write, see docs!!!)
+		int	21h
 		jnc	read_ok
 
 		mov	ah,9

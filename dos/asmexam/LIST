@@ -103,6 +103,8 @@
    reset95.com        Reset drive                       [MS-DOS 7.0+]
    int25.com          INT 25h absolute disk read        [MS-DOS 1.0+]
    int25_32.com       INT 25h absolute disk read >= 32MB[MS-DOS 3.31+]
+   int25f32.com       INT 25h abs. disk read, FAT32     [MS-DOS 7.0+/Windows 95 OSR2,98,ME]
+                      equivalent
 * Windows 95 Long File Names
    lfnmkdir.com       Long filename mkdir               [MS-DOS 7.0+/Windows 95,98,ME]
    lfnrmdir.com       Long filename rmdir               [MS-DOS 7.0+/Windows 95,98,ME]
