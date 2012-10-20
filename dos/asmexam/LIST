@@ -101,6 +101,7 @@
    pspseg2.com        Show current PSP segment          [MS-DOS 2.0+]
    pspseg3.com        Show current PSP segment          [MS-DOS 3.0+]
    reset95.com        Reset drive                       [MS-DOS 7.0+]
+   int25.com          INT 25h absolute disk read        [MS-DOS 1.0+]
 * Windows 95 Long File Names
    lfnmkdir.com       Long filename mkdir               [MS-DOS 7.0+/Windows 95,98,ME]
    lfnrmdir.com       Long filename rmdir               [MS-DOS 7.0+/Windows 95,98,ME]
