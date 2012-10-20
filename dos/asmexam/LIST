@@ -105,6 +105,10 @@
    int25_32.com       INT 25h absolute disk read >= 32MB[MS-DOS 3.31+]
    int25f32.com       INT 25h abs. disk read, FAT32     [MS-DOS 7.0+/Windows 95 OSR2,98,ME]
                       equivalent
+   dlock.com          INT 21h lock volume               [MS-DOS 7.0+/Windows 95,98,ME]
+   dunlock.com        INT 21h unlock volume             [MS-DOS 7.0+/Windows 95,98,ME]
+   dlock32.com        INT 21h lock volume (FAT32)       [MS-DOS 7.0+/Windows 95 OSR2,98,ME]
+   dunlok32.com       INT 21h unlock volume (FAT32)     [MS-DOS 7.0+/Windows 95 OSR2,98,ME]
 * Windows 95 Long File Names
    lfnmkdir.com       Long filename mkdir               [MS-DOS 7.0+/Windows 95,98,ME]
    lfnrmdir.com       Long filename rmdir               [MS-DOS 7.0+/Windows 95,98,ME]

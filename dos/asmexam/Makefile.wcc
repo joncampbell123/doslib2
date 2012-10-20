@@ -103,6 +103,10 @@ all_programs += $(abs_exe_dir)/lfnsname.com
 all_programs += $(abs_exe_dir)/int25.com
 all_programs += $(abs_exe_dir)/int25_32.com
 all_programs += $(abs_exe_dir)/int25f32.com
+all_programs += $(abs_exe_dir)/dlock.com
+all_programs += $(abs_exe_dir)/dunlock.com
+all_programs += $(abs_exe_dir)/dlock32.com
+all_programs += $(abs_exe_dir)/dunlok32.com
 
 all-programs: $(all_programs)
 
@@ -404,6 +408,18 @@ $(abs_exe_dir)/int25_32.com: int25_32.asm
 	$(NASM) -o $@ -f bin $(NASMFLAGS) $^
 
 $(abs_exe_dir)/int25f32.com: int25f32.asm
+	$(NASM) -o $@ -f bin $(NASMFLAGS) $^
+
+$(abs_exe_dir)/dlock.com: dlock.asm
+	$(NASM) -o $@ -f bin $(NASMFLAGS) $^
+
+$(abs_exe_dir)/dunlock.com: dunlock.asm
+	$(NASM) -o $@ -f bin $(NASMFLAGS) $^
+
+$(abs_exe_dir)/dlock32.com: dlock32.asm
+	$(NASM) -o $@ -f bin $(NASMFLAGS) $^
+
+$(abs_exe_dir)/dunlok32.com: dunlok32.asm
 	$(NASM) -o $@ -f bin $(NASMFLAGS) $^
 
 all-txt: $(abs_exe_dir)/emm.txt
