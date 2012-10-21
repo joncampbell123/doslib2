@@ -61,6 +61,9 @@ disk:
 	dd if=/dev/zero of=test.dsk bs=512 count=2880
 	mkfs.vfat test.dsk
 	for i in ../../build/dos/asmexam/dos16r/086c/exe/*.com; do mcopy -i test.dsk $$i ::; done
+	mcopy -i test.dsk ../../cwsdpmi.dat ::cwsdpmi.exe
+	mcopy -i test.dsk ../../hdpmi16.dat ::hdpmi16.exe
+	mcopy -i test.dsk ../../hdpmi32.dat ::hdpmi32.exe
 
 disk-all: disk disk-pcdos10 disk-pcdos11 disk720 disk360
 

@@ -18,10 +18,156 @@
 		jz	dpmi_ok
 
 		mov	dx,str_need_dpmi
-		call	common_str_print_crlf
-		ret
+		jmp	common_str_error
 
-dpmi_ok:
+; DPMI server is present. print server info
+dpmi_ok:	mov	[dpmi_required_para],si
+		mov	word [dpmi_alloc_para],0
+		mov	[dpmi_entry],di
+		mov	[dpmi_entry+2],es
+
+		push	si		; save SI for later
+		push	dx		; save DX for later
+;      ------------- 32-bit supported?
+		push	cx
+		mov	dx,str_32bit_supported
+		call	common_str_print
+		mov	dx,str_no
+		test	bx,1
+		jz	.no32
+		mov	dx,str_yes
+.no32:		call	common_str_print_crlf
+		pop	cx
+;      ------------- Processor type
+		push	cx
+		mov	dx,str_processor_type
+		call	common_str_print
+		pop	cx
+		mov	al,cl
+		xor	ah,ah
+		call	putdec16
+		mov	ax,86
+		call	putdec16
+		mov	dx,crlf
+		call	common_str_print
+;      ------------- DPMI server version
+		mov	dx,str_dpmi_version
+		call	common_str_print
+		pop	dx		; OK we need DX back (see dpmi_ok)
+		mov	al,dh
+		xor	ah,ah
+		call	putdec16
+		mov	al,'.'
+		call	putc
+		mov	al,dl
+		call	putdec16
+		mov	dx,crlf
+		call	common_str_print
+;      ------------- DPMI required memory
+		mov	dx,str_required_para
+		call	common_str_print
+		pop	si		; OK we need SI back (see dpmi_ok)
+		mov	ax,si
+		call	putdec16
+		mov	dx,crlf
+		call	common_str_print
+;      ------------- DPMI entry point
+		mov	dx,str_entry_point
+		call	common_str_print
+		mov	ax,[dpmi_entry+2]
+		call	puthex16
+		mov	al,':'
+		call	putc
+		mov	ax,[dpmi_entry]
+		call	puthex16
+		mov	dx,crlf
+		call	common_str_print
+;      ------------- Our real mode segment value
+		mov	dx,str_real_cs
+		call	common_str_print
+		mov	ax,cs
+		call	puthex16
+		mov	dx,crlf
+		call	common_str_print
+
+; OK, now we need to realloc the COM segment down to only what we need, so that
+; we can then allocate memory
+		mov	ah,0x4A		; AH=0x4A resize memory block
+		lea	bx,[END_OF_IMAGE+15]
+		shr	bx,4		; NTS: 16-bit protected mode needs at least a 286, so we can use SHR xxx,<imm> forms we normally can't on an 8086
+		push	cs
+		pop	es		; ES=segment to resize (our code segment)
+		int	21h
+		jnc	realloc_ok
+
+		mov	dx,str_cant_realloc_cs
+		jmp	common_str_error
+
+; we shrunk our code segment down, now allocate memory for DPMI if needed
+realloc_ok:	mov	bx,[dpmi_required_para]
+		or	bx,bx
+		jz	dpmi_alloc_ok	; skip this step if DPMI does not need to alloc memory
+
+		mov	ah,0x48		; AH=0x48 allocate memory block
+					; BX=number of paragraphs
+		int	21h
+		jnc	dpmi_alloc_ok
+
+		mov	dx,str_cant_alloc_dpmi
+		jmp	common_str_error
+
+; DPMI allocation OK or didn't need to. At this point, it's time to enter DPMI protected mode
+dpmi_alloc_ok:	mov	[dpmi_alloc_para],ax ; store allocated segment
+		mov	es,ax		; and move to ES
+
+;      ------------- Our real mode dpmi segment
+		push	es
+		mov	dx,str_real_dpmiseg
+		call	common_str_print
+		mov	ax,[dpmi_alloc_para]
+		call	puthex16
+		mov	dx,crlf
+		call	common_str_print
+		pop	es
+
+		xor	ax,ax		; AX=0 16-bit application
+					; ES=DPMI segment
+		call	far [dpmi_entry]; GO!
+		jnc	dpmi_prot16_ok
+
+		mov	dx,str_cant_enter_prot
+		jmp	common_str_error
+
+; DPMI 16-bit protected mode entry worked, we are now in 16-bit protected mode.
+; Note that DPMI servers allow us to INT 21h directly and do a bit of translation
+; to make it work, so we can use the same string print routines as before.
+dpmi_prot16_ok:	mov	dx,str_entry_ok
+		call	common_str_print_crlf
+
+;      ------------- Our protected mode segment value
+		mov	dx,str_prot_cs
+		call	common_str_print
+		mov	ax,cs
+		call	puthex16
+		mov	dx,crlf
+		call	common_str_print
+
+;      ------------- Ask the segment base of our code segment
+		mov	ax,0x0006
+		mov	bx,cs
+		int	31h
+		jc	.base_na
+		push	dx			; CX:DX 32-bit base
+		push	cx
+		mov	dx,str_prot_cs_base
+		call	common_str_print
+		pop	ax			; pop CX => AX
+		call	puthex16
+		pop	ax			; pop DX => AX
+		call	puthex16
+		mov	dx,crlf
+		call	common_str_print
+.base_na:
 
 ; EXIT to DOS
 exit:		mov	ax,0x4C00	; exit to DOS
@@ -140,28 +286,30 @@ puthex16:	push	ax
 		segment .data
 
 hexes:		db	'0123456789ABCDEF'
-str_req_fail:	db	'Request failed$'
-need_dos_version:db	'WARNING: This version assumes MS-DOS 4.0 or higher$'
-str_drive_number:db	'Drive: $'
-str_unit_number:db	'Unit: $'
-str_bytes_per_sector:db	'Bytes/sector: $'
-str_highest_sector_num_cl:db 'Highest sector number in a cluster: $'
-str_sectors_per_cluster_pow2:db 'Sectors/cluster: $'
-str_reserved:	db	'Reserved sectors: $'
-str_fats:	db	'Number of FATs: $'
-str_root_dirents:db	'Number of root directory entries: $'
-str_first_user_sector:db 'First user sector number: $'
-str_highest_cluster:db	'Highest cluster number: $'
-str_sectors_per_fat:db	'Sectors per FAT: $'
-str_first_dir_sector:db	'First directory sector: $'
-str_device_driver_header:db 'Device driver header location: $'
-str_media_id:	db	'Media ID: $'
-str_disk_accessed:db	'Disk accessed: $'
-str_next_pdb:	db	'Next PDB location: $'
-str_cluster_start_free_search:db 'Cluster to start free space search at: $'
-str_free_clusters:db	'Free clusters: $'
-str_need_dpmi:	db	'DPMI server required: $'
+
+str_no:		db	'No$'
+str_yes:	db	'Yes$'
+str_32bit_supported:db	'32-bit supported: $'
+str_need_dpmi:	db	'DPMI server required$'
+str_processor_type:db	'Processor: $'
+str_dpmi_version:db	'DPMI server v$'
+str_required_para:db	'Required paragraphs: $'
+str_entry_point:db	'Entry point: $'
+str_cant_realloc_cs:db	'Cannot realloc code segment$'
+str_cant_alloc_dpmi:db	'Cannot alloc DPMI segment$'
+str_real_cs:	db	'Real mode CS: $'
+str_prot_cs:	db	'Protected mode CS: $'
+str_prot_cs_base:db	'CS segment base: $'
+str_cant_enter_prot:db	'Cannot enter DPMI protected mode$'
+str_real_dpmiseg:db	'Real mode DPMI segment: $'
+str_entry_ok:	db	'DPMI protected mode now active$'
 crlf:		db	13,10,'$'
 
 		segment .bss
+
+dpmi_required_para:resw	1
+dpmi_entry:	resw	2
+dpmi_alloc_para:resw	1	; segment we allocated for DPMI server
+
+END_OF_IMAGE:	resb	1	; this extra byte is used by the code to realloc the COM file down
 
