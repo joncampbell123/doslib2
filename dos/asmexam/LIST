@@ -144,4 +144,6 @@
 * DPMI
    dpmi16_0.com       Example code to enter 16-bit prot [DPMI 0.9+]
                       mode.
+   dpmi32_0.com       Example code to enter 32-bit prot [DPMI 0.9+]
+                      mode.
 

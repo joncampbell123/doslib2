@@ -108,6 +108,7 @@ all_programs += $(abs_exe_dir)/dunlock.com
 all_programs += $(abs_exe_dir)/dlock32.com
 all_programs += $(abs_exe_dir)/dunlok32.com
 all_programs += $(abs_exe_dir)/dpmi16_0.com
+all_programs += $(abs_exe_dir)/dpmi32_0.com
 
 all-programs: $(all_programs)
 
@@ -424,6 +425,9 @@ $(abs_exe_dir)/dunlok32.com: dunlok32.asm
 	$(NASM) -o $@ -f bin $(NASMFLAGS) $^
 
 $(abs_exe_dir)/dpmi16_0.com: dpmi16_0.asm
+	$(NASM) -o $@ -f bin $(NASMFLAGS) $^
+
+$(abs_exe_dir)/dpmi32_0.com: dpmi32_0.asm
 	$(NASM) -o $@ -f bin $(NASMFLAGS) $^
 
 all-txt: $(abs_exe_dir)/emm.txt
