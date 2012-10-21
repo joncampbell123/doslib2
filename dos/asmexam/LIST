@@ -141,3 +141,7 @@
    64mul16.com        Multiply 64-bit unsigned int      [MS-DOS 1.0+]
                         by 16-bit unsigned int only
                         using 8086 instructions
+* DPMI
+   dpmi16_0.com       Example code to enter 16-bit prot [DPMI 0.9+]
+                      mode.
+
