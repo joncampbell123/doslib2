@@ -10,4 +10,8 @@
                       draw image
    cga2a.com          Set CGA 640x200 2-color, and      [ALL except MDA/Herc]
                       draw image
+   herc2a.com         Setup Hercules/MDA 720x348 mode   [Herc]
+   ega16a.exe         Setup EGA 640x350x16 and draw     [EGA/VGA/SVGA/etc]
+   ega16b.exe         Setup EGA 640x350x16 and draw,    [EGA/VGA/SVGA/etc]
+                      and program custom palette
 

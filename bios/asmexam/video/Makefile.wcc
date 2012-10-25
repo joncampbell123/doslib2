@@ -11,6 +11,10 @@ all_programs += $(abs_exe_dir)/mode0.com
 all_programs += $(abs_exe_dir)/80text1.com
 all_programs += $(abs_exe_dir)/cga4a.com
 all_programs += $(abs_exe_dir)/cga2a.com
+all_programs += $(abs_exe_dir)/herc2a.com
+all_programs += $(abs_exe_dir)/herc2a6.com
+all_programs += $(abs_exe_dir)/ega16a.exe
+all_programs += $(abs_exe_dir)/ega16b.exe
 
 all-programs: $(all_programs)
 
@@ -32,11 +36,43 @@ $(abs_exe_dir)/mode0.com: mode0.asm
 $(abs_exe_dir)/80text1.com: 80text1.asm
 	$(NASM) -o $@ -f bin $(NASMFLAGS) $^
 
+$(abs_exe_dir)/ega16b.exe: $(abs_obj_dir)/ega16b.obj
+	@echo option quiet system $(WLINK_SYSTEM) $(WLINKFLAGS) $(WLINK_SEGMENTS) $(foreach x,$(filter %$(obj_suffix),$^),file "$(x)") option map=$(abs_obj_dir)/ega16b.map name $@ >$(abs_obj_dir)/ega16b.cmd
+	$(WLINK) @$(abs_obj_dir)/ega16b.cmd
+
+$(abs_obj_dir)/ega16b.obj: ega16b.asm hotair-ega-640x350x16.cuspal.bmp
+	$(NASM) -o $@ -f obj $(NASMFLAGS) $<
+
+$(abs_exe_dir)/ega16a.exe: $(abs_obj_dir)/ega16a.obj
+	@echo option quiet system $(WLINK_SYSTEM) $(WLINKFLAGS) $(WLINK_SEGMENTS) $(foreach x,$(filter %$(obj_suffix),$^),file "$(x)") option map=$(abs_obj_dir)/ega16a.map name $@ >$(abs_obj_dir)/ega16a.cmd
+	$(WLINK) @$(abs_obj_dir)/ega16a.cmd
+
+$(abs_obj_dir)/ega16a.obj: ega16a.asm hotair-ega-640x350x16.stdpal.bmp
+	$(NASM) -o $@ -f obj $(NASMFLAGS) $<
+
 $(abs_exe_dir)/cga4a.com: cga4a.asm parrot-cga-320x186.raw.ppm.cga billgates-cga-320x200.raw.ppm.cga
 	$(NASM) -o $@ -f bin $(NASMFLAGS) $<
 
 $(abs_exe_dir)/cga2a.com: cga2a.asm salvador-watches-cga-640x200.raw.ppm.cga ny-sky-cga-640x200.raw.ppm.cga
 	$(NASM) -o $@ -f bin $(NASMFLAGS) $<
+
+$(abs_exe_dir)/herc2a.com: herc2a.asm castus-herc-720x348.raw.ppm.herc
+	$(NASM) -o $@ -f bin $(NASMFLAGS) $<
+
+$(abs_exe_dir)/herc2a6.com: herc2a6.asm lolcat-hammahtime-640x348.herc.raw.herc
+	$(NASM) -o $@ -f bin $(NASMFLAGS) $<
+
+hotair-ega-640x350x16.cuspal.bmp: hotair-ega-640x350x16.cuspal.bmp.xz
+	xz -c -d $^ >$@
+
+hotair-ega-640x350x16.stdpal.bmp: hotair-ega-640x350x16.stdpal.bmp.xz
+	xz -c -d $^ >$@
+
+lolcat-hammahtime-640x348.herc.raw.herc: lolcat-hammahtime-640x348.herc.raw.ppm.xz
+	xz -c -d $^ | ./ppm2cga2.pl >$@
+
+castus-herc-720x348.raw.ppm.herc: castus-herc-720x348.raw.ppm.xz
+	xz -c -d $^ | ./ppm2cga2.pl >$@
 
 ny-sky-cga-640x200.raw.ppm.cga: ny-sky-cga-640x200.raw.ppm.xz
 	xz -c -d $^ | ./ppm2cga2.pl >$@
@@ -56,7 +92,7 @@ all-targets: all-targets-abs-dirs all-programs all-txt
 	@true
 
 clean-targets:
-	@rm -Rfv $(abs_exe_dir) $(abs_lib_dir) $(abs_obj_dir) parrot-cga-320x186.raw.ppm.cga salvador-watches-cga-640x200.raw.ppm.cga ny-sky-cga-640x200.raw.ppm.cga billgates-cga-320x200.raw.ppm.cga
+	@rm -Rfv $(abs_exe_dir) $(abs_lib_dir) $(abs_obj_dir) parrot-cga-320x186.raw.ppm.cga salvador-watches-cga-640x200.raw.ppm.cga ny-sky-cga-640x200.raw.ppm.cga billgates-cga-320x200.raw.ppm.cga lolcat-hammahtime-640x348.herc.raw.herc castus-herc-720x348.raw.ppm.herc hotair-ega-640x350x16.stdpal.bmp hotair-ega-640x350x16.cuspal.bmp
 
 endif
 

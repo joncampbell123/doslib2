@@ -30,6 +30,7 @@ disk:
 	dd if=/dev/zero of=test.dsk bs=512 count=2880
 	mkfs.vfat test.dsk
 	for i in ../../../build/bios/asmexam/video/dos16r/086c/exe/*.com; do mcopy -i test.dsk $$i ::; done
+	for i in ../../../build/bios/asmexam/video/dos16r/086c/exe/*.exe; do mcopy -i test.dsk $$i ::; done
 
 disk-all: disk
 
