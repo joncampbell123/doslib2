@@ -18,6 +18,7 @@ all_programs += $(abs_exe_dir)/ega16b.exe
 all_programs += $(abs_exe_dir)/ega16bv.exe
 all_programs += $(abs_exe_dir)/ega16c.exe
 all_programs += $(abs_exe_dir)/ega16d.exe
+all_programs += $(abs_exe_dir)/ega16e.exe
 
 all-programs: $(all_programs)
 
@@ -38,6 +39,13 @@ $(abs_exe_dir)/mode0.com: mode0.asm
 
 $(abs_exe_dir)/80text1.com: 80text1.asm
 	$(NASM) -o $@ -f bin $(NASMFLAGS) $^
+
+$(abs_exe_dir)/ega16e.exe: $(abs_obj_dir)/ega16e.obj
+	@echo option quiet system $(WLINK_SYSTEM) $(WLINKFLAGS) $(WLINK_SEGMENTS) $(foreach x,$(filter %$(obj_suffix),$^),file "$(x)") option map=$(abs_obj_dir)/ega16b.map name $@ >$(abs_obj_dir)/ega16e.cmd
+	$(WLINK) @$(abs_obj_dir)/ega16e.cmd
+
+$(abs_obj_dir)/ega16e.obj: ega16e.asm hotair-ega-640x350x16.cuspal.bmp
+	$(NASM) -o $@ -f obj $(NASMFLAGS) $<
 
 $(abs_exe_dir)/ega16d.exe: $(abs_obj_dir)/ega16d.obj
 	@echo option quiet system $(WLINK_SYSTEM) $(WLINKFLAGS) $(WLINK_SEGMENTS) $(foreach x,$(filter %$(obj_suffix),$^),file "$(x)") option map=$(abs_obj_dir)/ega16b.map name $@ >$(abs_obj_dir)/ega16d.cmd

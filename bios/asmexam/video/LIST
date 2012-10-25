@@ -24,3 +24,8 @@
    ega16d.exe         Setup EGA 640x350x16, draw, and   [EGA/VGA/SVGA/etc]
                       then use Write Mode 1 to bitblit
                       VRAM to VRAM.
+   ega16e.exe         Setup EGA 640x350x16, draw, and   [EGA/VGA/SVGA/etc]
+                      then use Write Mode 1 to bitblit
+                      VRAM to VRAM with a stretching
+                      effect.
+
