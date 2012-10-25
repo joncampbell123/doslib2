@@ -15,16 +15,25 @@
 		mov	ax,6
 		int	10h
 
-		cld
+		mov	si,bitmap
+		mov	dx,200/2
+		call	display
+
+		mov	si,bitmap2
+		mov	dx,200/2
+		call	display
+
+		ret
+
+display:	cld
 		mov	ax,0xB800
 		mov	es,ax
 		xor	di,di
-		mov	si,bitmap
 		mov	cx,2
 totalloop:	push	si
 		push	di
 		push	cx
-		mov	cx,200/2
+		mov	cx,dx
 
 .rowloop:	push	cx
 		mov	cx,80		; one row = 80 bytes = 320 pixels
@@ -50,6 +59,9 @@ totalloop:	push	si
 
 bitmap:; NTS: The bitmap is in CGA 2-color format but NOT interleaved
 incbin		"salvador-watches-cga-640x200.raw.ppm.cga"
+
+bitmap2:
+incbin		"ny-sky-cga-640x200.raw.ppm.cga"
 
 		segment .bss
 

@@ -29,7 +29,6 @@ display:	cld
 		mov	ax,0xB800
 		mov	es,ax
 		xor	di,di
-		mov	si,bitmap
 		mov	cx,2
 totalloop:	push	si
 		push	di
