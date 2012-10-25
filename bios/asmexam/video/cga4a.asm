@@ -15,7 +15,17 @@
 		mov	ax,4
 		int	10h
 
-		cld
+		mov	dx,186/2
+		mov	si,bitmap
+		call	display
+
+		mov	dx,200/2
+		mov	si,bitmap2
+		call	display
+
+		ret
+
+display:	cld
 		mov	ax,0xB800
 		mov	es,ax
 		xor	di,di
@@ -24,7 +34,7 @@
 totalloop:	push	si
 		push	di
 		push	cx
-		mov	cx,186/2
+		mov	cx,dx		; DX = # of rows per pass
 
 .rowloop:	push	cx
 		mov	cx,80		; one row = 80 bytes = 320 pixels
@@ -50,6 +60,9 @@ totalloop:	push	si
 
 bitmap:; NTS: The bitmap is in CGA 4-color format but NOT interleaved
 incbin		"parrot-cga-320x186.raw.ppm.cga"
+
+bitmap2:
+incbin		"billgates-cga-320x200.raw.ppm.cga"
 
 		segment .bss
 
