@@ -6,4 +6,6 @@
    mode0.com          Set 40x25 text mode, mono         [ALL except MDA/Herc]
    80text1.com        Set 80x25 mode and draw, with     [ALL]
                       INT 11h to autodetect mono/color
+   cga4a.com          Set CGA 320x200 4-color, and      [ALL except MDA/Herc]
+                      draw pattern
 

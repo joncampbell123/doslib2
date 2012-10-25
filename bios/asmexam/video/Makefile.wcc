@@ -9,6 +9,7 @@ all_programs += $(abs_exe_dir)/mode2.com
 all_programs += $(abs_exe_dir)/mode1.com
 all_programs += $(abs_exe_dir)/mode0.com
 all_programs += $(abs_exe_dir)/80text1.com
+all_programs += $(abs_exe_dir)/cga4a.com
 
 all-programs: $(all_programs)
 
@@ -30,13 +31,19 @@ $(abs_exe_dir)/mode0.com: mode0.asm
 $(abs_exe_dir)/80text1.com: 80text1.asm
 	$(NASM) -o $@ -f bin $(NASMFLAGS) $^
 
+$(abs_exe_dir)/cga4a.com: cga4a.asm parrot-cga-320x186.raw.ppm.cga
+	$(NASM) -o $@ -f bin $(NASMFLAGS) $<
+
+parrot-cga-320x186.raw.ppm.cga: parrot-cga-320x186.raw.ppm
+	./ppm2cga.pl <$^ >$@
+
 all-txt:
 
 all-targets: all-targets-abs-dirs all-programs all-txt
 	@true
 
 clean-targets:
-	@rm -Rfv $(abs_exe_dir) $(abs_lib_dir) $(abs_obj_dir)
+	@rm -Rfv $(abs_exe_dir) $(abs_lib_dir) $(abs_obj_dir) parrot-cga-320x186.raw.ppm.cga
 
 endif
 
