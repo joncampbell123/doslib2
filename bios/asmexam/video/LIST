@@ -14,4 +14,13 @@
    ega16a.exe         Setup EGA 640x350x16 and draw     [EGA/VGA/SVGA/etc]
    ega16b.exe         Setup EGA 640x350x16 and draw,    [EGA/VGA/SVGA/etc]
                       and program custom palette
-
+   ega16bv.exe        Setup EGA 640x350x16 and draw,    [VGA/SVGA/etc]
+                      and program custom palette using
+                      VGA DAC registers, which won't
+                      work on EGA.
+   ega16c.exe         Setup EGA 640x350x16 and draw.    [EGA/VGA/SVGA/etc]
+                      This version uses column-major
+                      drawing to increase performance.
+   ega16d.exe         Setup EGA 640x350x16, draw, and   [EGA/VGA/SVGA/etc]
+                      then use Write Mode 1 to bitblit
+                      VRAM to VRAM.

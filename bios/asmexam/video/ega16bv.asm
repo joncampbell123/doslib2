@@ -1,8 +1,8 @@
 ;--------------------------------------------------------------------------------------
-; EGA16B.COM
+; EGA16BV.COM
 ; 
 ; Use the BIOS to set EGA 640x350 16-color planar mode. Then display a bitmap, using
-; a custom color palette.
+; a custom color palette programmed in using the VGA DAC registers.
 ;--------------------------------------------------------------------------------------
 		bits 16			; 16-bit real mode
 
@@ -15,69 +15,55 @@
 		mov	ax,0xA000
 		mov	es,ax
 
+; remap attribute controller to 1:1 4-bit mapping.
+; Most VGA BIOSes for compatibility mode map attribute controller entries 0...7 -> 0...7 and 8...15 -> 48...63
+; because on VGA cards, the 6-bit attribute controller "color" is just an index into the VGA palette.
+
+		mov	dx,0x3DA
+		in	al,dx		; reset attribute controller flip-flop
+		mov	dx,0x3C0
+		xor	al,al
+		mov	cx,16		; 16 colors
+attrset:	out	dx,al		; attribute controller index
+		nop
+		out	dx,al		; attribute controller palette entry
+		inc	al
+		loop	attrset
+		mov	al,0x20
+		out	dx,al		; restore video
+
 ; program color palette
 		mov	ax,seg bitmap_palette
 		mov	ds,ax
 		mov	si,bitmap_palette
 		mov	cx,16
-		mov	bl,0		; register 0
-		mov	dx,0x3DA
-		in	al,dx		; reset attribute controller flip-flop
+		mov	dx,0x3C8
+		xor	al,al
+		out	dx,al		; start at color index 0
+		inc	dx		; leave DX=0x3C9 for inner loop
 set_palette:	push	cx
+		mov	cl,2
 
 		lodsb			; load "B"
-		mov	cl,6
-		shr	al,cl		; AL >>= 6
-		mov	dl,al
-		and	dl,0x01		; DL = DL & 1
-		and	al,0x02		; AL = AL & 2
-		mov	cl,3-1
-		shl	al,cl		; AL <<= (3 - 1)
-		or	dl,al		; DL |= AL
+		shr	al,cl		; convert to 6-bit
+		push	ax
 
 		lodsb			; load "G"
-		mov	cl,5
-		shr	al,cl		; AL >>= 6
-		mov	dh,al
-		and	dh,0x02		; DL = DL & 1
-		and	al,0x04		; AL = AL & 2
-		mov	cl,3-1
-		shl	al,cl		; AL <<= (3 - 1)
-		or	dl,al		; DL |= AL
-		or	dl,dh		; DL |= AL
+		shr	al,cl		; convert to 6-bit
+		push	ax
 
 		lodsb			; load "R"
-		mov	cl,4
-		shr	al,cl		; AL >>= 6
-		mov	dh,al
-		and	dh,0x04		; DL = DL & 1
-		and	al,0x08		; AL = AL & 2
-		mov	cl,3-1
-		shl	al,cl		; AL <<= (3 - 1)
-		or	dl,al		; DL |= AL
-		or	dl,dh		; DL |= AL
+		shr	al,cl		; convert to 6-bit
+		out	dx,al		; and write to VGA
+		pop	ax
+		out	dx,al		; write "G"
+		pop	ax
+		out	dx,al		; write "B"
 
 		inc	si		; skip 4th
 
-		; SO:
-		; DL=6-bit RGB color to load into palette
-		; BL=register to load into
-		mov	bh,dl
-		mov	dx,0x3C0
-
-		mov	al,bl
-		out	dx,al
-
-		mov	al,bh
-		out	dx,al
-
-		inc	bl
-
 		pop	cx
 		loop	set_palette
-; restore video
-		mov	al,0x20
-		out	dx,al
 
 ; draw top part
 		xor	di,di		; start at top
