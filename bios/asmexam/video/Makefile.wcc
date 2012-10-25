@@ -10,6 +10,7 @@ all_programs += $(abs_exe_dir)/mode1.com
 all_programs += $(abs_exe_dir)/mode0.com
 all_programs += $(abs_exe_dir)/80text1.com
 all_programs += $(abs_exe_dir)/cga4a.com
+all_programs += $(abs_exe_dir)/cga2a.com
 
 all-programs: $(all_programs)
 
@@ -34,8 +35,14 @@ $(abs_exe_dir)/80text1.com: 80text1.asm
 $(abs_exe_dir)/cga4a.com: cga4a.asm parrot-cga-320x186.raw.ppm.cga
 	$(NASM) -o $@ -f bin $(NASMFLAGS) $<
 
-parrot-cga-320x186.raw.ppm.cga: parrot-cga-320x186.raw.ppm
-	./ppm2cga.pl <$^ >$@
+$(abs_exe_dir)/cga2a.com: cga2a.asm salvador-watches-cga-640x200.raw.ppm.cga
+	$(NASM) -o $@ -f bin $(NASMFLAGS) $<
+
+salvador-watches-cga-640x200.raw.ppm.cga: salvador-watches-cga-640x200.raw.ppm.xz
+	xz -c -d $^ | ./ppm2cga2.pl >$@
+
+parrot-cga-320x186.raw.ppm.cga: parrot-cga-320x186.raw.ppm.xz
+	xz -c -d $^ | ./ppm2cga.pl >$@
 
 all-txt:
 
@@ -43,7 +50,7 @@ all-targets: all-targets-abs-dirs all-programs all-txt
 	@true
 
 clean-targets:
-	@rm -Rfv $(abs_exe_dir) $(abs_lib_dir) $(abs_obj_dir) parrot-cga-320x186.raw.ppm.cga
+	@rm -Rfv $(abs_exe_dir) $(abs_lib_dir) $(abs_obj_dir) parrot-cga-320x186.raw.ppm.cga salvador-watches-cga-640x200.raw.ppm.cga
 
 endif
 
