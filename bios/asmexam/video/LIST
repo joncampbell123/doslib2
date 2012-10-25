@@ -1,0 +1,7 @@
+* BIOS INT10h video
+   mode7.com          Set 80x25 text mode, mono         [ALL except CGA]
+   mode3.com          Set 80x25 text mode, color        [ALL except MDA/Herc]
+   mode2.com          Set 80x25 text mode, mono         [ALL except MDA/Herc]
+   mode1.com          Set 40x25 text mode, color        [ALL except MDA/Herc]
+   mode0.com          Set 40x25 text mode, mono         [ALL except MDA/Herc]
+

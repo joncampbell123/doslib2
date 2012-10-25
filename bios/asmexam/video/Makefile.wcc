@@ -1,0 +1,38 @@
+# This is a separate makefile because GNU automake interferes with GNU make conditionals
+ifdef target_subdir
+
+all-targets-abs-dirs: $(abs_exe_dir) $(abs_lib_dir) $(abs_obj_dir)
+
+all_programs  = $(abs_exe_dir)/mode7.com
+all_programs += $(abs_exe_dir)/mode3.com
+all_programs += $(abs_exe_dir)/mode2.com
+all_programs += $(abs_exe_dir)/mode1.com
+all_programs += $(abs_exe_dir)/mode0.com
+
+all-programs: $(all_programs)
+
+$(abs_exe_dir)/mode7.com: mode7.asm
+	$(NASM) -o $@ -f bin $(NASMFLAGS) $^
+
+$(abs_exe_dir)/mode3.com: mode3.asm
+	$(NASM) -o $@ -f bin $(NASMFLAGS) $^
+
+$(abs_exe_dir)/mode2.com: mode2.asm
+	$(NASM) -o $@ -f bin $(NASMFLAGS) $^
+
+$(abs_exe_dir)/mode1.com: mode1.asm
+	$(NASM) -o $@ -f bin $(NASMFLAGS) $^
+
+$(abs_exe_dir)/mode0.com: mode0.asm
+	$(NASM) -o $@ -f bin $(NASMFLAGS) $^
+
+all-txt:
+
+all-targets: all-targets-abs-dirs all-programs all-txt
+	@true
+
+clean-targets:
+	@rm -Rfv $(abs_exe_dir) $(abs_lib_dir) $(abs_obj_dir)
+
+endif
+
