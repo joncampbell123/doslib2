@@ -8,6 +8,7 @@ all_programs += $(abs_exe_dir)/mode3.com
 all_programs += $(abs_exe_dir)/mode2.com
 all_programs += $(abs_exe_dir)/mode1.com
 all_programs += $(abs_exe_dir)/mode0.com
+all_programs += $(abs_exe_dir)/80text1.com
 
 all-programs: $(all_programs)
 
@@ -24,6 +25,9 @@ $(abs_exe_dir)/mode1.com: mode1.asm
 	$(NASM) -o $@ -f bin $(NASMFLAGS) $^
 
 $(abs_exe_dir)/mode0.com: mode0.asm
+	$(NASM) -o $@ -f bin $(NASMFLAGS) $^
+
+$(abs_exe_dir)/80text1.com: 80text1.asm
 	$(NASM) -o $@ -f bin $(NASMFLAGS) $^
 
 all-txt:
