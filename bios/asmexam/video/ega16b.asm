@@ -8,7 +8,45 @@
 
 		segment text class=code
 
-..start:	mov	ax,16		; mode 0x10 EGA 640x350x16
+..start:	push	cs
+		pop	ds
+
+; load bitmap from file into memory
+		mov	ax,0x3D00	; AH=0x3D OPEN FILE AL=0 compat sharing
+		mov	dx,str_bmp	; DS:DX = path to file
+		int	21h
+		jnc	open_ok
+
+		mov	ax,0x4C01
+		int	21h
+		hlt
+open_ok:	mov	[cs:handle],ax
+
+; read data into memory, part 1
+		mov	ah,0x3F
+		mov	bx,[cs:handle]
+		mov	dx,seg bitmap_hdr
+		mov	ds,dx
+		mov	dx,bitmap_hdr
+		mov	cx,(320*175) + 0x76
+		int	21h
+
+; read data into memory, part 2
+		mov	ah,0x3F
+		mov	bx,[cs:handle]
+		mov	dx,seg bitmap_part2
+		mov	ds,dx
+		mov	dx,bitmap_part2
+		mov	cx,(320*175)
+		int	21h
+
+; close file
+		mov	ah,0x3E
+		mov	bx,[cs:handle]
+		int	21h
+
+; setup the mode
+		mov	ax,16		; mode 0x10 EGA 640x350x16
 		int	10h
 
 		cld
@@ -165,23 +203,24 @@ gc_write:	mov	dx,0x3CE
 		out	dx,al
 		ret
 
-		segment data1
+; data
+str_bmp:	db	'ega35cus.350',0
+handle:		resw	1
 
-bitmap_palette:
-incbin		"hotair-ega-640x350x16.cuspal.bmp",0x36,0x40
+		segment data1
 
 ; NTS: The bitmap totals 112KB, which Watcom will not allow to fit in one segment.
 ;      So we split it up into a top half and bottom half across two segments.
 ;      The image is 16-color (4-bit) packed. The includes here assume a bitmap
 ;      saved by the GIMP in Windows BMP format that is 640x350 16-color 4-bit packed.
 ;      This version assumes the default EGA palette and does not include it from the bitmap.
-bitmap_part1:
-incbin		"hotair-ega-640x350x16.cuspal.bmp",0x76,320*175	; top half
+bitmap_hdr:	resb	0x36
+bitmap_palette:	resb	0x40
+bitmap_part1:	resb	320*175
 
 		segment data2
 
-bitmap_part2:
-incbin		"hotair-ega-640x350x16.cuspal.bmp",0x76+(320*175),320*175	; bottom half
+bitmap_part2:	resb	320*175
 
 		segment stack class=stack
 

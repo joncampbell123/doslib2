@@ -31,6 +31,7 @@ disk:
 	mkfs.vfat test.dsk
 	for i in ../../../build/bios/asmexam/video/dos16r/086c/exe/*.com; do mcopy -i test.dsk $$i ::; done
 	for i in ../../../build/bios/asmexam/video/dos16r/086c/exe/*.exe; do mcopy -i test.dsk $$i ::; done
+	for i in ../../../build/bios/asmexam/video/dos16r/086c/exe/*.350; do mcopy -i test.dsk $$i ::; done
 
 disk-all: disk
 

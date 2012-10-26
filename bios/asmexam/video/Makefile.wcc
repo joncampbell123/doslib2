@@ -44,42 +44,48 @@ $(abs_exe_dir)/ega16e.exe: $(abs_obj_dir)/ega16e.obj
 	@echo option quiet system $(WLINK_SYSTEM) $(WLINKFLAGS) $(WLINK_SEGMENTS) $(foreach x,$(filter %$(obj_suffix),$^),file "$(x)") option map=$(abs_obj_dir)/ega16b.map name $@ >$(abs_obj_dir)/ega16e.cmd
 	$(WLINK) @$(abs_obj_dir)/ega16e.cmd
 
-$(abs_obj_dir)/ega16e.obj: ega16e.asm hotair-ega-640x350x16.cuspal.bmp
+$(abs_obj_dir)/ega16e.obj: ega16e.asm $(abs_exe_dir)/ega35std.350
 	$(NASM) -o $@ -f obj $(NASMFLAGS) $<
 
 $(abs_exe_dir)/ega16d.exe: $(abs_obj_dir)/ega16d.obj
 	@echo option quiet system $(WLINK_SYSTEM) $(WLINKFLAGS) $(WLINK_SEGMENTS) $(foreach x,$(filter %$(obj_suffix),$^),file "$(x)") option map=$(abs_obj_dir)/ega16b.map name $@ >$(abs_obj_dir)/ega16d.cmd
 	$(WLINK) @$(abs_obj_dir)/ega16d.cmd
 
-$(abs_obj_dir)/ega16d.obj: ega16d.asm hotair-ega-640x350x16.cuspal.bmp
+$(abs_obj_dir)/ega16d.obj: ega16d.asm $(abs_exe_dir)/ega35std.350
 	$(NASM) -o $@ -f obj $(NASMFLAGS) $<
 
 $(abs_exe_dir)/ega16c.exe: $(abs_obj_dir)/ega16c.obj
 	@echo option quiet system $(WLINK_SYSTEM) $(WLINKFLAGS) $(WLINK_SEGMENTS) $(foreach x,$(filter %$(obj_suffix),$^),file "$(x)") option map=$(abs_obj_dir)/ega16b.map name $@ >$(abs_obj_dir)/ega16c.cmd
 	$(WLINK) @$(abs_obj_dir)/ega16c.cmd
 
-$(abs_obj_dir)/ega16c.obj: ega16c.asm hotair-ega-640x350x16.cuspal.bmp
+$(abs_obj_dir)/ega16c.obj: ega16c.asm $(abs_exe_dir)/ega35std.350
 	$(NASM) -o $@ -f obj $(NASMFLAGS) $<
 
 $(abs_exe_dir)/ega16bv.exe: $(abs_obj_dir)/ega16bv.obj
 	@echo option quiet system $(WLINK_SYSTEM) $(WLINKFLAGS) $(WLINK_SEGMENTS) $(foreach x,$(filter %$(obj_suffix),$^),file "$(x)") option map=$(abs_obj_dir)/ega16b.map name $@ >$(abs_obj_dir)/ega16bv.cmd
 	$(WLINK) @$(abs_obj_dir)/ega16bv.cmd
 
-$(abs_obj_dir)/ega16bv.obj: ega16bv.asm hotair-ega-640x350x16.cuspal.bmp
+$(abs_obj_dir)/ega16bv.obj: ega16bv.asm $(abs_exe_dir)/ega35cus.350
 	$(NASM) -o $@ -f obj $(NASMFLAGS) $<
 
 $(abs_exe_dir)/ega16b.exe: $(abs_obj_dir)/ega16b.obj
 	@echo option quiet system $(WLINK_SYSTEM) $(WLINKFLAGS) $(WLINK_SEGMENTS) $(foreach x,$(filter %$(obj_suffix),$^),file "$(x)") option map=$(abs_obj_dir)/ega16b.map name $@ >$(abs_obj_dir)/ega16b.cmd
 	$(WLINK) @$(abs_obj_dir)/ega16b.cmd
 
-$(abs_obj_dir)/ega16b.obj: ega16b.asm hotair-ega-640x350x16.cuspal.bmp
+$(abs_obj_dir)/ega16b.obj: ega16b.asm $(abs_exe_dir)/ega35cus.350
 	$(NASM) -o $@ -f obj $(NASMFLAGS) $<
 
-$(abs_exe_dir)/ega16a.exe: $(abs_obj_dir)/ega16a.obj
+$(abs_exe_dir)/ega16a.exe: $(abs_obj_dir)/ega16a.obj $(abs_exe_dir)/ega35std.350
 	@echo option quiet system $(WLINK_SYSTEM) $(WLINKFLAGS) $(WLINK_SEGMENTS) $(foreach x,$(filter %$(obj_suffix),$^),file "$(x)") option map=$(abs_obj_dir)/ega16a.map name $@ >$(abs_obj_dir)/ega16a.cmd
 	$(WLINK) @$(abs_obj_dir)/ega16a.cmd
 
-$(abs_obj_dir)/ega16a.obj: ega16a.asm hotair-ega-640x350x16.stdpal.bmp
+$(abs_exe_dir)/ega35std.350: ega35std.350
+	cp -v $^ $@
+
+$(abs_exe_dir)/ega35cus.350: ega35cus.350
+	cp -v $^ $@
+
+$(abs_obj_dir)/ega16a.obj: ega16a.asm ega35std.350
 	$(NASM) -o $@ -f obj $(NASMFLAGS) $<
 
 $(abs_exe_dir)/cga4a.com: cga4a.asm parrot-cga-320x186.raw.ppm.cga billgates-cga-320x200.raw.ppm.cga
@@ -118,13 +124,19 @@ billgates-cga-320x200.raw.ppm.cga: billgates-cga-320x200.raw.ppm.xz
 parrot-cga-320x186.raw.ppm.cga: parrot-cga-320x186.raw.ppm.xz
 	xz -c -d $^ | ./ppm2cga.pl >$@
 
+ega35std.350: hotair-ega-640x350x16.stdpal.bmp
+	cp -v $^ $@
+
+ega35cus.350: hotair-ega-640x350x16.cuspal.bmp
+	cp -v $^ $@
+
 all-txt:
 
 all-targets: all-targets-abs-dirs all-programs all-txt
 	@true
 
 clean-targets:
-	@rm -Rfv $(abs_exe_dir) $(abs_lib_dir) $(abs_obj_dir) parrot-cga-320x186.raw.ppm.cga salvador-watches-cga-640x200.raw.ppm.cga ny-sky-cga-640x200.raw.ppm.cga billgates-cga-320x200.raw.ppm.cga lolcat-hammahtime-640x348.herc.raw.herc castus-herc-720x348.raw.ppm.herc hotair-ega-640x350x16.stdpal.bmp hotair-ega-640x350x16.cuspal.bmp
+	@rm -Rfv $(abs_exe_dir) $(abs_lib_dir) $(abs_obj_dir) parrot-cga-320x186.raw.ppm.cga salvador-watches-cga-640x200.raw.ppm.cga ny-sky-cga-640x200.raw.ppm.cga billgates-cga-320x200.raw.ppm.cga lolcat-hammahtime-640x348.herc.raw.herc castus-herc-720x348.raw.ppm.herc hotair-ega-640x350x16.stdpal.bmp hotair-ega-640x350x16.cuspal.bmp *.350
 
 endif
 
