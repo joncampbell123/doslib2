@@ -21,6 +21,10 @@ all_programs += $(abs_exe_dir)/ega16d.exe
 all_programs += $(abs_exe_dir)/ega16e.exe
 all_programs += $(abs_exe_dir)/vga256a.exe
 all_programs += $(abs_exe_dir)/vga256b.exe
+all_programs += $(abs_exe_dir)/vga256c.exe
+all_programs += $(abs_exe_dir)/vga256d.exe
+all_programs += $(abs_exe_dir)/vga256e.exe
+all_programs += $(abs_exe_dir)/vga256f.exe
 
 all-programs: $(all_programs)
 
@@ -95,6 +99,33 @@ $(abs_exe_dir)/vga256b.exe: $(abs_obj_dir)/vga256b.obj $(abs_exe_dir)/vga256p1.4
 	@echo option quiet system $(WLINK_SYSTEM) $(WLINKFLAGS) $(WLINK_SEGMENTS) $(foreach x,$(filter %$(obj_suffix),$^),file "$(x)") option map=$(abs_obj_dir)/ega16a.map name $@ >$(abs_obj_dir)/ega16a.cmd
 	$(WLINK) @$(abs_obj_dir)/ega16a.cmd
 
+$(abs_obj_dir)/vga256c.obj: vga256c.asm $(abs_exe_dir)/vga256p1.200
+	$(NASM) -o $@ -f obj $(NASMFLAGS) $<
+
+$(abs_exe_dir)/vga256c.exe: $(abs_obj_dir)/vga256c.obj $(abs_exe_dir)/vga256p1.200
+	@echo option quiet system $(WLINK_SYSTEM) $(WLINKFLAGS) $(WLINK_SEGMENTS) $(foreach x,$(filter %$(obj_suffix),$^),file "$(x)") option map=$(abs_obj_dir)/ega16a.map name $@ >$(abs_obj_dir)/ega16a.cmd
+	$(WLINK) @$(abs_obj_dir)/ega16a.cmd
+
+$(abs_obj_dir)/vga256d.obj: vga256d.asm $(abs_exe_dir)/vga256p1.400
+	$(NASM) -o $@ -f obj $(NASMFLAGS) $<
+
+$(abs_exe_dir)/vga256d.exe: $(abs_obj_dir)/vga256d.obj $(abs_exe_dir)/vga256p1.400
+	@echo option quiet system $(WLINK_SYSTEM) $(WLINKFLAGS) $(WLINK_SEGMENTS) $(foreach x,$(filter %$(obj_suffix),$^),file "$(x)") option map=$(abs_obj_dir)/ega16a.map name $@ >$(abs_obj_dir)/ega16a.cmd
+	$(WLINK) @$(abs_obj_dir)/ega16a.cmd
+
+$(abs_obj_dir)/vga256e.obj: vga256e.asm $(abs_exe_dir)/vga256p1.200
+	$(NASM) -o $@ -f obj $(NASMFLAGS) $<
+
+$(abs_exe_dir)/vga256e.exe: $(abs_obj_dir)/vga256e.obj $(abs_exe_dir)/vga256p1.200
+	@echo option quiet system $(WLINK_SYSTEM) $(WLINKFLAGS) $(WLINK_SEGMENTS) $(foreach x,$(filter %$(obj_suffix),$^),file "$(x)") option map=$(abs_obj_dir)/ega16a.map name $@ >$(abs_obj_dir)/ega16a.cmd
+	$(WLINK) @$(abs_obj_dir)/ega16a.cmd
+
+$(abs_obj_dir)/vga256f.obj: vga256f.asm $(abs_exe_dir)/vga256p1.400
+	$(NASM) -o $@ -f obj $(NASMFLAGS) $<
+
+$(abs_exe_dir)/vga256f.exe: $(abs_obj_dir)/vga256f.obj $(abs_exe_dir)/vga256p1.400
+	@echo option quiet system $(WLINK_SYSTEM) $(WLINKFLAGS) $(WLINK_SEGMENTS) $(foreach x,$(filter %$(obj_suffix),$^),file "$(x)") option map=$(abs_obj_dir)/ega16a.map name $@ >$(abs_obj_dir)/ega16a.cmd
+	$(WLINK) @$(abs_obj_dir)/ega16a.cmd
 
 $(abs_exe_dir)/ega35std.350: ega35std.350
 	cp -v $^ $@

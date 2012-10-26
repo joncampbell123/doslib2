@@ -1,5 +1,5 @@
 ;--------------------------------------------------------------------------------------
-; VGA256B.COM
+; VGA256D.COM
 ; 
 ; Setup VGA 320x400x256 and display a bitmap. This is done (as usual) by setting
 ; 320x200x256 mode then tweaking the "maximum scan line" register on VGA hardware.
@@ -7,12 +7,7 @@
 ; the boot logo and within DISPDIB.DLL to provide 320x400x256 fullscreen modes for
 ; Windows such as when playing an AVI full screen).
 ;
-; WARNING: This assumes that your VGA/SVGA chipset or emulator supports changing the
-;          memory map select register to access the first 128KB of VGA RAM through
-;          0xA0000-0xBFFFF (a somewhat undocumented trick), though such cards are
-;          somewhat uncommon. If this program fails to display a complete image,
-;          then you should try VGA256D.COM which uses the more traditional "Mode X"
-;          unchained VGA method to access all 256KB of VGA RAM.
+; This version uses the more common unchained "mode x" method.
 ;--------------------------------------------------------------------------------------
 		bits 16			; 16-bit real mode
 
@@ -66,18 +61,35 @@ open_ok:	mov	[cs:handle],ax
 		mov	al,0x40
 		out	dx,al		; <- tweak 320x200 into 320x400
 
-		mov	dx,0x3CE
-		mov	al,0x06
+		mov	dx,0x3C4
+		mov	al,0x04
+		out	dx,al		; address reg 4 of the sequencer
+		inc	dx
+		mov	al,0x06		; Chain 4 disable, extended memory enable, disable odd/even
+		out	dx,al
+		dec	dx
+
+		mov	al,0x02		; now reg 2
 		out	dx,al
 		inc	dx
-		mov	al,0x01		; <- tweak memory map 0xA0000-0xBFFFF and keep text mode disabled
-		out	dx,al		; <- WARNING: Some SVGA chipsets and emulators do not emulate this mode of
-					;             access properly! This includes:
-					;              - DOSBox 0.74 (without DOSBox-X patches)
-					; 
-					;             If you run this program and see half an image or a
-					;             garbled picture then your chipset does not support
-					;             mapping the first 128KB to 0xA0000-0xBFFFF.
+		mov	al,0x0F		; enable all planes
+		out	dx,al
+
+		mov	dx,0x3D4
+
+		mov	al,0x14
+		out	dx,al
+		inc	dx
+		mov	al,0x00		; write CRTC reg 0x14 turn off long mode
+		out	dx,al
+		dec	dx
+
+		mov	al,0x17
+		out	dx,al
+		inc	dx
+		mov	al,0xE3		; write CRTC reg 0x17 enable byte mode
+		out	dx,al
+		dec	dx
 
 ; load the color palette
 		cld
@@ -116,25 +128,24 @@ palette_load:	push	cx
 
 		cld
 
-; draw top part
 		mov	ax,0xA000
 		mov	es,ax
-		xor	di,di		; start at top
+
+; draw top part
 		mov	ax,seg bitmap
 		mov	ds,ax
+		xor	di,di		; start at top
 		mov	si,bitmap
-		mov	cx,(320*200)/2	; 320*200 pixel pairs
-		rep	movsw
+		mov	cx,80*200
+		call	blit
 
 ; draw bottom part
-		mov	ax,0xA000+4000
-		mov	es,ax
-		xor	di,di		; start at top
 		mov	ax,seg bitmap_part2
 		mov	ds,ax
 		mov	si,bitmap_part2
-		mov	cx,(320*200)/2	; 320*200 pixel pairs
-		rep	movsw
+		mov	di,80*200
+		mov	cx,80*200
+		call	blit
 
 ; wait for user
 		xor	ax,ax
@@ -148,9 +159,36 @@ palette_load:	push	cx
 		mov	ax,0x4C00
 		int	21h
 
+; blitting routine
+blit:		mov	byte [cs:bitmask],0x11
+
+.loop1:		mov	dx,0x3C4
+		mov	al,0x02
+		out	dx,al
+		inc	dx
+		mov	al,[cs:bitmask]
+		out	dx,al
+
+		push	si
+		push	di
+		push	cx
+.loop2:		lodsb
+		add	si,3
+		stosb
+		loop	.loop2
+		pop	cx
+		pop	di
+		pop	si
+		inc	si
+
+		shl	byte [cs:bitmask],1
+		jnc	.loop1
+		ret
+
 ; data
 str_bmp:	db	'vga256p1.400',0
 handle:		resw	1
+bitmask:	resb	1
 
 		segment data1
 
