@@ -28,4 +28,5 @@
                       then use Write Mode 1 to bitblit
                       VRAM to VRAM with a stretching
                       effect.
+   vga256a.exe        Setup VGA 320x200x256             [VGA/SVGA/etc]
 
