@@ -29,4 +29,5 @@
                       VRAM to VRAM with a stretching
                       effect.
    vga256a.exe        Setup VGA 320x200x256             [VGA/SVGA/etc]
+   vga256b.exe        Setup VGA 320x400x256             [VGA/SVGA/etc]
 
