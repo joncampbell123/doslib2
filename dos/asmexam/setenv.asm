@@ -1,7 +1,8 @@
 ;--------------------------------------------------------------------------------------
-; EXEC.COM
+; SETENV.COM
 ;
-; Execute another MS-DOS program. In this case, we run COMMAND.COM.
+; Replace the environment block, then execute another MS-DOS program. In this case, we
+; run COMMAND.COM.
 ;--------------------------------------------------------------------------------------
 		bits 16			; 16-bit real mode
 		org 0x100		; DOS .COM executable starts at 0x100 in memory
@@ -26,6 +27,35 @@
 		mov	cl,4
 		shr	bx,cl		; BX = (BX + this image size + 0xF) >> 4 = number of paragraphs
 		int	21h
+
+; next: free the environment block given to us by DOS
+		mov	ah,0x49
+		mov	bx,[0x2C]
+		or	bx,bx
+		jz	no_free_env
+		push	es
+		mov	es,bx
+		int	21h
+		pop	es
+		mov	word [0x2C],0
+
+; and allocate another one
+no_free_env:	mov	ah,0x48
+		mov	bx,2		; 2 x 16 = 32 bytes
+		int	21h
+		jnc	new_env_ok
+		mov	ax,0x4C01
+		int	21h
+		hlt			; return if failed
+new_env_ok:	mov	word [0x2C],ax	; store the new segment into the env block pointer in the PSP
+		push	es
+		cld
+		xor	di,di
+		mov	si,test_env
+		mov	cx,32/2		; 32 bytes
+		mov	es,ax
+		rep	movsw
+		pop	es
 
 ; OK proceed
 		cld
@@ -75,9 +105,14 @@ exec_err:	mov	ax,cs
 		segment .data
 
 exec_path:	db	'COMMAND.COM',0
-exec_cmdtail:	db	'.\ /K echo hello',13,0
+exec_cmdtail:	db	'',13,0
 str_fail:	db	'Failed',13,10,'$'
 str_ok:		db	'Exec OK',13,10,'$'
+
+; this is copied into the new env block. must be 32 bytes
+test_env:	db	'TESTING=123',0		; +12 = 12
+		db	'HELLO=World',0         ; +12 = 24
+		db	'AB=CD',0,0,0		; +8  = 32
 
 		segment .bss
 

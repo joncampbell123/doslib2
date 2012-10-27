@@ -109,6 +109,11 @@
    dunlock.com        INT 21h unlock volume             [MS-DOS 7.0+/Windows 95,98,ME]
    dlock32.com        INT 21h lock volume (FAT32)       [MS-DOS 7.0+/Windows 95 OSR2,98,ME]
    dunlok32.com       INT 21h unlock volume (FAT32)     [MS-DOS 7.0+/Windows 95 OSR2,98,ME]
+   showenv.com        Print out the contents of the     [MS-DOS 2.0+]
+                      environment block
+   setenv.com         Replaces the env. block and then  [MS-DOS 2.0+]
+                      exec's command.com so that you
+                      can examine the new block.
 * Windows 95 Long File Names
    lfnmkdir.com       Long filename mkdir               [MS-DOS 7.0+/Windows 95,98,ME]
    lfnrmdir.com       Long filename rmdir               [MS-DOS 7.0+/Windows 95,98,ME]
