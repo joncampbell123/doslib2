@@ -27,6 +27,7 @@ all_programs += $(abs_exe_dir)/vga256e.exe
 all_programs += $(abs_exe_dir)/vga256f.exe
 all_programs += $(abs_exe_dir)/vga256g.exe
 all_programs += $(abs_exe_dir)/vga256h.exe
+all_programs += $(abs_exe_dir)/vga256i.exe
 
 all-programs: $(all_programs)
 
@@ -143,6 +144,13 @@ $(abs_exe_dir)/vga256h.exe: $(abs_obj_dir)/vga256h.obj $(abs_exe_dir)/vga256p1.4
 	@echo option quiet system $(WLINK_SYSTEM) $(WLINKFLAGS) $(WLINK_SEGMENTS) $(foreach x,$(filter %$(obj_suffix),$^),file "$(x)") option map=$(abs_obj_dir)/ega16a.map name $@ >$(abs_obj_dir)/ega16a.cmd
 	$(WLINK) @$(abs_obj_dir)/ega16a.cmd
 
+$(abs_obj_dir)/vga256i.obj: vga256i.asm $(abs_exe_dir)/vga256p1.350
+	$(NASM) -o $@ -f obj $(NASMFLAGS) $<
+
+$(abs_exe_dir)/vga256i.exe: $(abs_obj_dir)/vga256i.obj $(abs_exe_dir)/vga256p1.350
+	@echo option quiet system $(WLINK_SYSTEM) $(WLINKFLAGS) $(WLINK_SEGMENTS) $(foreach x,$(filter %$(obj_suffix),$^),file "$(x)") option map=$(abs_obj_dir)/ega16a.map name $@ >$(abs_obj_dir)/ega16a.cmd
+	$(WLINK) @$(abs_obj_dir)/ega16a.cmd
+
 $(abs_exe_dir)/ega35std.350: ega35std.350
 	cp -v $^ $@
 
@@ -188,6 +196,9 @@ billgates-cga-320x200.raw.ppm.cga: billgates-cga-320x200.raw.ppm.xz
 parrot-cga-320x186.raw.ppm.cga: parrot-cga-320x186.raw.ppm.xz
 	xz -c -d $^ | ./ppm2cga.pl >$@
 
+temple-320x350x256.bmp: temple-320x350x256.bmp.xz
+	xz -c -d $^ >$@
+
 temple-320x480x256.bmp: temple-320x480x256.bmp.xz
 	xz -c -d $^ >$@
 
@@ -212,6 +223,9 @@ $(abs_exe_dir)/vga256p1.400: dandelion-320x400x256.bmp
 $(abs_exe_dir)/vga256p1.480: temple-320x480x256.bmp
 	cp -v $^ $@
 
+$(abs_exe_dir)/vga256p1.350: temple-320x350x256.bmp
+	cp -v $^ $@
+
 ega35std.350: hotair-ega-640x350x16.stdpal.bmp
 	cp -v $^ $@
 
@@ -224,7 +238,7 @@ all-targets: all-targets-abs-dirs all-programs all-txt
 	@true
 
 clean-targets:
-	@rm -Rfv $(abs_exe_dir) $(abs_lib_dir) $(abs_obj_dir) parrot-cga-320x186.raw.ppm.cga salvador-watches-cga-640x200.raw.ppm.cga ny-sky-cga-640x200.raw.ppm.cga billgates-cga-320x200.raw.ppm.cga lolcat-hammahtime-640x348.herc.raw.herc castus-herc-720x348.raw.ppm.herc hotair-ega-640x350x16.stdpal.bmp hotair-ega-640x350x16.cuspal.bmp *.350 *.200 *.240 *.480 sunset-320x200x256.bmp dandelion-320x400x256.bmp temple-320x480x256.bmp temple-320x240x256.bmp
+	@rm -Rfv $(abs_exe_dir) $(abs_lib_dir) $(abs_obj_dir) parrot-cga-320x186.raw.ppm.cga salvador-watches-cga-640x200.raw.ppm.cga ny-sky-cga-640x200.raw.ppm.cga billgates-cga-320x200.raw.ppm.cga lolcat-hammahtime-640x348.herc.raw.herc castus-herc-720x348.raw.ppm.herc hotair-ega-640x350x16.stdpal.bmp hotair-ega-640x350x16.cuspal.bmp *.350 *.200 *.240 *.480 *.350 sunset-320x200x256.bmp dandelion-320x400x256.bmp temple-320x480x256.bmp temple-320x240x256.bmp temple-320x340x256.bmp temple-320x350x256.bmp
 
 endif
 
