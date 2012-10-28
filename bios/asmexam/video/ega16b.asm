@@ -63,6 +63,8 @@ open_ok:	mov	[cs:handle],ax
 		in	al,dx		; reset attribute controller flip-flop
 set_palette:	push	cx
 
+		; FIXME: EGA puts the MSB of each 2-bit R/G/B value LOWEST, then HIGHEST.
+		;        I think the picture looks terrible only because this code got it backwards.
 		lodsb			; load "B"
 		mov	cl,6
 		shr	al,cl		; AL >>= 6

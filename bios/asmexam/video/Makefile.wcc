@@ -28,8 +28,16 @@ all_programs += $(abs_exe_dir)/vga256f.exe
 all_programs += $(abs_exe_dir)/vga256g.exe
 all_programs += $(abs_exe_dir)/vga256h.exe
 all_programs += $(abs_exe_dir)/vga256i.exe
+all_programs += $(abs_exe_dir)/vgaras1.com
+all_programs += $(abs_exe_dir)/egaras1.com
 
 all-programs: $(all_programs)
+
+$(abs_exe_dir)/egaras1.com: egaras1.asm
+	$(NASM) -o $@ -f bin $(NASMFLAGS) $^
+
+$(abs_exe_dir)/vgaras1.com: vgaras1.asm
+	$(NASM) -o $@ -f bin $(NASMFLAGS) $^
 
 $(abs_exe_dir)/mode7.com: mode7.asm
 	$(NASM) -o $@ -f bin $(NASMFLAGS) $^

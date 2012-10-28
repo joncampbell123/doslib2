@@ -36,4 +36,10 @@
    vga256f.exe        Setup VGA 320x400x256             [VGA/SVGA/etc]
    vga256g.exe        Setup VGA 320x240x256             [VGA/SVGA/etc]
    vga256h.exe        Setup VGA 320x480x256             [VGA/SVGA/etc]
+   vgaras1.com        VGA 320x200x256 with raster FX    [VGA/SVGA/etc]
+                      (changing palette registers per
+                      scan line)
+   egaras1.com        EGA 320x200x256 with raster FX    [EGA/VGA/SVGA/etc]
+                      (changing palette registers per
+                      scan line)
 
