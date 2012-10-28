@@ -30,4 +30,10 @@
                       effect.
    vga256a.exe        Setup VGA 320x200x256             [VGA/SVGA/etc]
    vga256b.exe        Setup VGA 320x400x256             [VGA/SVGA/etc]
+   vga256c.exe        Setup VGA 320x200x256             [VGA/SVGA/etc]
+   vga256d.exe        Setup VGA 320x400x256             [VGA/SVGA/etc]
+   vga256e.exe        Setup VGA 320x200x256             [VGA/SVGA/etc]
+   vga256f.exe        Setup VGA 320x400x256             [VGA/SVGA/etc]
+   vga256g.exe        Setup VGA 320x240x256             [VGA/SVGA/etc]
+   vga256h.exe        Setup VGA 320x480x256             [VGA/SVGA/etc]
 
