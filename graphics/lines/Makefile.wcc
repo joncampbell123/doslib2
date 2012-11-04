@@ -1,0 +1,39 @@
+# This is a separate makefile because GNU automake interferes with GNU make conditionals
+ifdef target_subdir
+
+all-targets-abs-dirs: $(abs_exe_dir) $(abs_lib_dir) $(abs_obj_dir)
+
+$(abs_obj_dir)/naive1$(obj_suffix): naive1.c
+ ifeq ($(target_subdir),linux/host)
+	$(CC) $(CFLAGS) -I.. -I../.. -c -o $@ $^
+ else
+	$(WCC) $(WCCFLAGS) -fo=$(abs_obj_dir)/.obj -i=.. -i=../.. $^
+ endif
+endif
+
+$(abs_exe_dir)/naive1$(exe_suffix): $(obj_win32s_compat) $(abs_obj_dir)/naive1$(obj_suffix)
+ifeq ($(target_subdir),linux/host)
+	$(CC) $(LDFLAGS) -o $@ $^
+else
+	@echo option quiet system $(WLINK_SYSTEM) $(WLINKFLAGS) $(WLINK_SEGMENTS) $(foreach x,$(filter %$(obj_suffix),$^),file "$(x)") option map=$(abs_obj_dir)/naive1.map name $@ >$(abs_obj_dir)/naive1.cmd
+	$(WLINK) @$(abs_obj_dir)/naive1.cmd
+	#@rm -f $(abs_obj_dir)/naive1.cmd
+ ifeq ($(TARGET_WINDOWS_WIN386),1)
+	@$(WIN386_EXE_TO_REX_IF_REX) $@
+	@$(WBIND) $@ -q -n
+ endif
+ ifneq ($(WIN16_NE_SETVER),)
+	$(WIN16_NE_SETVER) $@
+ endif
+endif
+
+all-programs: $(all_programs)
+
+all-targets: all-targets-abs-dirs all-programs
+	@true
+
+clean-targets:
+	@rm -Rfv $(abs_exe_dir) $(abs_lib_dir) $(abs_obj_dir)
+
+endif
+

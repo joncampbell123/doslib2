@@ -1,4 +1,4 @@
-SUBDIRS = test windows hw ext dos bios
+SUBDIRS = test windows hw ext dos bios graphics
 ACLOCAL_AMFLAGS = -I m4 -I m4fixed
 
 library_includedir = $(includedir)/doslib2
