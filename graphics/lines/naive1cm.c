@@ -36,7 +36,7 @@ static int clip_line(struct pos2 *out,struct pos2 in[2]) {
 				continue;
 			}
 			else if (out[1].x < 0) {
-				out[1].y -= (int)(m * -out[1].x);
+				out[1].y += (int)(m * -out[1].x);
 				out[1].x = 0;
 				continue;
 			}
@@ -47,7 +47,7 @@ static int clip_line(struct pos2 *out,struct pos2 in[2]) {
 				continue;
 			}
 			else if (out[1].x >= WIDTH) {
-				out[1].y += (int)(m * (out[1].x + 1 - WIDTH));
+				out[1].y -= (int)(m * (out[1].x + 1 - WIDTH));
 				out[1].x = WIDTH-1;
 				continue;
 			}
