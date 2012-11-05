@@ -19,6 +19,7 @@ all_programs += $(abs_exe_dir)/ega16bv.exe
 all_programs += $(abs_exe_dir)/ega16c.exe
 all_programs += $(abs_exe_dir)/ega16d.exe
 all_programs += $(abs_exe_dir)/ega16e.exe
+all_programs += $(abs_exe_dir)/ega16f.exe
 all_programs += $(abs_exe_dir)/vga256a.exe
 all_programs += $(abs_exe_dir)/vga256b.exe
 all_programs += $(abs_exe_dir)/vga256c.exe
@@ -56,6 +57,13 @@ $(abs_exe_dir)/mode0.com: mode0.asm
 
 $(abs_exe_dir)/80text1.com: 80text1.asm
 	$(NASM) -o $@ -f bin $(NASMFLAGS) $^
+
+$(abs_exe_dir)/ega16f.exe: $(abs_obj_dir)/ega16f.obj
+	@echo option quiet system $(WLINK_SYSTEM) $(WLINKFLAGS) $(WLINK_SEGMENTS) $(foreach x,$(filter %$(obj_suffix),$^),file "$(x)") option map=$(abs_obj_dir)/ega16b.map name $@ >$(abs_obj_dir)/ega16f.cmd
+	$(WLINK) @$(abs_obj_dir)/ega16f.cmd
+
+$(abs_obj_dir)/ega16f.obj: ega16f.asm $(abs_exe_dir)/ega35std.350
+	$(NASM) -o $@ -f obj $(NASMFLAGS) $<
 
 $(abs_exe_dir)/ega16e.exe: $(abs_obj_dir)/ega16e.obj
 	@echo option quiet system $(WLINK_SYSTEM) $(WLINKFLAGS) $(WLINK_SEGMENTS) $(foreach x,$(filter %$(obj_suffix),$^),file "$(x)") option map=$(abs_obj_dir)/ega16b.map name $@ >$(abs_obj_dir)/ega16e.cmd
