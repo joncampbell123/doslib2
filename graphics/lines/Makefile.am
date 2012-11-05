@@ -1,6 +1,6 @@
 
 BUILD_dos16r=1
-#BUILD_dos32p=1
+BUILD_dos32p=1
 #BUILD_win16r=1
 #BUILD_win16p=1
 #BUILD_win16b=1
