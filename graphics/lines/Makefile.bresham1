@@ -1,0 +1,211 @@
+
+# NAIVE1 CGA 320x200x4
+#--------------------------------------------------------------------------------
+$(abs_obj_dir)/cga04/bresham1$(obj_suffix): $(common1_dep) $(bresham1_dep) $(cm1cga04_dep)
+	$(WCC) $(WCCFLAGS) -dDRIVER=\"cm1cga04.h\" -fo=$(abs_obj_dir)/cga04/.obj -i=.. -i=../.. bresham1.c
+
+$(abs_exe_dir)/cga04/bresham1$(exe_suffix): $(obj_win32s_compat) $(abs_obj_dir)/cga04/bresham1$(obj_suffix) $(abs_exe_dir)/cga04/dos4gw.exe
+	@echo option quiet system $(WLINK_SYSTEM) $(WLINKFLAGS) $(WLINK_SEGMENTS) $(foreach x,$(filter %$(obj_suffix),$^),file "$(x)") option map=$(abs_obj_dir)/cga04/bresham1.map name $@ >$(abs_obj_dir)/cga04/bresham1.cmd
+	$(WLINK) @$(abs_obj_dir)/cga04/bresham1.cmd
+#--------------------------------------------------------------------------------
+
+# NAIVE1 CGA 640x200x2
+#--------------------------------------------------------------------------------
+$(abs_obj_dir)/cga06/bresham1$(obj_suffix): $(common1_dep) $(bresham1_dep) $(cm1cga06_dep)
+	$(WCC) $(WCCFLAGS) -dDRIVER=\"cm1cga06.h\" -fo=$(abs_obj_dir)/cga06/.obj -i=.. -i=../.. bresham1.c
+
+$(abs_exe_dir)/cga06/bresham1$(exe_suffix): $(obj_win32s_compat) $(abs_obj_dir)/cga06/bresham1$(obj_suffix) $(abs_exe_dir)/cga06/dos4gw.exe
+	@echo option quiet system $(WLINK_SYSTEM) $(WLINKFLAGS) $(WLINK_SEGMENTS) $(foreach x,$(filter %$(obj_suffix),$^),file "$(x)") option map=$(abs_obj_dir)/cga06/bresham1.map name $@ >$(abs_obj_dir)/cga06/bresham1.cmd
+	$(WLINK) @$(abs_obj_dir)/cga06/bresham1.cmd
+#--------------------------------------------------------------------------------
+
+# NAIVE1 EGA 320x200x16
+#--------------------------------------------------------------------------------
+$(abs_obj_dir)/ega0d/bresham1$(obj_suffix): $(common1_dep) $(bresham1_dep) $(cm1ega0d_dep)
+	$(WCC) $(WCCFLAGS) -dDRIVER=\"cm1ega0d.h\" -fo=$(abs_obj_dir)/ega0d/.obj -i=.. -i=../.. bresham1.c
+
+$(abs_exe_dir)/ega0d/bresham1$(exe_suffix): $(obj_win32s_compat) $(abs_obj_dir)/ega0d/bresham1$(obj_suffix) $(abs_exe_dir)/ega0d/dos4gw.exe
+	@echo option quiet system $(WLINK_SYSTEM) $(WLINKFLAGS) $(WLINK_SEGMENTS) $(foreach x,$(filter %$(obj_suffix),$^),file "$(x)") option map=$(abs_obj_dir)/ega0d/bresham1.map name $@ >$(abs_obj_dir)/ega0d/bresham1.cmd
+	$(WLINK) @$(abs_obj_dir)/ega0d/bresham1.cmd
+#--------------------------------------------------------------------------------
+
+# NAIVE1 EGA 320x200x16 with page flipping
+#--------------------------------------------------------------------------------
+$(abs_obj_dir)/ega0dp/bresham1$(obj_suffix): $(common1_dep) $(bresham1_dep) $(cm1ega0dp_dep)
+	$(WCC) $(WCCFLAGS) -dDRIVER=\"cm1ega0dp.h\" -fo=$(abs_obj_dir)/ega0dp/.obj -i=.. -i=../.. bresham1.c
+
+$(abs_exe_dir)/ega0dp/bresham1$(exe_suffix): $(obj_win32s_compat) $(abs_obj_dir)/ega0dp/bresham1$(obj_suffix) $(abs_exe_dir)/ega0dp/dos4gw.exe
+	@echo option quiet system $(WLINK_SYSTEM) $(WLINKFLAGS) $(WLINK_SEGMENTS) $(foreach x,$(filter %$(obj_suffix),$^),file "$(x)") option map=$(abs_obj_dir)/ega0dp/bresham1.map name $@ >$(abs_obj_dir)/ega0dp/bresham1.cmd
+	$(WLINK) @$(abs_obj_dir)/ega0dp/bresham1.cmd
+#--------------------------------------------------------------------------------
+
+# NAIVE1 EGA 640x350x16
+#--------------------------------------------------------------------------------
+$(abs_obj_dir)/ega10/bresham1$(obj_suffix): $(common1_dep) $(bresham1_dep) $(cm1ega10_dep)
+	$(WCC) $(WCCFLAGS) -dDRIVER=\"cm1ega10.h\" -fo=$(abs_obj_dir)/ega10/.obj -i=.. -i=../.. bresham1.c
+
+$(abs_exe_dir)/ega10/bresham1$(exe_suffix): $(obj_win32s_compat) $(abs_obj_dir)/ega10/bresham1$(obj_suffix) $(abs_exe_dir)/ega10/dos4gw.exe
+	@echo option quiet system $(WLINK_SYSTEM) $(WLINKFLAGS) $(WLINK_SEGMENTS) $(foreach x,$(filter %$(obj_suffix),$^),file "$(x)") option map=$(abs_obj_dir)/ega10/bresham1.map name $@ >$(abs_obj_dir)/ega10/bresham1.cmd
+	$(WLINK) @$(abs_obj_dir)/ega10/bresham1.cmd
+#--------------------------------------------------------------------------------
+
+# NAIVE1 EGA 640x350x16 with page flipping
+#--------------------------------------------------------------------------------
+$(abs_obj_dir)/ega10p/bresham1$(obj_suffix): $(common1_dep) $(bresham1_dep) $(cm1ega10p_dep)
+	$(WCC) $(WCCFLAGS) -dDRIVER=\"cm1ega10p.h\" -fo=$(abs_obj_dir)/ega10p/.obj -i=.. -i=../.. bresham1.c
+
+$(abs_exe_dir)/ega10p/bresham1$(exe_suffix): $(obj_win32s_compat) $(abs_obj_dir)/ega10p/bresham1$(obj_suffix) $(abs_exe_dir)/ega10p/dos4gw.exe
+	@echo option quiet system $(WLINK_SYSTEM) $(WLINKFLAGS) $(WLINK_SEGMENTS) $(foreach x,$(filter %$(obj_suffix),$^),file "$(x)") option map=$(abs_obj_dir)/ega10p/bresham1.map name $@ >$(abs_obj_dir)/ega10p/bresham1.cmd
+	$(WLINK) @$(abs_obj_dir)/ega10p/bresham1.cmd
+#--------------------------------------------------------------------------------
+
+# NAIVE1 MCGA 640x480x2
+#--------------------------------------------------------------------------------
+$(abs_obj_dir)/mcga11/bresham1$(obj_suffix): $(common1_dep) $(bresham1_dep) $(cm1mcga11_dep)
+	$(WCC) $(WCCFLAGS) -dDRIVER=\"cm1mcga11.h\" -fo=$(abs_obj_dir)/mcga11/.obj -i=.. -i=../.. bresham1.c
+
+$(abs_exe_dir)/mcga11/bresham1$(exe_suffix): $(obj_win32s_compat) $(abs_obj_dir)/mcga11/bresham1$(obj_suffix) $(abs_exe_dir)/mcga11/dos4gw.exe
+	@echo option quiet system $(WLINK_SYSTEM) $(WLINKFLAGS) $(WLINK_SEGMENTS) $(foreach x,$(filter %$(obj_suffix),$^),file "$(x)") option map=$(abs_obj_dir)/mcga11/bresham1.map name $@ >$(abs_obj_dir)/mcga11/bresham1.cmd
+	$(WLINK) @$(abs_obj_dir)/mcga11/bresham1.cmd
+#--------------------------------------------------------------------------------
+
+# NAIVE1 VGA 640x480x16
+#--------------------------------------------------------------------------------
+$(abs_obj_dir)/vga12/bresham1$(obj_suffix): $(common1_dep) $(bresham1_dep) $(cm1vga12_dep)
+	$(WCC) $(WCCFLAGS) -dDRIVER=\"cm1vga12.h\" -fo=$(abs_obj_dir)/vga12/.obj -i=.. -i=../.. bresham1.c
+
+$(abs_exe_dir)/vga12/bresham1$(exe_suffix): $(obj_win32s_compat) $(abs_obj_dir)/vga12/bresham1$(obj_suffix) $(abs_exe_dir)/vga12/dos4gw.exe
+	@echo option quiet system $(WLINK_SYSTEM) $(WLINKFLAGS) $(WLINK_SEGMENTS) $(foreach x,$(filter %$(obj_suffix),$^),file "$(x)") option map=$(abs_obj_dir)/vga12/bresham1.map name $@ >$(abs_obj_dir)/vga12/bresham1.cmd
+	$(WLINK) @$(abs_obj_dir)/vga12/bresham1.cmd
+#--------------------------------------------------------------------------------
+
+# NAIVE1 VGA 640x480x4 (16-color mode, 4 planes used in groups of 2 to simulate page flipping)
+#--------------------------------------------------------------------------------
+$(abs_obj_dir)/vga12bp/bresham1$(obj_suffix): $(common1_dep) $(bresham1_dep) $(cm1vga12bp_dep)
+	$(WCC) $(WCCFLAGS) -dDRIVER=\"cm1vga12bp.h\" -fo=$(abs_obj_dir)/vga12bp/.obj -i=.. -i=../.. bresham1.c
+
+$(abs_exe_dir)/vga12bp/bresham1$(exe_suffix): $(obj_win32s_compat) $(abs_obj_dir)/vga12bp/bresham1$(obj_suffix) $(abs_exe_dir)/vga12bp/dos4gw.exe
+	@echo option quiet system $(WLINK_SYSTEM) $(WLINKFLAGS) $(WLINK_SEGMENTS) $(foreach x,$(filter %$(obj_suffix),$^),file "$(x)") option map=$(abs_obj_dir)/vga12bp/bresham1.map name $@ >$(abs_obj_dir)/vga12bp/bresham1.cmd
+	$(WLINK) @$(abs_obj_dir)/vga12bp/bresham1.cmd
+#--------------------------------------------------------------------------------
+
+# NAIVE1 VGA 320x200x256
+#--------------------------------------------------------------------------------
+$(abs_obj_dir)/vga13/bresham1$(obj_suffix): $(common1_dep) $(bresham1_dep) $(cm1vga13_dep)
+	$(WCC) $(WCCFLAGS) -dDRIVER=\"cm1vga13.h\" -fo=$(abs_obj_dir)/vga13/.obj -i=.. -i=../.. bresham1.c
+
+$(abs_exe_dir)/vga13/bresham1$(exe_suffix): $(obj_win32s_compat) $(abs_obj_dir)/vga13/bresham1$(obj_suffix) $(abs_exe_dir)/vga13/dos4gw.exe
+	@echo option quiet system $(WLINK_SYSTEM) $(WLINKFLAGS) $(WLINK_SEGMENTS) $(foreach x,$(filter %$(obj_suffix),$^),file "$(x)") option map=$(abs_obj_dir)/vga13/bresham1.map name $@ >$(abs_obj_dir)/vga13/bresham1.cmd
+	$(WLINK) @$(abs_obj_dir)/vga13/bresham1.cmd
+#--------------------------------------------------------------------------------
+
+# NAIVE1 VGA 320x200x256 mode X
+#--------------------------------------------------------------------------------
+$(abs_obj_dir)/vga13x/bresham1$(obj_suffix): $(common1_dep) $(bresham1_dep) $(cm1vga13x_dep)
+	$(WCC) $(WCCFLAGS) -dDRIVER=\"cm1vga13x.h\" -fo=$(abs_obj_dir)/vga13x/.obj -i=.. -i=../.. bresham1.c
+
+$(abs_exe_dir)/vga13x/bresham1$(exe_suffix): $(obj_win32s_compat) $(abs_obj_dir)/vga13x/bresham1$(obj_suffix) $(abs_exe_dir)/vga13x/dos4gw.exe
+	@echo option quiet system $(WLINK_SYSTEM) $(WLINKFLAGS) $(WLINK_SEGMENTS) $(foreach x,$(filter %$(obj_suffix),$^),file "$(x)") option map=$(abs_obj_dir)/vga13x/bresham1.map name $@ >$(abs_obj_dir)/vga13x/bresham1.cmd
+	$(WLINK) @$(abs_obj_dir)/vga13x/bresham1.cmd
+#--------------------------------------------------------------------------------
+
+# NAIVE1 VGA 320x200x256 mode X with page flipping
+#--------------------------------------------------------------------------------
+$(abs_obj_dir)/vga13xp/bresham1$(obj_suffix): $(common1_dep) $(bresham1_dep) $(cm1vga13xp_dep)
+	$(WCC) $(WCCFLAGS) -dDRIVER=\"cm1vga13xp.h\" -fo=$(abs_obj_dir)/vga13xp/.obj -i=.. -i=../.. bresham1.c
+
+$(abs_exe_dir)/vga13xp/bresham1$(exe_suffix): $(obj_win32s_compat) $(abs_obj_dir)/vga13xp/bresham1$(obj_suffix) $(abs_exe_dir)/vga13xp/dos4gw.exe
+	@echo option quiet system $(WLINK_SYSTEM) $(WLINKFLAGS) $(WLINK_SEGMENTS) $(foreach x,$(filter %$(obj_suffix),$^),file "$(x)") option map=$(abs_obj_dir)/vga13xp/bresham1.map name $@ >$(abs_obj_dir)/vga13xp/bresham1.cmd
+	$(WLINK) @$(abs_obj_dir)/vga13xp/bresham1.cmd
+#--------------------------------------------------------------------------------
+
+# NAIVE1 SVGA 800x600x16
+#--------------------------------------------------------------------------------
+$(abs_obj_dir)/svga6a/bresham1$(obj_suffix): $(common1_dep) $(bresham1_dep) $(cm1svga6a_dep)
+	$(WCC) $(WCCFLAGS) -dDRIVER=\"cm1svga6a.h\" -fo=$(abs_obj_dir)/svga6a/.obj -i=.. -i=../.. bresham1.c
+
+$(abs_exe_dir)/svga6a/bresham1$(exe_suffix): $(obj_win32s_compat) $(abs_obj_dir)/svga6a/bresham1$(obj_suffix) $(abs_exe_dir)/svga6a/dos4gw.exe
+	@echo option quiet system $(WLINK_SYSTEM) $(WLINKFLAGS) $(WLINK_SEGMENTS) $(foreach x,$(filter %$(obj_suffix),$^),file "$(x)") option map=$(abs_obj_dir)/svga6a/bresham1.map name $@ >$(abs_obj_dir)/svga6a/bresham1.cmd
+	$(WLINK) @$(abs_obj_dir)/svga6a/bresham1.cmd
+#--------------------------------------------------------------------------------
+
+# NAIVE1 SVGA 640x480x256 Tseng ET3000/ET4000
+#--------------------------------------------------------------------------------
+$(abs_obj_dir)/tseng2e/bresham1$(obj_suffix): $(common1_dep) $(bresham1_dep) $(cm1tseng2e_dep)
+	$(WCC) $(WCCFLAGS) -dDRIVER=\"cm1tseng2e.h\" -fo=$(abs_obj_dir)/tseng2e/.obj -i=.. -i=../.. bresham1.c
+
+$(abs_exe_dir)/tseng2e/bresham1$(exe_suffix): $(obj_win32s_compat) $(abs_obj_dir)/tseng2e/bresham1$(obj_suffix) $(abs_exe_dir)/tseng2e/dos4gw.exe
+	@echo option quiet system $(WLINK_SYSTEM) $(WLINKFLAGS) $(WLINK_SEGMENTS) $(foreach x,$(filter %$(obj_suffix),$^),file "$(x)") option map=$(abs_obj_dir)/tseng2e/bresham1.map name $@ >$(abs_obj_dir)/tseng2e/bresham1.cmd
+	$(WLINK) @$(abs_obj_dir)/tseng2e/bresham1.cmd
+#--------------------------------------------------------------------------------
+
+# NAIVE1 SVGA 800x600x256 Tseng ET3000/ET4000
+#--------------------------------------------------------------------------------
+$(abs_obj_dir)/tseng30/bresham1$(obj_suffix): $(common1_dep) $(bresham1_dep) $(cm1tseng30_dep)
+	$(WCC) $(WCCFLAGS) -dDRIVER=\"cm1tseng30.h\" -fo=$(abs_obj_dir)/tseng30/.obj -i=.. -i=../.. bresham1.c
+
+$(abs_exe_dir)/tseng30/bresham1$(exe_suffix): $(obj_win32s_compat) $(abs_obj_dir)/tseng30/bresham1$(obj_suffix) $(abs_exe_dir)/tseng30/dos4gw.exe
+	@echo option quiet system $(WLINK_SYSTEM) $(WLINKFLAGS) $(WLINK_SEGMENTS) $(foreach x,$(filter %$(obj_suffix),$^),file "$(x)") option map=$(abs_obj_dir)/tseng30/bresham1.map name $@ >$(abs_obj_dir)/tseng30/bresham1.cmd
+	$(WLINK) @$(abs_obj_dir)/tseng30/bresham1.cmd
+#--------------------------------------------------------------------------------
+
+# NAIVE1 SVGA 1024x768x256 Tseng ET3000/ET4000
+#--------------------------------------------------------------------------------
+$(abs_obj_dir)/tseng38/bresham1$(obj_suffix): $(common1_dep) $(bresham1_dep) $(cm1tseng38_dep)
+	$(WCC) $(WCCFLAGS) -dDRIVER=\"cm1tseng38.h\" -fo=$(abs_obj_dir)/tseng38/.obj -i=.. -i=../.. bresham1.c
+
+$(abs_exe_dir)/tseng38/bresham1$(exe_suffix): $(obj_win32s_compat) $(abs_obj_dir)/tseng38/bresham1$(obj_suffix) $(abs_exe_dir)/tseng38/dos4gw.exe
+	@echo option quiet system $(WLINK_SYSTEM) $(WLINKFLAGS) $(WLINK_SEGMENTS) $(foreach x,$(filter %$(obj_suffix),$^),file "$(x)") option map=$(abs_obj_dir)/tseng38/bresham1.map name $@ >$(abs_obj_dir)/tseng38/bresham1.cmd
+	$(WLINK) @$(abs_obj_dir)/tseng38/bresham1.cmd
+#--------------------------------------------------------------------------------
+
+# NAIVE1 SVGA 640x480x256 VESA BIOS
+#--------------------------------------------------------------------------------
+$(abs_obj_dir)/vbe8_640/bresham1$(obj_suffix): $(common1_dep) $(bresham1_dep) $(cm1vbe8_640_dep)
+	$(WCC) $(WCCFLAGS) -dDRIVER=\"cm1vbe8_640.h\" -fo=$(abs_obj_dir)/vbe8_640/.obj -i=.. -i=../.. bresham1.c
+
+$(abs_exe_dir)/vbe8_640/bresham1$(exe_suffix): $(obj_win32s_compat) $(abs_obj_dir)/vbe8_640/bresham1$(obj_suffix) $(abs_exe_dir)/vbe8_640/dos4gw.exe
+	@echo option quiet system $(WLINK_SYSTEM) $(WLINKFLAGS) $(WLINK_SEGMENTS) $(foreach x,$(filter %$(obj_suffix),$^),file "$(x)") option map=$(abs_obj_dir)/vbe8_640/bresham1.map name $@ >$(abs_obj_dir)/vbe8_640/bresham1.cmd
+	$(WLINK) @$(abs_obj_dir)/vbe8_640/bresham1.cmd
+#--------------------------------------------------------------------------------
+
+# NAIVE1 SVGA 1024x768x256 VESA BIOS
+#--------------------------------------------------------------------------------
+$(abs_obj_dir)/vbe8_1k/bresham1$(obj_suffix): $(common1_dep) $(bresham1_dep) $(cm1vbe8_1k_dep)
+	$(WCC) $(WCCFLAGS) -dDRIVER=\"cm1vbe8_1k.h\" -fo=$(abs_obj_dir)/vbe8_1k/.obj -i=.. -i=../.. bresham1.c
+
+$(abs_exe_dir)/vbe8_1k/bresham1$(exe_suffix): $(obj_win32s_compat) $(abs_obj_dir)/vbe8_1k/bresham1$(obj_suffix) $(abs_exe_dir)/vbe8_1k/dos4gw.exe
+	@echo option quiet system $(WLINK_SYSTEM) $(WLINKFLAGS) $(WLINK_SEGMENTS) $(foreach x,$(filter %$(obj_suffix),$^),file "$(x)") option map=$(abs_obj_dir)/vbe8_1k/bresham1.map name $@ >$(abs_obj_dir)/vbe8_1k/bresham1.cmd
+	$(WLINK) @$(abs_obj_dir)/vbe8_1k/bresham1.cmd
+#--------------------------------------------------------------------------------
+
+# NAIVE1 SVGA 640x480x16-bit VESA BIOS
+#--------------------------------------------------------------------------------
+$(abs_obj_dir)/vbe16640/bresham1$(obj_suffix): $(common1_dep) $(bresham1_dep) $(cm1vbe16640_dep)
+	$(WCC) $(WCCFLAGS) -dDRIVER=\"cm1vbe16640.h\" -fo=$(abs_obj_dir)/vbe16640/.obj -i=.. -i=../.. bresham1.c
+
+$(abs_exe_dir)/vbe16640/bresham1$(exe_suffix): $(obj_win32s_compat) $(abs_obj_dir)/vbe16640/bresham1$(obj_suffix) $(abs_exe_dir)/vbe16640/dos4gw.exe
+	@echo option quiet system $(WLINK_SYSTEM) $(WLINKFLAGS) $(WLINK_SEGMENTS) $(foreach x,$(filter %$(obj_suffix),$^),file "$(x)") option map=$(abs_obj_dir)/vbe16640/bresham1.map name $@ >$(abs_obj_dir)/vbe16640/bresham1.cmd
+	$(WLINK) @$(abs_obj_dir)/vbe16640/bresham1.cmd
+#--------------------------------------------------------------------------------
+
+# NAIVE1 SVGA 640x480x256 Paradise
+#--------------------------------------------------------------------------------
+$(abs_obj_dir)/paradi5f/bresham1$(obj_suffix): $(common1_dep) $(bresham1_dep) $(cm1paradi5f_dep)
+	$(WCC) $(WCCFLAGS) -dDRIVER=\"cm1paradi5f.h\" -fo=$(abs_obj_dir)/paradi5f/.obj -i=.. -i=../.. bresham1.c
+
+$(abs_exe_dir)/paradi5f/bresham1$(exe_suffix): $(obj_win32s_compat) $(abs_obj_dir)/paradi5f/bresham1$(obj_suffix) $(abs_exe_dir)/paradi5f/dos4gw.exe
+	@echo option quiet system $(WLINK_SYSTEM) $(WLINKFLAGS) $(WLINK_SEGMENTS) $(foreach x,$(filter %$(obj_suffix),$^),file "$(x)") option map=$(abs_obj_dir)/paradi5f/bresham1.map name $@ >$(abs_obj_dir)/paradi5f/bresham1.cmd
+	$(WLINK) @$(abs_obj_dir)/paradi5f/bresham1.cmd
+#--------------------------------------------------------------------------------
+
+# NAIVE1 SVGA 640x480x256 S3 + VESA BIOS
+#--------------------------------------------------------------------------------
+$(abs_obj_dir)/s3_640/bresham1$(obj_suffix): $(common1_dep) $(bresham1_dep) $(cm1s3_640_dep)
+	$(WCC) $(WCCFLAGS) -dDRIVER=\"cm1s3_640.h\" -fo=$(abs_obj_dir)/s3_640/.obj -i=.. -i=../.. bresham1.c
+
+$(abs_exe_dir)/s3_640/bresham1$(exe_suffix): $(obj_win32s_compat) $(abs_obj_dir)/s3_640/bresham1$(obj_suffix) $(abs_exe_dir)/s3_640/dos4gw.exe
+	@echo option quiet system $(WLINK_SYSTEM) $(WLINKFLAGS) $(WLINK_SEGMENTS) $(foreach x,$(filter %$(obj_suffix),$^),file "$(x)") option map=$(abs_obj_dir)/s3_640/bresham1.map name $@ >$(abs_obj_dir)/s3_640/bresham1.cmd
+	$(WLINK) @$(abs_obj_dir)/s3_640/bresham1.cmd
+#--------------------------------------------------------------------------------
+
