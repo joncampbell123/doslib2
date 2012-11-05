@@ -28,7 +28,7 @@ static void clear_screen() {
 #if TARGET_BITS == 16
 	_fmemset((unsigned char far*)VRAM,0,16384);
 #else
-	memset((unsigned char*)VRAM,0,80*16384);
+	memset((unsigned char*)VRAM,0,16384);
 #endif
 }
 
