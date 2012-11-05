@@ -2,6 +2,8 @@
 #define WIDTH 640
 #define HEIGHT 350
 
+#define pageflip()
+
 #if TARGET_BITS == 16
 static volatile unsigned char far *VRAM = MK_FP(0xA000,0x0000);
 #else
@@ -29,9 +31,9 @@ static void clear_screen() {
 	outp(0x3CF,0xFF);
 
 #if TARGET_BITS == 16
-	_fmemset((unsigned char far*)VRAM,0,80*480);
+	_fmemset((unsigned char far*)VRAM,0,80*350);
 #else
-	memset((unsigned char*)VRAM,0,80*480);
+	memset((unsigned char*)VRAM,0,80*350);
 #endif
 }
 

@@ -2,6 +2,8 @@
 #define WIDTH 320
 #define HEIGHT 200
 
+#define pageflip()
+
 #if TARGET_BITS == 16
 static unsigned char far *VRAM = MK_FP(0xA000,0x0000);
 #else

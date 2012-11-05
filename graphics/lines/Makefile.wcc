@@ -6,9 +6,80 @@ all-targets-abs-dirs: $(abs_exe_dir) $(abs_lib_dir) $(abs_obj_dir)
 common1_dep=common1.h common1m.c
 naive1_dep=naive1.c naive1cm.c
 cm1vga13_dep=cm1vga13.h
+cm1vga13x_dep=cm1vga13x.h
 cm1vga12_dep=cm1vga12.h
+cm1vga12bp_dep=cm1vga12bp.h
 cm1mcga11_dep=cm1mcga11.h
 cm1ega10_dep=cm1ega10.h
+cm1ega10p_dep=cm1ega10p.h
+cm1ega0d_dep=cm1ega0d.h
+cm1ega0dp_dep=cm1ega0dp.h
+cm1cga06_dep=cm1cga06.h
+cm1cga04_dep=cm1cga04.h
+
+# NAIVE1 CGA 320x200x4
+#--------------------------------------------------------------------------------
+$(abs_obj_dir)/cga04/naive1$(obj_suffix): $(common1_dep) $(naive1_dep) $(cm1cga04_dep)
+	$(WCC) $(WCCFLAGS) -dDRIVER=\"cm1cga04.h\" -fo=$(abs_obj_dir)/cga04/.obj -i=.. -i=../.. naive1.c
+
+$(abs_exe_dir)/cga04/naive1$(exe_suffix): $(obj_win32s_compat) $(abs_obj_dir)/cga04/naive1$(obj_suffix) $(abs_exe_dir)/cga04/dos4gw.exe
+	@echo option quiet system $(WLINK_SYSTEM) $(WLINKFLAGS) $(WLINK_SEGMENTS) $(foreach x,$(filter %$(obj_suffix),$^),file "$(x)") option map=$(abs_obj_dir)/cga04/naive1.map name $@ >$(abs_obj_dir)/cga04/naive1.cmd
+	$(WLINK) @$(abs_obj_dir)/cga04/naive1.cmd
+
+$(abs_exe_dir)/cga04/dos4gw.exe:
+	cp -vn ../../dos4gw.dat $(abs_exe_dir)/cga04/dos4gw.exe
+
+$(abs_exe_dir)/cga04 $(abs_obj_dir)/cga04:
+	mkdir -p $(abs_obj_dir)/cga04 $(abs_exe_dir)/cga04
+#--------------------------------------------------------------------------------
+
+# NAIVE1 CGA 640x200x2
+#--------------------------------------------------------------------------------
+$(abs_obj_dir)/cga06/naive1$(obj_suffix): $(common1_dep) $(naive1_dep) $(cm1cga06_dep)
+	$(WCC) $(WCCFLAGS) -dDRIVER=\"cm1cga06.h\" -fo=$(abs_obj_dir)/cga06/.obj -i=.. -i=../.. naive1.c
+
+$(abs_exe_dir)/cga06/naive1$(exe_suffix): $(obj_win32s_compat) $(abs_obj_dir)/cga06/naive1$(obj_suffix) $(abs_exe_dir)/cga06/dos4gw.exe
+	@echo option quiet system $(WLINK_SYSTEM) $(WLINKFLAGS) $(WLINK_SEGMENTS) $(foreach x,$(filter %$(obj_suffix),$^),file "$(x)") option map=$(abs_obj_dir)/cga06/naive1.map name $@ >$(abs_obj_dir)/cga06/naive1.cmd
+	$(WLINK) @$(abs_obj_dir)/cga06/naive1.cmd
+
+$(abs_exe_dir)/cga06/dos4gw.exe:
+	cp -vn ../../dos4gw.dat $(abs_exe_dir)/cga06/dos4gw.exe
+
+$(abs_exe_dir)/cga06 $(abs_obj_dir)/cga06:
+	mkdir -p $(abs_obj_dir)/cga06 $(abs_exe_dir)/cga06
+#--------------------------------------------------------------------------------
+
+# NAIVE1 EGA 320x200x16
+#--------------------------------------------------------------------------------
+$(abs_obj_dir)/ega0d/naive1$(obj_suffix): $(common1_dep) $(naive1_dep) $(cm1ega0d_dep)
+	$(WCC) $(WCCFLAGS) -dDRIVER=\"cm1ega0d.h\" -fo=$(abs_obj_dir)/ega0d/.obj -i=.. -i=../.. naive1.c
+
+$(abs_exe_dir)/ega0d/naive1$(exe_suffix): $(obj_win32s_compat) $(abs_obj_dir)/ega0d/naive1$(obj_suffix) $(abs_exe_dir)/ega0d/dos4gw.exe
+	@echo option quiet system $(WLINK_SYSTEM) $(WLINKFLAGS) $(WLINK_SEGMENTS) $(foreach x,$(filter %$(obj_suffix),$^),file "$(x)") option map=$(abs_obj_dir)/ega0d/naive1.map name $@ >$(abs_obj_dir)/ega0d/naive1.cmd
+	$(WLINK) @$(abs_obj_dir)/ega0d/naive1.cmd
+
+$(abs_exe_dir)/ega0d/dos4gw.exe:
+	cp -vn ../../dos4gw.dat $(abs_exe_dir)/ega0d/dos4gw.exe
+
+$(abs_exe_dir)/ega0d $(abs_obj_dir)/ega0d:
+	mkdir -p $(abs_obj_dir)/ega0d $(abs_exe_dir)/ega0d
+#--------------------------------------------------------------------------------
+
+# NAIVE1 EGA 320x200x16 with page flipping
+#--------------------------------------------------------------------------------
+$(abs_obj_dir)/ega0dp/naive1$(obj_suffix): $(common1_dep) $(naive1_dep) $(cm1ega0dp_dep)
+	$(WCC) $(WCCFLAGS) -dDRIVER=\"cm1ega0dp.h\" -fo=$(abs_obj_dir)/ega0dp/.obj -i=.. -i=../.. naive1.c
+
+$(abs_exe_dir)/ega0dp/naive1$(exe_suffix): $(obj_win32s_compat) $(abs_obj_dir)/ega0dp/naive1$(obj_suffix) $(abs_exe_dir)/ega0dp/dos4gw.exe
+	@echo option quiet system $(WLINK_SYSTEM) $(WLINKFLAGS) $(WLINK_SEGMENTS) $(foreach x,$(filter %$(obj_suffix),$^),file "$(x)") option map=$(abs_obj_dir)/ega0dp/naive1.map name $@ >$(abs_obj_dir)/ega0dp/naive1.cmd
+	$(WLINK) @$(abs_obj_dir)/ega0dp/naive1.cmd
+
+$(abs_exe_dir)/ega0dp/dos4gw.exe:
+	cp -vn ../../dos4gw.dat $(abs_exe_dir)/ega0dp/dos4gw.exe
+
+$(abs_exe_dir)/ega0dp $(abs_obj_dir)/ega0dp:
+	mkdir -p $(abs_obj_dir)/ega0dp $(abs_exe_dir)/ega0dp
+#--------------------------------------------------------------------------------
 
 # NAIVE1 EGA 640x350x16
 #--------------------------------------------------------------------------------
@@ -24,6 +95,22 @@ $(abs_exe_dir)/ega10/dos4gw.exe:
 
 $(abs_exe_dir)/ega10 $(abs_obj_dir)/ega10:
 	mkdir -p $(abs_obj_dir)/ega10 $(abs_exe_dir)/ega10
+#--------------------------------------------------------------------------------
+
+# NAIVE1 EGA 640x350x16 with page flipping
+#--------------------------------------------------------------------------------
+$(abs_obj_dir)/ega10p/naive1$(obj_suffix): $(common1_dep) $(naive1_dep) $(cm1ega10p_dep)
+	$(WCC) $(WCCFLAGS) -dDRIVER=\"cm1ega10p.h\" -fo=$(abs_obj_dir)/ega10p/.obj -i=.. -i=../.. naive1.c
+
+$(abs_exe_dir)/ega10p/naive1$(exe_suffix): $(obj_win32s_compat) $(abs_obj_dir)/ega10p/naive1$(obj_suffix) $(abs_exe_dir)/ega10p/dos4gw.exe
+	@echo option quiet system $(WLINK_SYSTEM) $(WLINKFLAGS) $(WLINK_SEGMENTS) $(foreach x,$(filter %$(obj_suffix),$^),file "$(x)") option map=$(abs_obj_dir)/ega10p/naive1.map name $@ >$(abs_obj_dir)/ega10p/naive1.cmd
+	$(WLINK) @$(abs_obj_dir)/ega10p/naive1.cmd
+
+$(abs_exe_dir)/ega10p/dos4gw.exe:
+	cp -vn ../../dos4gw.dat $(abs_exe_dir)/ega10p/dos4gw.exe
+
+$(abs_exe_dir)/ega10p $(abs_obj_dir)/ega10p:
+	mkdir -p $(abs_obj_dir)/ega10p $(abs_exe_dir)/ega10p
 #--------------------------------------------------------------------------------
 
 # NAIVE1 MCGA 640x480x2
@@ -58,6 +145,22 @@ $(abs_exe_dir)/vga12 $(abs_obj_dir)/vga12:
 	mkdir -p $(abs_obj_dir)/vga12 $(abs_exe_dir)/vga12
 #--------------------------------------------------------------------------------
 
+# NAIVE1 VGA 640x480x4 (16-color mode, 4 planes used in groups of 2 to simulate page flipping)
+#--------------------------------------------------------------------------------
+$(abs_obj_dir)/vga12bp/naive1$(obj_suffix): $(common1_dep) $(naive1_dep) $(cm1vga12bp_dep)
+	$(WCC) $(WCCFLAGS) -dDRIVER=\"cm1vga12bp.h\" -fo=$(abs_obj_dir)/vga12bp/.obj -i=.. -i=../.. naive1.c
+
+$(abs_exe_dir)/vga12bp/naive1$(exe_suffix): $(obj_win32s_compat) $(abs_obj_dir)/vga12bp/naive1$(obj_suffix) $(abs_exe_dir)/vga12bp/dos4gw.exe
+	@echo option quiet system $(WLINK_SYSTEM) $(WLINKFLAGS) $(WLINK_SEGMENTS) $(foreach x,$(filter %$(obj_suffix),$^),file "$(x)") option map=$(abs_obj_dir)/vga12bp/naive1.map name $@ >$(abs_obj_dir)/vga12bp/naive1.cmd
+	$(WLINK) @$(abs_obj_dir)/vga12bp/naive1.cmd
+
+$(abs_exe_dir)/vga12bp/dos4gw.exe:
+	cp -vn ../../dos4gw.dat $(abs_exe_dir)/vga12bp/dos4gw.exe
+
+$(abs_exe_dir)/vga12bp $(abs_obj_dir)/vga12bp:
+	mkdir -p $(abs_obj_dir)/vga12bp $(abs_exe_dir)/vga12bp
+#--------------------------------------------------------------------------------
+
 # NAIVE1 VGA 320x200x256
 #--------------------------------------------------------------------------------
 $(abs_obj_dir)/vga13/naive1$(obj_suffix): $(common1_dep) $(naive1_dep) $(cm1vga13_dep)
@@ -74,8 +177,40 @@ $(abs_exe_dir)/vga13 $(abs_obj_dir)/vga13:
 	mkdir -p $(abs_obj_dir)/vga13 $(abs_exe_dir)/vga13
 #--------------------------------------------------------------------------------
 
-all-programs: $(foreach dirn,$(abs_obj_dir) $(abs_exe_dir),$(foreach videohw,ega10 mcga11 vga12 vga13,$(dirn)/$(videohw))) \
-	$(foreach videohw,ega10 mcga11 vga12 vga13,$(abs_exe_dir)/$(videohw)/naive1$(exe_suffix))
+# NAIVE1 VGA 320x200x256 mode X
+#--------------------------------------------------------------------------------
+$(abs_obj_dir)/vga13x/naive1$(obj_suffix): $(common1_dep) $(naive1_dep) $(cm1vga13x_dep)
+	$(WCC) $(WCCFLAGS) -dDRIVER=\"cm1vga13x.h\" -fo=$(abs_obj_dir)/vga13x/.obj -i=.. -i=../.. naive1.c
+
+$(abs_exe_dir)/vga13x/naive1$(exe_suffix): $(obj_win32s_compat) $(abs_obj_dir)/vga13x/naive1$(obj_suffix) $(abs_exe_dir)/vga13x/dos4gw.exe
+	@echo option quiet system $(WLINK_SYSTEM) $(WLINKFLAGS) $(WLINK_SEGMENTS) $(foreach x,$(filter %$(obj_suffix),$^),file "$(x)") option map=$(abs_obj_dir)/vga13x/naive1.map name $@ >$(abs_obj_dir)/vga13x/naive1.cmd
+	$(WLINK) @$(abs_obj_dir)/vga13x/naive1.cmd
+
+$(abs_exe_dir)/vga13x/dos4gw.exe:
+	cp -vn ../../dos4gw.dat $(abs_exe_dir)/vga13x/dos4gw.exe
+
+$(abs_exe_dir)/vga13x $(abs_obj_dir)/vga13x:
+	mkdir -p $(abs_obj_dir)/vga13x $(abs_exe_dir)/vga13x
+#--------------------------------------------------------------------------------
+
+# NAIVE1 VGA 320x200x256 mode X with page flipping
+#--------------------------------------------------------------------------------
+$(abs_obj_dir)/vga13xp/naive1$(obj_suffix): $(common1_dep) $(naive1_dep) $(cm1vga13xp_dep)
+	$(WCC) $(WCCFLAGS) -dDRIVER=\"cm1vga13xp.h\" -fo=$(abs_obj_dir)/vga13xp/.obj -i=.. -i=../.. naive1.c
+
+$(abs_exe_dir)/vga13xp/naive1$(exe_suffix): $(obj_win32s_compat) $(abs_obj_dir)/vga13xp/naive1$(obj_suffix) $(abs_exe_dir)/vga13xp/dos4gw.exe
+	@echo option quiet system $(WLINK_SYSTEM) $(WLINKFLAGS) $(WLINK_SEGMENTS) $(foreach x,$(filter %$(obj_suffix),$^),file "$(x)") option map=$(abs_obj_dir)/vga13xp/naive1.map name $@ >$(abs_obj_dir)/vga13xp/naive1.cmd
+	$(WLINK) @$(abs_obj_dir)/vga13xp/naive1.cmd
+
+$(abs_exe_dir)/vga13xp/dos4gw.exe:
+	cp -vn ../../dos4gw.dat $(abs_exe_dir)/vga13xp/dos4gw.exe
+
+$(abs_exe_dir)/vga13xp $(abs_obj_dir)/vga13xp:
+	mkdir -p $(abs_obj_dir)/vga13xp $(abs_exe_dir)/vga13xp
+#--------------------------------------------------------------------------------
+
+all-programs: $(foreach dirn,$(abs_obj_dir) $(abs_exe_dir),$(foreach videohw,cga04 cga06 ega0d ega0dp ega10 ega10p mcga11 vga12 vga12bp vga13 vga13x vga13xp,$(dirn)/$(videohw))) \
+	$(foreach videohw,cga04 cga06 ega0d ega0dp ega10 ega10p mcga11 vga12 vga12bp vga13 vga13x vga13xp,$(abs_exe_dir)/$(videohw)/naive1$(exe_suffix))
 
 all-targets: all-targets-abs-dirs all-programs
 	@true
