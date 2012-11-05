@@ -16,6 +16,13 @@ cm1ega0d_dep=cm1ega0d.h
 cm1ega0dp_dep=cm1ega0dp.h
 cm1cga06_dep=cm1cga06.h
 cm1cga04_dep=cm1cga04.h
+cm1svga6a_dep=cm1svga6a.h
+cm1tseng2e_dep=cm1tseng2e.h cmtseng.h
+cm1tseng30_dep=cm1tseng30.h cmtseng.h
+cm1tseng38_dep=cm1tseng38.h cmtseng.h
+cm1vbe8_640_dep=cm1vbe8_640.h
+cm1vbe16640_dep=cm1vbe16640.h
+cm1vbe8_1k_dep=cm1vbe8_1k.h
 
 # NAIVE1 CGA 320x200x4
 #--------------------------------------------------------------------------------
@@ -209,8 +216,120 @@ $(abs_exe_dir)/vga13xp $(abs_obj_dir)/vga13xp:
 	mkdir -p $(abs_obj_dir)/vga13xp $(abs_exe_dir)/vga13xp
 #--------------------------------------------------------------------------------
 
-all-programs: $(foreach dirn,$(abs_obj_dir) $(abs_exe_dir),$(foreach videohw,cga04 cga06 ega0d ega0dp ega10 ega10p mcga11 vga12 vga12bp vga13 vga13x vga13xp,$(dirn)/$(videohw))) \
-	$(foreach videohw,cga04 cga06 ega0d ega0dp ega10 ega10p mcga11 vga12 vga12bp vga13 vga13x vga13xp,$(abs_exe_dir)/$(videohw)/naive1$(exe_suffix))
+# NAIVE1 SVGA 800x600x16
+#--------------------------------------------------------------------------------
+$(abs_obj_dir)/svga6a/naive1$(obj_suffix): $(common1_dep) $(naive1_dep) $(cm1svga6a_dep)
+	$(WCC) $(WCCFLAGS) -dDRIVER=\"cm1svga6a.h\" -fo=$(abs_obj_dir)/svga6a/.obj -i=.. -i=../.. naive1.c
+
+$(abs_exe_dir)/svga6a/naive1$(exe_suffix): $(obj_win32s_compat) $(abs_obj_dir)/svga6a/naive1$(obj_suffix) $(abs_exe_dir)/svga6a/dos4gw.exe
+	@echo option quiet system $(WLINK_SYSTEM) $(WLINKFLAGS) $(WLINK_SEGMENTS) $(foreach x,$(filter %$(obj_suffix),$^),file "$(x)") option map=$(abs_obj_dir)/svga6a/naive1.map name $@ >$(abs_obj_dir)/svga6a/naive1.cmd
+	$(WLINK) @$(abs_obj_dir)/svga6a/naive1.cmd
+
+$(abs_exe_dir)/svga6a/dos4gw.exe:
+	cp -vn ../../dos4gw.dat $(abs_exe_dir)/svga6a/dos4gw.exe
+
+$(abs_exe_dir)/svga6a $(abs_obj_dir)/svga6a:
+	mkdir -p $(abs_obj_dir)/svga6a $(abs_exe_dir)/svga6a
+#--------------------------------------------------------------------------------
+
+# NAIVE1 SVGA 640x480x256 Tseng ET3000/ET4000
+#--------------------------------------------------------------------------------
+$(abs_obj_dir)/tseng2e/naive1$(obj_suffix): $(common1_dep) $(naive1_dep) $(cm1tseng2e_dep)
+	$(WCC) $(WCCFLAGS) -dDRIVER=\"cm1tseng2e.h\" -fo=$(abs_obj_dir)/tseng2e/.obj -i=.. -i=../.. naive1.c
+
+$(abs_exe_dir)/tseng2e/naive1$(exe_suffix): $(obj_win32s_compat) $(abs_obj_dir)/tseng2e/naive1$(obj_suffix) $(abs_exe_dir)/tseng2e/dos4gw.exe
+	@echo option quiet system $(WLINK_SYSTEM) $(WLINKFLAGS) $(WLINK_SEGMENTS) $(foreach x,$(filter %$(obj_suffix),$^),file "$(x)") option map=$(abs_obj_dir)/tseng2e/naive1.map name $@ >$(abs_obj_dir)/tseng2e/naive1.cmd
+	$(WLINK) @$(abs_obj_dir)/tseng2e/naive1.cmd
+
+$(abs_exe_dir)/tseng2e/dos4gw.exe:
+	cp -vn ../../dos4gw.dat $(abs_exe_dir)/tseng2e/dos4gw.exe
+
+$(abs_exe_dir)/tseng2e $(abs_obj_dir)/tseng2e:
+	mkdir -p $(abs_obj_dir)/tseng2e $(abs_exe_dir)/tseng2e
+#--------------------------------------------------------------------------------
+
+# NAIVE1 SVGA 800x600x256 Tseng ET3000/ET4000
+#--------------------------------------------------------------------------------
+$(abs_obj_dir)/tseng30/naive1$(obj_suffix): $(common1_dep) $(naive1_dep) $(cm1tseng30_dep)
+	$(WCC) $(WCCFLAGS) -dDRIVER=\"cm1tseng30.h\" -fo=$(abs_obj_dir)/tseng30/.obj -i=.. -i=../.. naive1.c
+
+$(abs_exe_dir)/tseng30/naive1$(exe_suffix): $(obj_win32s_compat) $(abs_obj_dir)/tseng30/naive1$(obj_suffix) $(abs_exe_dir)/tseng30/dos4gw.exe
+	@echo option quiet system $(WLINK_SYSTEM) $(WLINKFLAGS) $(WLINK_SEGMENTS) $(foreach x,$(filter %$(obj_suffix),$^),file "$(x)") option map=$(abs_obj_dir)/tseng30/naive1.map name $@ >$(abs_obj_dir)/tseng30/naive1.cmd
+	$(WLINK) @$(abs_obj_dir)/tseng30/naive1.cmd
+
+$(abs_exe_dir)/tseng30/dos4gw.exe:
+	cp -vn ../../dos4gw.dat $(abs_exe_dir)/tseng30/dos4gw.exe
+
+$(abs_exe_dir)/tseng30 $(abs_obj_dir)/tseng30:
+	mkdir -p $(abs_obj_dir)/tseng30 $(abs_exe_dir)/tseng30
+#--------------------------------------------------------------------------------
+
+# NAIVE1 SVGA 1024x768x256 Tseng ET3000/ET4000
+#--------------------------------------------------------------------------------
+$(abs_obj_dir)/tseng38/naive1$(obj_suffix): $(common1_dep) $(naive1_dep) $(cm1tseng38_dep)
+	$(WCC) $(WCCFLAGS) -dDRIVER=\"cm1tseng38.h\" -fo=$(abs_obj_dir)/tseng38/.obj -i=.. -i=../.. naive1.c
+
+$(abs_exe_dir)/tseng38/naive1$(exe_suffix): $(obj_win32s_compat) $(abs_obj_dir)/tseng38/naive1$(obj_suffix) $(abs_exe_dir)/tseng38/dos4gw.exe
+	@echo option quiet system $(WLINK_SYSTEM) $(WLINKFLAGS) $(WLINK_SEGMENTS) $(foreach x,$(filter %$(obj_suffix),$^),file "$(x)") option map=$(abs_obj_dir)/tseng38/naive1.map name $@ >$(abs_obj_dir)/tseng38/naive1.cmd
+	$(WLINK) @$(abs_obj_dir)/tseng38/naive1.cmd
+
+$(abs_exe_dir)/tseng38/dos4gw.exe:
+	cp -vn ../../dos4gw.dat $(abs_exe_dir)/tseng38/dos4gw.exe
+
+$(abs_exe_dir)/tseng38 $(abs_obj_dir)/tseng38:
+	mkdir -p $(abs_obj_dir)/tseng38 $(abs_exe_dir)/tseng38
+#--------------------------------------------------------------------------------
+
+# NAIVE1 SVGA 640x480x256 VESA BIOS
+#--------------------------------------------------------------------------------
+$(abs_obj_dir)/vbe8_640/naive1$(obj_suffix): $(common1_dep) $(naive1_dep) $(cm1vbe8_640_dep)
+	$(WCC) $(WCCFLAGS) -dDRIVER=\"cm1vbe8_640.h\" -fo=$(abs_obj_dir)/vbe8_640/.obj -i=.. -i=../.. naive1.c
+
+$(abs_exe_dir)/vbe8_640/naive1$(exe_suffix): $(obj_win32s_compat) $(abs_obj_dir)/vbe8_640/naive1$(obj_suffix) $(abs_exe_dir)/vbe8_640/dos4gw.exe
+	@echo option quiet system $(WLINK_SYSTEM) $(WLINKFLAGS) $(WLINK_SEGMENTS) $(foreach x,$(filter %$(obj_suffix),$^),file "$(x)") option map=$(abs_obj_dir)/vbe8_640/naive1.map name $@ >$(abs_obj_dir)/vbe8_640/naive1.cmd
+	$(WLINK) @$(abs_obj_dir)/vbe8_640/naive1.cmd
+
+$(abs_exe_dir)/vbe8_640/dos4gw.exe:
+	cp -vn ../../dos4gw.dat $(abs_exe_dir)/vbe8_640/dos4gw.exe
+
+$(abs_exe_dir)/vbe8_640 $(abs_obj_dir)/vbe8_640:
+	mkdir -p $(abs_obj_dir)/vbe8_640 $(abs_exe_dir)/vbe8_640
+#--------------------------------------------------------------------------------
+
+# NAIVE1 SVGA 1024x768x256 VESA BIOS
+#--------------------------------------------------------------------------------
+$(abs_obj_dir)/vbe8_1k/naive1$(obj_suffix): $(common1_dep) $(naive1_dep) $(cm1vbe8_1k_dep)
+	$(WCC) $(WCCFLAGS) -dDRIVER=\"cm1vbe8_1k.h\" -fo=$(abs_obj_dir)/vbe8_1k/.obj -i=.. -i=../.. naive1.c
+
+$(abs_exe_dir)/vbe8_1k/naive1$(exe_suffix): $(obj_win32s_compat) $(abs_obj_dir)/vbe8_1k/naive1$(obj_suffix) $(abs_exe_dir)/vbe8_1k/dos4gw.exe
+	@echo option quiet system $(WLINK_SYSTEM) $(WLINKFLAGS) $(WLINK_SEGMENTS) $(foreach x,$(filter %$(obj_suffix),$^),file "$(x)") option map=$(abs_obj_dir)/vbe8_1k/naive1.map name $@ >$(abs_obj_dir)/vbe8_1k/naive1.cmd
+	$(WLINK) @$(abs_obj_dir)/vbe8_1k/naive1.cmd
+
+$(abs_exe_dir)/vbe8_1k/dos4gw.exe:
+	cp -vn ../../dos4gw.dat $(abs_exe_dir)/vbe8_1k/dos4gw.exe
+
+$(abs_exe_dir)/vbe8_1k $(abs_obj_dir)/vbe8_1k:
+	mkdir -p $(abs_obj_dir)/vbe8_1k $(abs_exe_dir)/vbe8_1k
+#--------------------------------------------------------------------------------
+
+# NAIVE1 SVGA 640x480x16-bit VESA BIOS
+#--------------------------------------------------------------------------------
+$(abs_obj_dir)/vbe16640/naive1$(obj_suffix): $(common1_dep) $(naive1_dep) $(cm1vbe16640_dep)
+	$(WCC) $(WCCFLAGS) -dDRIVER=\"cm1vbe16640.h\" -fo=$(abs_obj_dir)/vbe16640/.obj -i=.. -i=../.. naive1.c
+
+$(abs_exe_dir)/vbe16640/naive1$(exe_suffix): $(obj_win32s_compat) $(abs_obj_dir)/vbe16640/naive1$(obj_suffix) $(abs_exe_dir)/vbe16640/dos4gw.exe
+	@echo option quiet system $(WLINK_SYSTEM) $(WLINKFLAGS) $(WLINK_SEGMENTS) $(foreach x,$(filter %$(obj_suffix),$^),file "$(x)") option map=$(abs_obj_dir)/vbe16640/naive1.map name $@ >$(abs_obj_dir)/vbe16640/naive1.cmd
+	$(WLINK) @$(abs_obj_dir)/vbe16640/naive1.cmd
+
+$(abs_exe_dir)/vbe16640/dos4gw.exe:
+	cp -vn ../../dos4gw.dat $(abs_exe_dir)/vbe16640/dos4gw.exe
+
+$(abs_exe_dir)/vbe16640 $(abs_obj_dir)/vbe16640:
+	mkdir -p $(abs_obj_dir)/vbe16640 $(abs_exe_dir)/vbe16640
+#--------------------------------------------------------------------------------
+
+all-programs: $(foreach dirn,$(abs_obj_dir) $(abs_exe_dir),$(foreach videohw,cga04 cga06 ega0d ega0dp ega10 ega10p mcga11 vga12 vga12bp tseng2e tseng30 vbe8_1k vbe16640 vbe8_640 tseng38 svga6a vga13 vga13x vga13xp,$(dirn)/$(videohw))) \
+	$(foreach videohw,cga04 cga06 ega0d ega0dp ega10 ega10p mcga11 vga12 vga12bp tseng2e tseng30 vbe8_1k vbe16640 vbe8_640 tseng38 svga6a vga13 vga13x vga13xp,$(abs_exe_dir)/$(videohw)/naive1$(exe_suffix))
 
 all-targets: all-targets-abs-dirs all-programs
 	@true

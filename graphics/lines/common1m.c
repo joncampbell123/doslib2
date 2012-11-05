@@ -21,10 +21,10 @@ notinst:
 #else
 #endif
 
-	point[0].x = 40;
-	point[0].y = 40;
-	point[1].x = 120;
-	point[1].y = 100;
+	point[0].x = WIDTH/4;
+	point[0].y = WIDTH/4;
+	point[1].x = WIDTH*3/4;
+	point[1].y = HEIGHT*4/5;
 	setup_graphics();
 
 	do {
