@@ -59,7 +59,7 @@ disk360:
 
 disk:
 	dd if=/dev/zero of=test.dsk bs=512 count=2880
-	mkfs.vfat test.dsk
+	mkfs.vfat -r 256 test.dsk
 	for i in ../../build/dos/asmexam/dos16r/086c/exe/*.com; do mcopy -i test.dsk $$i ::; done
 	mcopy -i test.dsk ../../cwsdpmi0.dat ::cwsdpmi0.exe
 	mcopy -i test.dsk ../../cwsdpmi.dat ::cwsdpmi.exe
