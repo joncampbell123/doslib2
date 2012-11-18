@@ -40,6 +40,11 @@
    tsrnull.com        Terminate & Stay Resident         [MS-DOS 2.0+]
    tsrnull2.com       TSR (and free env. block)         [MS-DOS 2.0+]
    tsrndos1.com       TSR using INT 27h                 [MS-DOS 1.0+]
+   dpb_10.com         Disk Parameter Block (DOS 1.0),   [MS-DOS 1.0]
+                      it turns out though MS-DOS 1.0
+                      does not implement the function
+                      and therefore this program is now
+                      just a stub.
    dpb_11.com         Disk Parameter Block (DOS 1.1)    [MS-DOS 1.1+]
    dpb_2.com          Disk Parameter Block (DOS 2.x)    [MS-DOS 2.x]
    dpb_3.com          Disk Parameter Block (DOS 3.x)    [MS-DOS 3.x]
