@@ -111,6 +111,7 @@ all_programs += $(abs_exe_dir)/dunlok32.com
 all_programs += $(abs_exe_dir)/dpmi16_0.com
 all_programs += $(abs_exe_dir)/dpmi32_0.com
 all_programs += $(abs_exe_dir)/showenv.com
+all_programs += $(abs_exe_dir)/peekm86.com
 all_programs += $(abs_exe_dir)/setenv.com
 
 all-programs: $(all_programs)
@@ -437,6 +438,9 @@ $(abs_exe_dir)/dpmi32_0.com: dpmi32_0.asm
 	$(NASM) -o $@ -f bin $(NASMFLAGS) $^
 
 $(abs_exe_dir)/showenv.com: showenv.asm
+	$(NASM) -o $@ -f bin $(NASMFLAGS) $^
+
+$(abs_exe_dir)/peekm86.com: peekm86.asm
 	$(NASM) -o $@ -f bin $(NASMFLAGS) $^
 
 $(abs_exe_dir)/setenv.com: setenv.asm
