@@ -647,9 +647,11 @@ int WINMAINPROC _win_main_con_entry(HINSTANCE hInstance,HINSTANCE hPrevInstance,
 	_this_console.conX = 0;
 	_this_console.conY = 0;
 
-#if TARGET_BITS == 16
+#if TARGET_BITS == 16 && defined(TARGET_WINDOWS) && defined(TARGET_WINDOWS_WIN16) && defined(TARGET_REALMODE) && TARGET_WINDOWS_VERSION < 31
 	/* Windows real mode: Lock our data segment. Real-mode builds typically set CODE and DATA segments
-	 * to moveable because Windows 1.x and 2.x apparently demand it. */
+	 * to moveable because Windows 1.x and 2.x apparently demand it.
+	 * Note that Windows 3.1 does not support "real mode".
+	 * And if we're being compiled for protected mode, this code also does not apply. */
 	if (IsWindowsRealMode()) {
 		LockData(); /* Lock data in place, so our FAR PTR remains valid */
 		LockCode(); /* Lock code in place, so that Watcom setjmp/longjmp works properly */
@@ -796,11 +798,11 @@ int WINMAINPROC _win_main_con_entry(HINSTANCE hInstance,HINSTANCE hPrevInstance,
 	DeleteObject(_this_console.monoSpaceFont);
 	_this_console.monoSpaceFont = NULL;
 
-#if TARGET_BITS == 16
-	/* Real mode: undo our work above */
+#if TARGET_BITS == 16 && defined(TARGET_WINDOWS) && defined(TARGET_WINDOWS_WIN16) && defined(TARGET_REALMODE) && TARGET_WINDOWS_VERSION < 31
+	/* undo the segment locking carried out above */
 	if (IsWindowsRealMode()) {
-		UnlockCode();
 		UnlockData();
+		UnlockCode();
 	}
 #endif
 
