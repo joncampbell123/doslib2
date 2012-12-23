@@ -1,0 +1,811 @@
+Universal Thunk Overview
+========================
+
+Win32s has the following design goals and requirements:
+
+o Offer a 32-bit programming model for Windows 3.1 Enhanced Mode
+
+o Use Win32 semantics for the windowing API
+
+o Win32s supports Win32 apps with binary compatibility (same exe format)
+
+o Win32s provides seemless migration from 16-bit Windows to 32-bit Windows NT
+
+Binary compatibility and the requirement to provide natural migration
+to Windows NT creates a portability problem for ISVs which have
+Windows apps that require device drivers.
+
+Win32s cannot support the Windows NT kernel device driver model on
+Windows 3.1.  Therefore, the only way that Win32 apps running on
+Windows 3.1 can access devices is through existing drivers supported
+by Windows 3.1.
+
+However, Windows NT does not support mixing 16- and 32-bit code in
+the same process.  This is not portable and therefore, not allowed. 
+There are a number of IPC mechanisms such as DDEML that would allow
+data to be passed between Win32 and 16-bit Windows processes, but the
+bandwidth is not sufficiently high for some types of applications.
+
+Therefore, the Universal Thunk has been designed to overcome this
+problem. The Universal Thunk allows a Win32 application to call a
+routine in a 16-bit DLL.  There is also support for a 16-bit routine
+to callback to a 32-bit function.  The simple Win32s thunk used to
+implement this design also provide address translation services
+allowing access to flat memory from segmented code and vice versa.
+
+This design allows a Win32 application to isolate driver specific
+routines in a 16-bit DLL.  The Win32 application remains portable
+across Windows 3.1 and Windows NT; on Windows NT the 16-bit DLL is
+replaced with a 32-bit DLL that communicates to devices via the
+Windows NT model.
+
+
+Universal Thunk Design
+======================
+
+First diagram illustrates Win32 Application using UT to access
+existing 16-bit service.
+
+Win32 application is binary compatible on Windows 3.1 and Windows NT.
+ The Win32 DLL offers identical interfaces on Windows 3.1 and Windows
+NT, however unique Win32 (32-bit) DLLs are created for Windows 3.1
+and Windows NT.  This DLL isolates the different techniques required
+to access drivers and hardware on Windows 3.1 and Windows NT.
+
+Windows 3.1
+-----------
+
++--------------+
+|              |
+|  Win32 App   |
+|              |
++--------------+
+       ^
+       | Std. Interface                                      Existing Win3.1
+       v                                   16-bit DLL          DLL/Driver
++--------------+       +----------+       +----------+  (1)  +----------+
+|              |------>|          |------>| UT16Proc |------>|          |
+|  Win32 DLL   |       | Win32s UT|------>| UT16Init |  (2)  |          |
+|fnUT32CallBack|<------|          |<------|          |<------|          |
++--------------+       +----------+       +----------+       +----------+
+                 32-bit             16-bit
+               Interface          Interface
+
+(1) Pass data from Win32 app to existing Win 3.1 DLL/driver or obtain data
+    from existing Win 3.1 DLL/driver. Transaction driven by Win32 application.
+
+(2) Use callback function to transfer data from existing Win 3.1 DLL/driver
+    to Win32 application. Transaction driven from 16-bit side.
+
+Windows NT
+----------
+
+Illustrates Win32 application relying on 32-bit Windows NT DLLs and drivers.
+
+                     +--------------+
+                     |              |
+                     |  Win32 App   |
+                     |              |
+                     +--------------+
+                            ^
+                            | Std. Interface
+                            v
+                     +--------------+
+                     |              |
+                     |  Win32 DLL   |
+                     |              |
+                     +--------------+
+                            ^
+                            | Driver I/O (via Win32 API or IOCTLs)
+                            v
+                     +--------------+
+                     |              |
+                     |  Windows NT  |
+                     | 32-bit driver|
+                     |  Kernel Mode |
+                     |              |
+                     +--------------+
+
+
+============================================================================
+================ Universal Thunk API =======================================
+============================================================================
+
+
+typedef DWORD (* WINAPI UT32PROC)(LPVOID lpBuff,
+                                  DWORD  dwUserDefined,
+                                  LPVOID *lpTranslationList
+                                 );
+
+Prototype of 32-bit thunk to 16-bit dll.
+
+Parameters
+----------
+
+lpBuff
+
+pointer to general purpose memory buffer. This 32-bit pointer is
+translated to 16:16 form and passed to the 16-bit procedure. The
+segmented address provides addresiblity for object of 32KB. This
+parameter is optional.
+
+dwUserDefined
+
+available for application use.
+
+lpTranslationList
+
+array of pointers to pointers that should be translated to segmented
+form. the list is terminated by a null pointer. No validity check is
+performed on the address except for null check. The translation list
+is used internally and not passed to the 16-bit procedure. This
+parameter is optional.
+
+See Also
+--------
+
+UTRegister()
+___________________________________________________________________________
+
+DWORD FAR PASCAL UT16PROC(LPVOID lpBuff, DWORD  dwUserDefined );
+
+UT16PROC name is a placeholder for the application-defined function
+name. The actual name must be exported by including it in the EXPORTS
+statement in the DLL's module-definition file.
+
+Parameters
+----------
+
+lpBuff
+
+pointer to general purpose memory buffer that was passed by the 32-bit code.
+
+dwUserDefined
+
+available for application use.
+
+See Also
+--------
+
+UTRegister()
+
+___________________________________________________________________________
+
+DWORD FAR PASCAL UT16INIT( UT16CBPROC pfnUT16CallBack, LPVOID lpBuff);
+
+UT16INIT name is a placeholder for the application-defined function
+name. The actual name must be exported by including it in the EXPORTS
+statement in the DLL's module-definition file.
+
+Parameters
+----------
+pfnUT16CallBack
+
+16-bit thunk to 32-bit callback routine, as specified at registration.
+
+
+lpBuff
+
+pointer to general purpose memory buffer that was passed by the 32-bit code.
+
+See Also
+--------
+
+UTRegister()
+
+___________________________________________________________________________
+
+DWORD WINAPI UT32CBPROC( LPVOID lpBuff, DWORD dwUserDefined );
+
+UT32CBPROC name is a placeholder for the application-defined function
+name. It does not have to be exported.
+
+Parameters
+----------
+
+lpBuff
+
+pointer to general purpose memory buffer as passed to 16-bit callback thunk.
+
+dwUserDefined
+
+available for application use.
+
+Comments
+--------
+
+Memory allocated by 16-bit code and passed to 32-bit must be first
+fixed in memory.
+
+
+See Also
+--------
+
+UTRegister()
+___________________________________________________________________________
+
+typedef DWORD FAR PASCAL (*UT16CBPROC)( LPVOID lpBuff,
+                                        DWORD dwUserDefined,
+                                        LPVOID *lpTranslationList
+                                      );
+
+Prototype of 16-bit Universal Thunk Call Back procedure
+
+Parameters
+----------
+
+lpBuff
+
+Pointer to general purpose memory buffer. This segmented pointer is
+translated to flat address and passed to the 32-bit callback
+procedure. This parameter is optional.
+
+dwUserDefined
+
+available for application use.
+
+lpTranslationList
+
+array of pointers to pointers that should be translated to segmented
+form. the list is terminated by a null pointer. No validity check is
+performed on the address except for null check. The translation list
+is used internally and not passed to the 32-bit callback procedure.
+This parameter is optional.
+
+See Also
+--------
+
+UTRegister()
+___________________________________________________________________________
+
+BOOL UTRegister(hModule, lpsz16BITDLL, lpszInitName, lpszProcName,
+                ppfn32Thunk, pfnUT32CallBack, lpBuff )
+
+HANDLE     hModule;          // 32-bit Dll module handle
+LPCTSTR    lpsz16BITDLL;     // Name of DLL (i.e. "MY16BIT.DLL")
+LPCTSTR    lpszInitName;     // Name of exported init function
+LPCTSTR    lpszProcName;     // Name of exported thunk function
+UT32PROC * ppfn32Thunk;      // Output parameter (indirect 32-bit
+function pointer)
+FARPROC    pfnUT32CallBack;  // Address of 32-bit callback function
+LPVOID     lpBuff;      // Pointer to shared memory block
+
+This routine registers a universal thunk that can be used to access
+16-bit code from a Win32 application running via Win32s on Windows
+3.1.  Only one UT can be created per Win32 dll.  The thunk can be
+destroyed by calling UTUnRegister(). UTRegister() will automatically
+load the 16-bit DLL specified. It then calls the init routine and
+provide it a 16-bit callable routine. The system creates a 32-bit
+thunk that can be used to call the 16-bit procedure in the 16-bit
+dll.
+
+Parameters
+----------
+
+hDllInst
+
+Handle of 32-bit dll. The universal thunk provides a mechnism to
+"extend" a win32 dll into win3.1. The thunk is owned by the dll and
+every dll is limited to have only one thunk.
+
+lpsz16BITDLL
+
+Points to a null-terminated string that that names the library file
+to be loaded. If the string does not contain a path, Win32s searches
+for the library using the same search mechanism as LoadLibrary on
+Windows 3.1.
+
+lpszInitName
+
+Points to a null-terminated string containing the function name, or
+specifies the ordinal value of the initialization function. If it is
+an ordinal value, the value must be in the low word and the high word
+must be zero. This parameter can be NULL if no initialization or
+callback is required.
+
+lpszProcName
+
+Points to a null-terminated string containing the function name, or
+specifies the ordinal value of the 16-bit function. If it is an
+ordinal value, the value must be in the low word and the high word
+must be zero.
+
+ppfn32Thunk
+
+Return value is a 32-bit function pointer (thunk to 16-bit routine)
+if UTRegister() is successful.  This function can be used to call the
+16-bit routine indirectly.
+
+pfnUT32CallBack
+
+Address of the 32-bit callback routine.  Win32S creates a 16-bit
+callable thunk to the 32-bit function and provid it to the
+initialization routine.  The 32-bit routine does not need to be
+specified as an EXPORT function in the DEF file. No call back thunk
+is created if either this parameter or lpszInitName are NULL.
+
+lpBuff
+
+Pointer to globally allocated shared memory. Pointer is translated
+into 16:16 alias by Universal Thunk and is passed to the
+initialization routine. This parameter is optional and ignored if
+NULL.
+
+Returns
+-------
+
+Function returns TRUE if DLL was loaded and UT16Init() routine was
+successfully called or FALSE if an error occurred.  Use the
+GetLastError() function to obtain extended error information. 
+Typical errors are: ERROR_FILE_NOT_FOUND, ERROR_PATH_NOT_FOUND,
+ERROR_INVALID_ORDINAL, and ERROR_NOT_ENOUGH_MEMORY,
+
+
+Comments
+--------
+
+Registering the Universal Thunk enables two capabilities for
+communicating between 32-bit and 16-bit routines.  The first
+capability is to allow a Win32 application to call a 16-bit routine
+passing data using globally shared memory. This is a Win32
+application initiated data transfer mechanism.
+
+The second capability is to register a callback routine by which
+16-bit code can callback into a 32-bit routine in a Win32 DLL. Again,
+shared global memory is used to transfer data.
+
+The first capability is designed to allow Win32 applications to use
+existing Windows 3.1 device drivers.  The design requires the Win32
+application to poll the device driver just like a 16-bit Windows 3.1
+application.  The globally shared memory buffer can be used to
+transfer data from the device (read operation) or to the device
+(write operation).
+
+The 32-bit callback routine is designed to allow Win32 applications
+to obtain information from 16-bit service providers.  This may be
+necessary until the service provider itself implements a Win32 DLL
+service.
+
+The 16-bit DLL must EXPORT the initialization routine and the  sevice
+routine, and  use the following function prototypes:
+
+VOID FAR PASCAL UT16Init( FARPROC pfnUT32CallBack, LPVOID lpBuff );
+
+DWORD FAR PASCAL UT16Proc( LPVOID lpBuff, DWORD dwUserDefined );
+
+UTRegister() will result in Win32s loading the specified DLL with
+normal Windows 3.1 DLL initialization occuring.  Win32s will then
+call the initialization routine passing this function a 16:16 thunk
+to the 32-bit callback function.  The initialization routine can
+return data in a global shared memory buffer.
+
+The initialization routine must return non zero value to indicate
+successful initialization. If it fails no thunk is created.
+
+UTRegister() returns a 32-bit thunk to the 16-bit UT16Proc().  This
+pointer can be used in Win32 code to call the 16-bit routine:
+
+dwUserDefinedReturn = (*pfnUT16Proc)( pSharedMemory, dwUserDefinedSend,
+                                      lpTranslationList );
+
+The Universal Thunk will translate the 32-bit linearaddress of the
+shared memory to a 16:16 segmented pointer, along with all the
+addresses listed by lpTranslationList before passing it to the 16-bit
+UT16Proc() routine.
+
+The 16-bit code can call Win32 code using the callback mechanism:
+
+dwUserDefinedReturn = (*pfnUT32CallBack)( pSharedMemory, dwUserDefinedSend,
+                                          lpTranslationList );
+
+The 32-bit callback routine should be defined as follows (but does
+not need to be EXPORTed in the DEF file):
+
+DWORD WINAPI UT32CBPROC( LPVOID lpBuff, DWORD dwUserDefined );
+
+See Also
+--------
+
+UTUnRegister(), LoadLibrary() (16-bit version), GetProcAddress
+(16-bit version)
+
+___________________________________________________________________________
+
+
+VOID UTUnRegister( hModule )
+
+HANDLE hModule
+
+Requests Win32s to call FreeLibrary() for the 16-bit DLL loaded by
+UTRegister().  Also, destroys the dynamically created Universal
+Thunk.
+
+Returns
+-------
+
+No return value.
+
+
+Comments
+--------
+
+This call allows the single dynamically created Universal Thunk to be
+destroyed and the 16-bit DLL dereferenced.  Win32s will clean-up
+these resources automatically when the Win32 dll is freed (normally
+or abnormally).
+
+See Also
+--------
+
+UTRegister(), FreeLibrary() (16-bit version)
+
+___________________________________________________________________________
+
+
+Universal Thunk auxilary services
+=================================
+
+The following are address translation services available for 16-bit code only.
+
+___________________________________________________________________________
+
+DWORD UTSelectorOffsetToLinear( lpByte )
+
+LPVOID  lpByte;
+
+Translate a segmented address to flat form;
+
+Returns
+-------
+
+Equivalent flat address.
+
+Comments
+--------
+
+The base of the flat selectors used by Win32S process is not zero. 
+If the memory is allocated by 16-bit api it must be fixed before its
+address can be converted to flat form.
+
+
+See Also
+--------
+UTLinearToSelectorOffset
+
+___________________________________________________________________________
+
+LPVOID UTLinearToSelectorOffset( lpByte )
+
+DWORD  lpByte;
+
+Translate a flat address to a segmented form.
+
+Returns
+-------
+
+Equivalent segmented address.
+
+Comments
+--------
+
+The returned address guarentees addressibility for objects up to 32K byte.
+
+See Also
+--------
+
+UTSelectorOffsetToLinear
+
+
+
+Universal Thunk Implementation Notes
+------------------------------------
+
+The following information discusses implementation issues that impact
+application usage.
+
+1)
+Only one Universal Thunk (UT) may exist for each Win32 dll. 
+Additional calls to UTRegister() will fail until UTUnRegister() is
+called.
+
+2)
+Win32s will destroy the UT and call FreeLibrary for the 16-bit DLL when:
+
+o UTUnRegister() is called
+
+o The Win32 dll is freed (normally or abnormally)
+
+3)
+Memory allocated by 16-bit routines via GlobalAlloc should be fixed
+via GlobalFix.  It must be translated to flat address before it can
+be used bu 32-bit code.  Translated will be performed by the system
+if passed as lpBuff or by using the traslation list.  It can also be
+translated explicitly via UTSelectorOffsetToLinear before it can be
+used by 32-bit code.
+
+4)
+The 32-bit callback function should not be used by 16-bit interrupt
+handlers. The Win32 API does not support locking memory pages,
+therefore an interrupt service routine which calls back into 32-bit
+code cannot gurantee that the code is currently paged into memory.
+
+5)
+Exception handling can be done in 32-bit code only. Exceptions in
+16-bit code will be handled by the last 32-bit exception frame.
+
+
+============================================================================
+======================= SAMPLE =============================================
+============================================================================
+
+    /*++
+
+    Copyright (c) 1985-92, Microsoft Corporation
+
+    Module Name:
+
+        db.h
+
+    Abstract:
+
+        Win32s sample code of Universal Thunk (UT) -
+        this example demonstrates how existing 16bit code can provide services
+        to 32bit application thru a thunking layer based on the UT api.
+
+        This header file defines the interface to the data base services.
+        The 32-bit interface provided by thunking is identical to the 16-bit
+        interface.
+
+    --*/
+
+
+    typedef  struct {
+         short int  len;
+         char      *str;
+    } DB_NAME;
+
+    typedef  struct {
+         short int  year;
+         short int  month;
+         short int  day;
+         short int  hour;
+         short int  minute;
+         short int  seconds;
+    } DB_TIME;
+
+
+    /*
+     * following services are provided by DB.DLL which is a 16bit dll.
+     */
+
+
+    int         DbGetVersion(void);
+    void        DbSetTime(DB_TIME * pTime);
+    short       DbAddUser(DB_NAME * pName, int Permission, short int *pId);
+
+
+    /*++
+
+    Copyright (c) 1985-92, Microsoft Corporation
+
+    Module Name:
+
+        db32.c
+
+    Abstract:
+
+        Win32s sample code of Universal Thunk (UT) -
+        32bit code that provides the same services as DB.DLL by means
+        of thunking to 16bit dll.
+        This is the main source file of DB32.DLL
+
+    --*/
+
+
+
+    #include <windows.h>
+    #include <w32sut.h>
+    #include <db.h>
+
+    UT32PROC  pUTProc=NULL;
+    int       cProcessesAttached = 0;
+
+
+    BOOL
+    DllInit(HINSTANCE hInst, DWORD fdwReason, LPVOID lpReserved)
+    {
+
+      if ( fdwReason == DLL_PROCESS_ATTACH ) {
+
+        /*
+         * Registration of UT need to be done only once for first
+         * attaching process.
+         */
+
+        if ( cProcessesAttached++ ) {
+            return(TRUE);
+        }
+
+        return UTRegister( hInst,        // DB32.DLL module handle
+                           "DB16.DLL",   // name of 16bit thunk dll
+                           NULL,         // no init routine
+                           "UTProc",     // name of 16bit dispatch routine
+                                         // exported from DB16.DLL
+                           &pUTProc,     // Global variable to
+receive thunk address
+                           NULL,         // no call back function
+                           NULL          // no shared memroy
+                         );
+      } else if ( fdwReason == DLL_PROCESS_DETACH ) {
+
+          if ( --cProcessesAttached == 0 ) {
+              UTUnregister( hInst );
+          }
+      }
+
+    }
+
+    /*
+     * constants for dispatcher in 16bit side
+     */
+
+    #define DB_SRV_GETVERSION   0
+    #define DB_SRV_SETTIME      1
+    #define DB_SRV_ADDUSER      2
+
+
+    int
+    DbGetVersion(void)
+    {
+
+        /*
+         * call the 16bit dispatch thru the 32bit thunk. no parameters
+         * are passed.
+         * returned value is the service result.
+         */
+
+        return( (int) (* pfnUTProc)(NULL, DB_SRV_GETVERSION, NULL) );
+
+    }
+
+    void
+    DbSetTime(DB_TIME * pTime);
+    {
+
+        /*
+         * call the 16bit dispatch thru the 32bit thunk.
+         * pass one pointer to a buffer which will be translated
+         * to 16:16 address before passed to 16bit side.
+         *
+         */
+
+        (* pfnUTProc)(pTime, DB_SRV_SETTIME, NULL);
+
+    }
+
+    int
+    DbAddUser(DB_NAME * pName, int Permission, short int *pId)
+    {
+
+        DWORD    Args[3];           // function has three arguments
+        PVOID    TransList[4];      // Three pointers needs translation:
+                                    //     pName
+                                    //     pName->str
+                                    //     pId
+                                    // plus null to indicate end of list
+        char    *pSaveStr;
+        int     Ret;
+
+        /*
+         * put arguments in buffer
+         */
+
+        Args[0] = pName;
+        Args[1] = Permission;
+        Args[2] = pId;
+
+        /*
+         * build translation list for all the flat pointers that need to
+         * be translated to segmented form.
+         */
+        TransList[0] = & Args[0];
+        TransList[1] = & pName->str;
+        TransList[2] = & Args[2];
+        TransList[3] = 0;
+
+        /*
+         * save the original pointer in the NAME struct so it can be restored
+         * after the call to the thunk.
+         * This is required only if the caller of the service expects the
+         * structure to be left unmodified.
+         */
+
+        pSaveStr = pName->str;
+
+        /*
+         * call the 16bit dispatch thru the 32bit thunk.
+         * pass arguments in buffer along with list of addresses
+         * that need to be translated equivalent segmented format.
+         *
+         */
+
+        Ret = (int) (* pfnUTProc)(Args, DB_SRV_ADDUSER, TransList);
+
+        /*
+         * restore flat pointer
+         */
+        pName->str = pSaveStr;
+
+        return(Ret);
+    }
+
+
+
+
+    /*++
+
+    Copyright (c) 1985-92, Microsoft Corporation
+
+    Module Name:
+
+        db16.c
+
+    Abstract:
+
+        Win32s sample code of Universal Thunk (UT) -
+        services dispatcher in 16bit side.
+        This is the main source file of DB16.DLL.
+
+    --*/
+
+
+    #include <windows.h>
+    #include <w32sut.h>
+    #include <db.h>
+
+
+    /*
+     * constants for dispatcher in 16bit side
+     */
+
+    #define DB_SRV_GETVERSION   0
+    #define DB_SRV_SETTIME      1
+    #define DB_SRV_ADDUSER      2
+
+
+    /*
+     * 16bit dispatcher function.
+     * exported by DB16.DLL
+     */
+
+    DWORD FAR PASCAL
+    UTProc(LPVOID lpBuf, DWORD dwFunc)
+    {
+
+        /*
+         * call 16bit DB services based on the function Id.
+         */
+
+        switch (dwFunc) {
+
+        case DB_SRV_GETVERSION:
+            return( (DWORD) DbGetVersion() );
+
+        case DB_SRV_SETTIME:
+            DbSetTime((DB_TIME *) lpBuf);
+            return;
+
+        case DB_SRV_ADDUSER:
+            return( (DWORD) DbAddUser( (DWORD *)lpBuf [0] ,
+                                       (DWORD *)lpBuf [1] ,
+                                       (DWORD *)lpBuf [2]
+                                     )
+                  );
+
+        }
+
+        return( 0 );
+    }
+
+
+++++++++++++++++++++++++++  E N D ++++++++++++++++++++++++++++++++++++++++++
