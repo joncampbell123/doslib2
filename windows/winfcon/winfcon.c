@@ -21,7 +21,6 @@
 #ifdef TARGET_WINDOWS
 # include <windows.h>
 # include <windows/apihelp.h>
-# include <windows/w32imphk/compat.h>
 # include <windows/winfcon/winfcon.h>
 #else
 # error what

@@ -43,7 +43,6 @@
 #ifdef TARGET_WINDOWS
 # include <windows.h>
 # include <windows/apihelp.h>
-# include <windows/w32imphk/compat.h>
 # include <windows/winfvtcn/winfvtcn.h>
 #else
 # error what

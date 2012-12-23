@@ -39,7 +39,6 @@
  *       a Win386 32-bit app causes the Watcom extender to flip out */
 #if defined(TARGET_WINDOWS)
 # include <windows.h>
-# include <windows/w32imphk/compat.h>
 # include <windows/apihelp.h>
 # if defined(TARGET_WINDOWS_GUI) && !defined(TARGET_WINDOWS_CONSOLE)
 #  define WINFCON_ENABLE 1

@@ -1,6 +1,5 @@
 #if defined(TARGET_WINDOWS) && defined(TARGET_WINDOWS_GUI)
 # include <windows.h>
-# include <windows/w32imphk/compat.h>
 # include <windows/apihelp.h>
 #endif
 

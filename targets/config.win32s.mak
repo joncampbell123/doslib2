@@ -116,13 +116,3 @@ NASMFLAGS_CONSOLE=$(NASMFLAGS)
 WLINKFLAGS_CONSOLE=$(WLINKFLAGS)
 WLINK_SYSTEM_CONSOLE=$(WLINK_SYSTEM)
 
-ifeq ($(TARGET_WINDOWS_WIN32s),1)
-lib_win32s_compat=$(abs_top_srcdir)/build/windows/w32imphk/$(target_subdir)/lib/compat$(lib_suffix)
-obj_win32s_compat=$(abs_top_srcdir)/build/windows/w32imphk/$(target_subdir)/obj/compat$(obj_suffix)
-
-ifneq ($(rel_srcdir),windows/w32imphk)
-$(lib_win32s_compat) $(obj_win32s_compat):
-	$(MAKE) -C $(abs_top_srcdir)/windows/w32imphk --no-print-directory -$(MAKEFLAGS) all-targets
-endif
-endif
-
