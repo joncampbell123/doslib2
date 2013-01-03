@@ -20,6 +20,16 @@
 #endif
 
 #pragma pack(push,1)
+struct cpu_info_t {
+/* offset defines are necessary only because Watcom's stupid inline assembler does not support accessing structure members */
+	signed char			cpu_basic_level;	/* +0 */
+	signed char			cpu_basic_fpu_level;	/* +1 */
+	uint16_t			cpu_flags;		/* +2 */
+	uint16_t			cpu_type_and_mask;	/* +4 on 386/486 systems without CPUID, this contains type and stepping value (DX) */
+	struct cpu_cpuid_info*		cpuid_info;		/* +6 */
+								/* +8/+10 */
+};
+
 struct cpu_cpuid_generic_block {
 	uint32_t		a,b,c,d;		/* EAX EBX ECX EDX */
 };
@@ -242,12 +252,14 @@ struct cpu_cpuid_info {
 /* CPU supports CPUID */
 #define CPU_FLAG_CPUID		0x08
 
-extern signed char cpu_basic_level;
-extern signed char cpu_basic_fpu_level;
-extern unsigned short cpu_flags;
-extern uint16_t cpu_type_and_mask;
+extern struct cpu_info_t cpu_info;
 
-extern struct cpu_cpuid_info* cpuid_info;
+//extern signed char cpu_basic_level;
+//extern signed char cpu_basic_fpu_level;
+//extern unsigned short cpu_flags;
+//extern uint16_t cpu_type_and_mask;
+
+//extern struct cpu_cpuid_info* cpuid_info;
 
 /* CPU ID string buffer length expected: 12 bytes for 3 DWORDs plus ASCIIZ NUL */
 #define CPU_ID_STRING_LENGTH 13

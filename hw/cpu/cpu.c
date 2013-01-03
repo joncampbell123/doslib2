@@ -13,33 +13,36 @@
 
 #include <misc/useful.h>
 
-signed char			cpu_basic_level = -1;
-signed char			cpu_basic_fpu_level = -1;
-unsigned short			cpu_flags = 0;
-struct cpu_cpuid_info*		cpuid_info = NULL;
-uint16_t			cpu_type_and_mask = 0;	/* on 386/486 systems without CPUID, this contains type and stepping value (DX) */
-	/* Possible values (if it worked):
-	 *
-	 *     0x03xx   386DX
-	 *     0x04xx   486
-	 *     0x05xx   Pentium
-	 *     0x23xx   386SX
-	 *     0x33xx   Intel i376
-	 *     0x43xx   386SL
-	 *     0xA3xx   IBM 386SLC
-	 *     0xA4xx   IBM 486SLC
-	 *
-	 *     0x0303   386 B1 to B10, Am386DX/DXL step A
-	 *     0x0305   Intel D0
-	 *     0x0308   Intel D1/D2/E1, Am386DX/DXL step B
-	 *
-	 *     0x2304   Intel A0
-	 *     0x2305   Intel B
-	 *     0x2308   Intel C/D1, Am386SX/SXL step A1
-	 *     0x2309   Intel 386CX/386EX/386SXstatic step A
-	 *
-	 *     For complete list see [http://www.youtube.com/watch?NR=1&feature=endscreen&v=DUiTZVinZEM]
-	 */
+struct cpu_info_t cpu_info = {
+	-1,		/* cpu basic level */
+	-1,		/* cpu basic FPU level */
+	0,		/* flags */
+	0,		/* cpu_type_and_mask */
+	NULL		/* cpu_cpuid_info */
+};
+
+/* Possible values of cpu_type_and_mask (if it worked):
+ *
+ *     0x03xx   386DX
+ *     0x04xx   486
+ *     0x05xx   Pentium
+ *     0x23xx   386SX
+ *     0x33xx   Intel i376
+ *     0x43xx   386SL
+ *     0xA3xx   IBM 386SLC
+ *     0xA4xx   IBM 486SLC
+ *
+ *     0x0303   386 B1 to B10, Am386DX/DXL step A
+ *     0x0305   Intel D0
+ *     0x0308   Intel D1/D2/E1, Am386DX/DXL step B
+ *
+ *     0x2304   Intel A0
+ *     0x2305   Intel B
+ *     0x2308   Intel C/D1, Am386SX/SXL step A1
+ *     0x2309   Intel 386CX/386EX/386SXstatic step A
+ *
+ *     For complete list see [http://www.youtube.com/watch?NR=1&feature=endscreen&v=DUiTZVinZEM]
+ */
 
 /* CPUID function. To avoid redundant asm blocks */
 #if defined(__GNUC__)
@@ -112,76 +115,76 @@ char *cpu_copy_ext_id_string(char *tmp/*CPU_EXT_ID_STRING_LENGTH*/,struct cpu_cp
 }
 
 static void probe_cpuid() {
-	if (cpuid_info != NULL) return;
+	if (cpu_info.cpuid_info != NULL) return;
 
-	cpuid_info = malloc(sizeof(*cpuid_info));
-	if (cpuid_info == NULL) return;
-	memset(cpuid_info,0,sizeof(*cpuid_info));
+	cpu_info.cpuid_info = malloc(sizeof(*cpu_info.cpuid_info));
+	if (cpu_info.cpuid_info == NULL) return;
+	memset(cpu_info.cpuid_info,0,sizeof(*cpu_info.cpuid_info));
 
 	/* alright then, let's ask the CPU it's identification */
-	do_cpuid(0x00000000,&(cpuid_info->e0.g)); /* NTS: e0.g aliases over e0.i and fills in info */
+	do_cpuid(0x00000000,&(cpu_info.cpuid_info->e0.g)); /* NTS: e0.g aliases over e0.i and fills in info */
 
 	/* if we didn't get anything, then CPUID is not functional */
-	if (cpuid_info->e0.i.cpuid_max == 0) {
-		cpu_flags &= ~CPU_FLAG_CPUID;
-		free(cpuid_info);
+	if (cpu_info.cpuid_info->e0.i.cpuid_max == 0) {
+		cpu_info.cpu_flags &= ~CPU_FLAG_CPUID;
+		free(cpu_info.cpuid_info);
 		return;
 	}
 
-	if (cpuid_info->e0.i.cpuid_max >= 1) {
-		do_cpuid(0x00000001,&(cpuid_info->e1.g));
-		if (cpuid_info->e1.f.family >= 4 && cpuid_info->e1.f.family <= 6)
-			cpu_basic_level = cpuid_info->e1.f.family;
+	if (cpu_info.cpuid_info->e0.i.cpuid_max >= 1) {
+		do_cpuid(0x00000001,&(cpu_info.cpuid_info->e1.g));
+		if (cpu_info.cpuid_info->e1.f.family >= 4 && cpu_info.cpuid_info->e1.f.family <= 6)
+			cpu_info.cpu_basic_level = cpu_info.cpuid_info->e1.f.family;
 
 		/* now check for the extended CPUID. it is said that in the original
 		 * Pentium ranges 0x80000000-0x8000001F respond exactly the same as
 		 * 0x00000000-0x0000001F */
-		do_cpuid(0x80000000,&(cpuid_info->e80000000.g));
-		if (cpuid_info->e80000000.i.cpuid_max < 0x80000000)
-			cpuid_info->e80000000.i.cpuid_max = 0;
-		else if (cpuid_info->e80000000.i.cpuid_max >= 0x80000001)
-			do_cpuid(0x80000001,&(cpuid_info->e80000001.g));
+		do_cpuid(0x80000000,&(cpu_info.cpuid_info->e80000000.g));
+		if (cpu_info.cpuid_info->e80000000.i.cpuid_max < 0x80000000)
+			cpu_info.cpuid_info->e80000000.i.cpuid_max = 0;
+		else if (cpu_info.cpuid_info->e80000000.i.cpuid_max >= 0x80000001)
+			do_cpuid(0x80000001,&(cpu_info.cpuid_info->e80000001.g));
 	}
 
 	/* extended CPU id string */
-	if (cpuid_info->e80000000.i.cpuid_max >= 0x80000004) {
-		do_cpuid(0x80000002,&(cpuid_info->e80000002));
-		do_cpuid(0x80000003,&(cpuid_info->e80000003));
-		do_cpuid(0x80000004,&(cpuid_info->e80000004));
+	if (cpu_info.cpuid_info->e80000000.i.cpuid_max >= 0x80000004) {
+		do_cpuid(0x80000002,&(cpu_info.cpuid_info->e80000002));
+		do_cpuid(0x80000003,&(cpu_info.cpuid_info->e80000003));
+		do_cpuid(0x80000004,&(cpu_info.cpuid_info->e80000004));
 	}
 
 	/* modern CPUs report the largest physical address, virtual address, etc. */
-	if (cpuid_info->e80000000.i.cpuid_max >= 0x80000008) {
+	if (cpu_info.cpuid_info->e80000000.i.cpuid_max >= 0x80000008) {
 		struct cpu_cpuid_generic_block tmp={0};
 
 		do_cpuid(0x80000008,&tmp);
-		cpuid_info->phys_addr_bits = tmp.a & 0xFF;
-		cpuid_info->virt_addr_bits = (tmp.a >> 8) & 0xFF;
-		cpuid_info->guest_phys_addr_bits = (tmp.a >> 16) & 0xFF;
-		if (cpuid_info->guest_phys_addr_bits == 0)
-			cpuid_info->guest_phys_addr_bits = cpuid_info->phys_addr_bits;
+		cpu_info.cpuid_info->phys_addr_bits = tmp.a & 0xFF;
+		cpu_info.cpuid_info->virt_addr_bits = (tmp.a >> 8) & 0xFF;
+		cpu_info.cpuid_info->guest_phys_addr_bits = (tmp.a >> 16) & 0xFF;
+		if (cpu_info.cpuid_info->guest_phys_addr_bits == 0)
+			cpu_info.cpuid_info->guest_phys_addr_bits = cpu_info.cpuid_info->phys_addr_bits;
 
-		cpuid_info->cpu_cores = (tmp.c & 0xFF) + 1;
-		if (tmp.c & 0xF000) cpuid_info->cpu_acpi_id_bits = 1 << (((tmp.c >> 12) & 0xF) - 1);
+		cpu_info.cpuid_info->cpu_cores = (tmp.c & 0xFF) + 1;
+		if (tmp.c & 0xF000) cpu_info.cpuid_info->cpu_acpi_id_bits = 1 << (((tmp.c >> 12) & 0xF) - 1);
 	}
 	/* we have to guess for older CPUs */
 	else {
 		/* If CPU supports long mode, then assume 40 bits */
-		if (cpuid_info->e80000001.f.d_lm) {
-			cpuid_info->phys_addr_bits = 40;
-			cpuid_info->virt_addr_bits = 40;
+		if (cpu_info.cpuid_info->e80000001.f.d_lm) {
+			cpu_info.cpuid_info->phys_addr_bits = 40;
+			cpu_info.cpuid_info->virt_addr_bits = 40;
 		}
 		/* If CPU supports PSE36, then assume 36 bits */
-		else if (cpuid_info->e1.f.d_pse36) {
-			cpuid_info->phys_addr_bits = 36;
-			cpuid_info->virt_addr_bits = 36;
+		else if (cpu_info.cpuid_info->e1.f.d_pse36) {
+			cpu_info.cpuid_info->phys_addr_bits = 36;
+			cpu_info.cpuid_info->virt_addr_bits = 36;
 		}
 		else {
-			cpuid_info->phys_addr_bits = 32;
-			cpuid_info->virt_addr_bits = 32;
+			cpu_info.cpuid_info->phys_addr_bits = 32;
+			cpu_info.cpuid_info->virt_addr_bits = 32;
 		}
 
-		cpuid_info->guest_phys_addr_bits = cpuid_info->phys_addr_bits;
+		cpu_info.cpuid_info->guest_phys_addr_bits = cpu_info.cpuid_info->phys_addr_bits;
 	}
 }
 
@@ -191,10 +194,10 @@ static void probe_fpu() {
 	/* If CPUID is available and reports an FPU, then assume
 	 * FPU is present (integrated into the CPU) and do not test.
 	 * Carry out the test if CPUID does not report one. */
-	if ((cpu_flags & CPU_FLAG_CPUID) && cpuid_info != NULL) {
-		if (cpuid_info->e1.f.d_fpu) {
-			cpu_basic_fpu_level = cpu_basic_level;
-			cpu_flags |= CPU_FLAG_FPU;
+	if ((cpu_info.cpu_flags & CPU_FLAG_CPUID) && cpu_info.cpuid_info != NULL) {
+		if (cpu_info.cpuid_info->e1.f.d_fpu) {
+			cpu_info.cpu_basic_fpu_level = cpu_info.cpu_basic_level;
+			cpu_info.cpu_flags |= CPU_FLAG_FPU;
 			return;
 		}
 	}
@@ -215,17 +218,24 @@ static void probe_fpu() {
 		cmp		ax,0x003F
 		jnz		no_fpu
 
+/* NTS: Goddamn it Watcom when will your stupid inline assembler support the TWO features
+ *      that would make this code so much easier to write:
+ *
+ *      a) the ability to refer to a member of a structure
+ *      b) the ability to use a #define macro as an offset from a symbol
+ *
+ *      You realize how error-prone it is to maintain this code without those features? */
 # if defined(__COMPACT__) || defined(__LARGE__) || defined(__HUGE__)
-		mov		ax,seg cpu_flags
+		mov		ax,seg cpu_info
 		mov		ds,ax
 # endif
-		or		byte ptr cpu_flags,0x01	; CPU_FLAG_FPU
+		or		byte ptr cpu_info+2/*WORD cpu_info.cpu_flags*/,0x01	; CPU_FLAG_FPU
 
 no_fpu:
 	}
 #endif
 
-	if (cpu_flags & CPU_FLAG_FPU) {
+	if (cpu_info.cpu_flags & CPU_FLAG_FPU) {
 		/* what we assume initially is based on the CPU basic level we detected earlier.
 		 * these assumptions are based on typical CPU+FPU hookups and the compatibility
 		 * of the chips:
@@ -236,12 +246,12 @@ no_fpu:
 		 *    486            can be paired with 80487 or integrated into the CPU
 		 *    Pentium        normally integrated into the CPU
 		 *  (anything newer) integrated into the CPU */
-		if (cpu_basic_level == 2/*286*/ || cpu_basic_level == 3/*386*/) {
+		if (cpu_info.cpu_basic_level == 2/*286*/ || cpu_info.cpu_basic_level == 3/*386*/) {
 #if defined(__GNUC__)
-			cpu_basic_fpu_level = 3;
+			cpu_info.cpu_basic_fpu_level = 3;
 			/* Linux host: TODO */
 #else
-			cpu_basic_fpu_level = 2;
+			cpu_info.cpu_basic_fpu_level = 2;
 
 			__asm {
 				.386
@@ -288,17 +298,17 @@ test_ok2:			finit
 
 test_ok3:			push		ds
 # if defined(__COMPACT__) || defined(__LARGE__) || defined(__HUGE__)
-				mov		ax,seg cpu_basic_fpu_level
+				mov		ax,seg cpu_info
 				mov		ds,ax
 # endif
-				mov		byte ptr [cpu_basic_fpu_level],3
+				mov		byte ptr cpu_info+1/*cpu_basic_fpu_level*/,3
 				pop		ds
 test_done:
 			}
 #endif
 		}
 		else {
-			cpu_basic_fpu_level = cpu_basic_level;
+			cpu_info.cpu_basic_fpu_level = cpu_info.cpu_basic_level;
 		}
 	}
 }
@@ -307,11 +317,11 @@ static void probe_basic_cpu_level() {
 /* 32-bit builds: The fact that we're executing is proof enough the CPU is a 386 or higher, skip the 8086/286 tests.
  * 16-bit builds: Use the Intel Standard test to determine 8086, 286, or up to 386. Also detect "virtual 8086 mode". */
 #if TARGET_BITS == 32 /* 32-bit DOS, Linux i386, Win32, etc... */
-	cpu_basic_level = 3;	/* we're running as 32-bit code therefore the CPU is at least a 386, we are in protected mode, and not v86 mode */
-	cpu_flags = CPU_FLAG_PROTMODE;
+	cpu_info.cpu_basic_level = 3;	/* we're running as 32-bit code therefore the CPU is at least a 386, we are in protected mode, and not v86 mode */
+	cpu_info.cpu_flags = CPU_FLAG_PROTMODE;
 #elif TARGET_BITS == 16
-	cpu_basic_level = 0;
-	cpu_flags = 0;
+	cpu_info.cpu_basic_level = 0;
+	cpu_info.cpu_flags = 0;
 
 	__asm {
 		.286
@@ -345,25 +355,25 @@ is_not_8086:	pushf				; save FLAGS
 		jnz	is_not_286
 
 # if defined(__COMPACT__) || defined(__LARGE__) || defined(__HUGE__)
-		mov	ax,seg cpu_basic_level
+		mov	ax,seg cpu_info
 		mov	ds,ax
 # endif
-		mov	cpu_basic_level,2
+		mov	byte ptr cpu_info+0/*cpu_basic_level*/,2
 
 		jmp	fin
 
 is_not_286:		
 # if defined(__COMPACT__) || defined(__LARGE__) || defined(__HUGE__)
-		mov	ax,seg cpu_basic_level
+		mov	ax,seg cpu_info
 		mov	ds,ax
 # endif
-		mov	cpu_basic_level,3
+		mov	byte ptr cpu_info+0/*cpu_basic_level*/,3
 
 fin:		popa
 		pop	ds			/* END */
 	}
 
-	if (cpu_basic_level >= 2) {
+	if (cpu_info.cpu_basic_level >= 2) {
 		__asm {
 			.286
 
@@ -378,10 +388,10 @@ fin:		popa
 			and	al,1
 			shl	al,2			; (1 << 2) == 0x04 == CPU_FLAG_PROTMODE
 #if defined(__COMPACT__) || defined(__LARGE__) || defined(__HUGE__)
-			mov	bx,seg cpu_flags
+			mov	bx,seg cpu_info
 			mov	ds,bx
 #endif
-			or	byte ptr cpu_flags,al
+			or	byte ptr cpu_info+2/*cpu_info.cpu_flags*/,al
 			pop	bx
 			pop	ax
 			pop	ds
@@ -396,13 +406,13 @@ fin:		popa
 	if ((GetWinFlags()&(WF_ENHANCED|WF_STANDARD)) == 0) {
 		/* TODO: Is it even possible to run Windows real-mode under a v86 kernel?
 		 *       For example, is it possible to run Windows 3.0 real mode under EMM386.EXE? */
-		if (cpu_flags & CPU_FLAG_PROTMODE) cpu_flags |= CPU_FLAG_V86;
+		if (cpu_info.cpu_flags & CPU_FLAG_PROTMODE) cpu_info.cpu_flags |= CPU_FLAG_V86;
 	}
 /*================================ 16-bit DOS ============================*/
 # elif defined(TARGET_MSDOS)
 	/* 16-bit DOS is supposed to run in real mode. So if CPU_FLAG_PROTMODE is set,
 	 * we're in virtual 8086 mode */
-	if (cpu_flags & CPU_FLAG_PROTMODE) cpu_flags |= CPU_FLAG_V86;
+	if (cpu_info.cpu_flags & CPU_FLAG_PROTMODE) cpu_info.cpu_flags |= CPU_FLAG_V86;
 # else
 #  error what
 # endif
@@ -411,7 +421,7 @@ fin:		popa
 #endif /* TARGET_BITS */
 
 	/* do not test further if less than a 386 */
-	if (cpu_basic_level < 3) return;
+	if (cpu_info.cpu_basic_level < 3) return;
 
 #if defined(__GNUC__)
 # if defined(__i386__) /* Linux i386 + GCC */
@@ -431,7 +441,7 @@ fin:		popa
 
 				"popfl\n"
 				: "=a" (a) /* output */ : /* input */ : /* clobbered */);
-		if (a&0x40000) cpu_basic_level = 4;
+		if (a&0x40000) cpu_info.cpu_basic_level = 4;
 	}
 # elif defined(__amd64__) /* Linux x86_64 + GCC */
 /* TODO */
@@ -462,10 +472,10 @@ fin:		popa
 
 is_not_386:
 # if defined(__COMPACT__) || defined(__LARGE__) || defined(__HUGE__)
-		mov	ax,seg cpu_basic_level
+		mov	ax,seg cpu_info
 		mov	ds,ax
 # endif
-		mov	cpu_basic_level,4
+		mov	byte ptr cpu_info+0/*cpu_basic_level*/,4
 
 fin2:		nop
 	}
@@ -499,14 +509,14 @@ fin2:		nop
 				: "=a" (a), "=b" (b) /* output */ : /* input */ : /* clobbered */);
 
 		/* a=when we cleared ID  b=when we set ID */
-		if ((a&0x00200000) == 0 && (b&0x00200000)) cpu_flags |= CPU_FLAG_CPUID;
+		if ((a&0x00200000) == 0 && (b&0x00200000)) cpu_info.cpu_flags |= CPU_FLAG_CPUID;
 	}
 # elif defined(__amd64__) /* Linux x86_64 + GCC */
 	/* TODO */
 # endif
 #else
 	/* if a 486 or higher, check for CPUID */
-	if (cpu_basic_level >= 4) {
+	if (cpu_info.cpu_basic_level >= 4) {
 		__asm {
 			.386
 
@@ -529,67 +539,22 @@ fin2:		nop
 			jz	no_cpuid		; if we failed to set CPUID then no CPUID
 
 #if defined(__COMPACT__) || defined(__LARGE__) || defined(__HUGE__)
-			mov	ax,seg cpu_flags
+			mov	ax,seg cpu_info
 			mov	ds,ax
 #endif
-			or	byte ptr cpu_flags,0x08 ; CPU_FLAG_CPUID
+			or	byte ptr cpu_info+2/*cpu_flags*/,0x08 ; CPU_FLAG_CPUID
 
 no_cpuid:		nop
 		}
 	}
 #endif
 
-	if (cpu_flags & CPU_FLAG_CPUID)
+	if (cpu_info.cpu_flags & CPU_FLAG_CPUID)
 		probe_cpuid();
-
-#if defined(TARGET_WINDOWS)
-	if (!(cpu_flags & CPU_FLAG_CPUID)) {/* we can assume at least >= 386 here */
-		cpuid_info->virt_addr_bits = 32;
-		cpuid_info->phys_addr_bits = 32;
-		cpuid_info->guest_phys_addr_bits = 32;
-	}
-#else
-	/* if the CPU does not provide CPUID, then try to get type/model ID value (386/486) */
-	if (!(cpu_flags & CPU_FLAG_CPUID)) {/* we can assume at least >= 386 here */
-# if !defined(__GNUC__) /* Not under Linux! */
-#  if !defined(TARGET_WINDOWS) /* Not under Windows! */
-		/* take the safest route first and ask the BIOS */
-		__asm {
-			push	ax
-			xor	cx,cx
-			mov	ax,0xC910
-			int	15h
-			jc	nocando
-			cmp	ah,0x00		; if AH != 0x00 then it didnt work
-#   if defined(__COMPACT__) || defined(__LARGE__) || defined(__HUGE__)
-			mov	ax,seg cpu_type_and_mask
-			mov	ds,ax
-#   endif
-			mov	cpu_type_and_mask,cx
-			jnz	nocando
-nocando:		pop	ax
-		}
-#  endif
-# endif
-
-		/* the phys/virt addr bits are not set by this point if probe_cpuid() is never executed.
-		 * so we need to set them to work 100% properly on pre-CPUID x86 processors */
-		cpuid_info->virt_addr_bits = 32;
-		/* TODO: It is said 386EX/386CX systems have 26-bit external addressing?? */
-		/* TODO: Is there anything we can do to identify some 486-class systems I have where
-		 *       address wraparound occurs every 64MB?? (26-bit address limit) */
-		if ((cpu_type_and_mask&0xFF00) == 0x23) /* Intel 386SX */
-			cpuid_info->phys_addr_bits = 24;
-		else
-			cpuid_info->phys_addr_bits = 32;
-
-		cpuid_info->guest_phys_addr_bits = cpuid_info->phys_addr_bits;
-	}
-#endif
 }
 
 void probe_cpu() {
-	if (cpu_basic_level < 0) {
+	if (cpu_info.cpu_basic_level < 0) {
 		probe_basic_cpu_level();
 		probe_fpu();
 	}
