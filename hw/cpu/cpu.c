@@ -301,10 +301,14 @@ test_ok2:			finit
 				fstsw		ax
 				fwait
 				and		ah,0x40
-				jz		test_ok3
-				jmp		test_done
+				jnz		test_done		; if its zero, then a 387
 
-test_ok3:			mov		level,3
+				/* FIXME: In certain cases, this instruction writes some random memory address?
+				          Its not doing it anymore, but it did when this was once coded to jmp
+				          to test_done if not, test_ok3 if so. WTF? (also noteworthy: when this
+					  code did malfunction the program somehow ended up reporting a 487 FPU
+					  when it detected a 386?!?) */
+				mov		byte ptr [level],3
 
 test_done:			pop		ax
 			}
@@ -472,28 +476,34 @@ is_286:			pop	ax
 
 			pushfd
 			push	eax
+			push	ebx
 
 # ifdef TARGET_CLI_STI_IS_SAFE
 			cli
 # endif
 			pushfd
 			pop	eax
-			or	eax,0x40000
-			push	eax
-			popf
-			pushf
-			pop	eax
-# ifdef TARGET_CLI_STI_IS_SAFE
-			sti
-# endif
-			test	eax,0x40000
-			jnz	is_not_386
-			jmp	fin2
 
-is_not_386:
+			or	eax,0x40000
+
+			push	eax
+			popfd
+
+			pushfd
+			pop	eax
+
+			mov	ebx,eax
+			and	ebx,0xFFFBFFFF
+			push	ebx
+			popfd
+
+			test	eax,0x40000
+			jz	is_386
+
 			mov	level,4
 
-fin2:			pop	eax
+is_386:			pop	ebx
+			pop	eax
 			popfd
 		}
 #endif
