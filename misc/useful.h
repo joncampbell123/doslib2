@@ -10,6 +10,9 @@
 #define cpp_stringify_l2(x) #x
 #define cpp_stringify(x) cpp_stringify_l2(x)
 
+#define _cpp_stringify(x) #x
+#define _cpp_stringify_num(x) _cpp_stringify(x)
+
 /* useful FAR definition */
 #ifndef FAR
 # if TARGET_MSDOS == 16
