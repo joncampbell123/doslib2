@@ -78,7 +78,7 @@ void do_cpuid(const uint32_t select,struct cpu_cpuid_generic_block FAR *b) {
 # if defined(__LARGE__) || defined(__COMPACT__) || defined(__HUGE__)
 		push	ds
 # endif
-		pushad
+		pusha
 		mov	eax,select
 # if defined(__LARGE__) || defined(__COMPACT__) || defined(__HUGE__)
 		lds	si,word ptr [b]
@@ -93,7 +93,7 @@ void do_cpuid(const uint32_t select,struct cpu_cpuid_generic_block FAR *b) {
 		mov	[si+4],ebx
 		mov	[si+8],ecx
 		mov	[si+12],edx
-		popad
+		popa
 # if defined(__LARGE__) || defined(__COMPACT__) || defined(__HUGE__)
 		pop	ds
 # endif
@@ -340,257 +340,35 @@ test_done:			pop		ax
 	cpu_info.cpu_basic_fpu_level = level;
 }
 
+#if defined(__GNUC__)
+unsigned int probe_basic_cpu_345_86();
+#else
+# if TARGET_BITS == 16
+unsigned int _cdecl probe_basic_cpu_0123_86();
+# endif
+unsigned int _cdecl probe_basic_cpu_345_86();
+#endif
+
 static void probe_basic_cpu_level() {
 	unsigned char level,flags;
-#if defined(TARGET_WINDOWS) && defined(TARGET_WINDOWS_WIN16)
-	DWORD winflags;
-#endif
+	unsigned int dtmp;
 
-/* 32-bit builds: The fact that we're executing is proof enough the CPU is a 386 or higher, skip the 8086/286 tests.
- * 16-bit builds: Use the Intel Standard test to determine 8086, 286, or up to 386. Also detect "virtual 8086 mode". */
 #if TARGET_BITS == 32 /* 32-bit DOS, Linux i386, Win32, etc... */
-	level = 3; /* if we're 32-bit code and running then the CPU is definitely a 386 or higher running in protected mode */
-	flags = CPU_FLAG_PROTMODE;
+	dtmp = probe_basic_cpu_345_86();
+	level = dtmp & 0xFF;
+	flags = (dtmp >> 8U) | CPU_FLAG_PROTMODE;
 #elif TARGET_BITS == 16
 /* ======================= 16-bit realmode DOS / real/protected mode Windows =================== */
-	level = 0;
-	flags = 0;
-
-# if defined(TARGET_WINDOWS) && defined(TARGET_WINDOWS_WIN16)
-	winflags = GetWinFlags();
-	if (winflags & (WF_PMODE|WF_STANDARD|WF_ENHANCED))
-		flags |= CPU_FLAG_PROTMODE;
-	if (winflags & 0x2000/*WF_PENTIUM*/)
-		level = 5;
-	else if (winflags & WF_CPU486)
-		level = 4;
-	else if (winflags & (WF_ENHANCED|WF_CPU386|WF_PAGING))
-		level = 3;
-	else if (winflags & WF_CPU286)
-		level = 2;
-# endif
-
-	if (level == 0) {
-		/* an 8086 will always set bits 12-15 */
-		__asm {
-			pushf
-			push	ax
-
-			pushf
-			pop	ax
-
-			and	ax,0x0FFF
-
-			push	ax
-			popf
-
-			pushf
-			pop	ax
-
-			and	ax,0xF000
-			cmp	ax,0xF000
-			jz	is_8086
-
-			mov	level,2			/* bits 12-15 are not all one, so it must be a 286 */
-
-is_8086:		pop	ax
-			popf
-		}
-	}
-
-	if (level == 2 && (flags&CPU_FLAG_PROTMODE) == 0) {
-		/* a 286 will always clear bits 12-15 in real mode.
-		 * I don't know how it will react in protected mode, so we skip the test if
-		 * targeting Win16 and GetWinFlags() says we're in protected mode */
-		__asm {
-			pushf
-			push	ax
-
-			pushf
-			pop	ax
-
-			or	ax,0xF000
-				
-			push	ax
-			popf
-
-			pushf
-			pop	ax
-				
-			and	ax,0xF000
-			jz	is_286
-
-			mov	level,3		/* bits 12-15 aren't necessarily zero, so it must be a 386 */
-
-is_286:			pop	ax
-			popf
-		}
-	}
-
-	if (level >= 2) {
-		/* if we're on a 286 or higher, use "smsw" to read whether or not the CPU
-		 * is in protected mode. on a 386 this is the best way to know whether we're
-		 * in real mode vs virtual 8086 mode. unlike "mov eax,cr0" this is legal
-		 * to execute in virtual 8086 mode without causing an exception. */
-		__asm {
-			.286
-
-			push	ax
-			smsw	ax
-			and	al,1
-			shl	al,2			; (1 << 2) == 0x04 == CPU_FLAG_PROTMODE
-			or	flags,al
-			pop	ax
-		}
-	}
-
-	if ((flags & CPU_FLAG_PROTMODE) && level >= 3) { /* if protected mode and 386 or higher */
-# if defined(TARGET_MSDOS)
-		/* 16-bit DOS is supposed to run in real mode. So if CPU_FLAG_PROTMODE is set,
-		 * we're in virtual 8086 mode */
-		flags |= CPU_FLAG_V86;
-# elif defined(TARGET_WINDOWS) && defined(TARGET_WINDOWS_WIN16)
-		/* if Windows says we're running in real mode, and yet we see the CPU in
-		 * protected mode, then we're (somehow) running under Windows real-mode which
-		 * is somehow running under virtual 8086 mode (FIXME: Is that even possible??
-		 * TEST: Try Windows 3.0 real mode with EMM386.EXE active---does that trigger this code path?) */
-		if ((winflags & (WF_PMODE|WF_STANDARD|WF_ENHANCED)) == 0) flags |= CPU_FLAG_V86;
-# endif
-	}
-#else
-# error Unknown TARGET_BITS
-#endif /* TARGET_BITS */
+	dtmp = probe_basic_cpu_0123_86();
+	level = dtmp & 0xFF;
+	flags = dtmp >> 8U;
 
 	if (level == 3) {
-#if defined(__GNUC__)
-# if defined(__i386__) /* Linux i386 + GCC */
-		unsigned int a;
-
-		/* a 386 will not allow setting the AC bit (bit 18) */
-		__asm__(	"pushfl\n"
-
-				"pushfl\n"
-				"popl	%%eax\n"
-				"or	$0x40000,%%eax\n"
-				"pushl	%%eax\n"
-				"popfl\n"
-				"pushfl\n"
-				"popl	%%eax\n"
-
-				"popfl\n"
-				: "=a" (a) /* output */ : /* input */ : /* clobbered */);
-		if (a&0x40000) level = 4;
-# elif defined(__amd64__) /* Linux x86_64 + GCC */
-/* TODO */
-# endif
-#else
-		/* a 386 will not allow setting the AC bit (bit 18) */
-		/* NTS: Inline assembly: #if TARGET_BITS == 16 doesn't work right, use only #ifdef */
-		/* NTS: Do NOT use cli/sti under 32-bit Windows targets. The NT kernel will fault us for it.
-		 *      Everyone expects 16-bit code to do it though */
-		__asm {
-			.386
-
-			pushfd
-			push	eax
-			push	ebx
-
-# ifdef TARGET_CLI_STI_IS_SAFE
-			cli
-# endif
-			pushfd
-			pop	eax
-
-			or	eax,0x40000
-
-			push	eax
-			popfd
-
-			pushfd
-			pop	eax
-
-			mov	ebx,eax
-			and	ebx,0xFFFBFFFF
-			push	ebx
-			popfd
-
-			test	eax,0x40000
-			jz	is_386
-
-			mov	level,4
-
-is_386:			pop	ebx
-			pop	eax
-			popfd
-		}
-#endif
+		dtmp = probe_basic_cpu_345_86();
+		level = dtmp & 0xFF;
+		flags |= dtmp >> 8U;
 	}
-
-	if (level >= 4) {
-#if defined(__GNUC__)
-# if defined(__i386__) /* Linux i386 + GCC */
-		/* if a 486 or higher, check for CPUID */
-		unsigned int a,b;
-
-		__asm__(	"pushfl\n"
-
-				"pushfl\n"
-				"popl	%%eax\n"
-				"and	$0xFFDFFFFF,%%eax\n"
-				"pushl	%%eax\n"
-				"popfl\n"
-				"pushfl\n"
-				"popl	%%eax\n"
-
-				"mov	%%eax,%%ebx\n"
-
-				"or	$0x00200000,%%ebx\n"
-				"pushl	%%ebx\n"
-				"popfl\n"
-				"pushfl\n"
-				"pop	%%ebx\n"
-
-				"popfl\n"
-				: "=a" (a), "=b" (b) /* output */ : /* input */ : /* clobbered */);
-
-		/* a=when we cleared ID  b=when we set ID */
-		if ((a&0x00200000) == 0 && (b&0x00200000)) cpu_info.cpu_flags |= CPU_FLAG_CPUID;
-# elif defined(__amd64__) /* Linux x86_64 + GCC */
-	/* TODO */
-# endif
-#else
-		/* if a 486 or higher, check for CPUID */
-		__asm {
-			.386
-
-			pushfd
-			push	eax
-
-			pushfd
-			pop	eax
-			and	eax,0xFFDFFFFF
-			push	eax
-			popfd
-			pushfd
-			pop	eax
-			test	eax,0x200000
-			jnz	no_cpuid		; if we failed to clear CPUID then no CPUID
-
-			or	eax,0x200000
-			push	eax
-			popfd
-			pushfd
-			pop	eax
-			test	eax,0x200000
-			jz	no_cpuid		; if we failed to set CPUID then no CPUID
-
-			or	flags,0x08 ; CPU_FLAG_CPUID
-
-no_cpuid:		pop	eax
-			popfd
-		}
-#endif
-	}
+#endif /* TARGET_BITS */
 
 	cpu_info.cpu_flags = flags;
 	cpu_info.cpu_basic_level = level;
