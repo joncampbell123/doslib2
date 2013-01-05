@@ -103,16 +103,20 @@ _probe_basic_cpu_345_86:
 
 %if TARGET_BITS == 16
 segment _DATA class=DATA
+use16
 %endif
 %if TARGET_BITS == 32
 section .data
+use32
 %endif
 
 %if TARGET_BITS == 16
 segment _BSS class=BSS
+use16
 %endif
 %if TARGET_BITS == 32
 section .bss
+use32
 %endif
 
 %if TARGET_BITS == 16

@@ -205,10 +205,20 @@ static void probe_cpuid() {
 	}
 }
 
-static void probe_fpu() {
-	unsigned char level=0,flags=0;
-	unsigned short tmp=0;
+#if defined(__GNUC__)
+unsigned int probe_basic_fpu_287_387();
+unsigned int probe_basic_cpu_345_86();
+unsigned int probe_basic_has_fpu();
+#else
+# if TARGET_BITS == 16
+unsigned int _cdecl probe_basic_cpu_0123_86();
+# endif
+unsigned int _cdecl probe_basic_fpu_287_387();
+unsigned int _cdecl probe_basic_cpu_345_86();
+unsigned int _cdecl probe_basic_has_fpu();
+#endif
 
+static void probe_fpu() {
 	/* If CPUID is available and reports an FPU, then assume
 	 * FPU is present (integrated into the CPU) and do not test.
 	 * Carry out the test if CPUID does not report one. */
@@ -220,134 +230,15 @@ static void probe_fpu() {
 		}
 	}
 
-#if defined(TARGET_WINDOWS) && defined(TARGET_WINDOWS_WIN16)
-	if (GetWinFlags() & WF_80x87)
-		flags |= CPU_FLAG_FPU;
-#endif
+	if (probe_basic_has_fpu()) {
+		cpu_info.cpu_basic_fpu_level = cpu_info.cpu_basic_level;
+		cpu_info.cpu_flags |= CPU_FLAG_FPU;
 
-	if ((flags&CPU_FLAG_FPU) == 0) {
-#if defined(__GNUC__)
-	/* Linux host: TODO */
-#else
-		__asm {
-			push		ax
-
-			fninit
-			mov		word ptr [tmp],0x5A5A
-			fnstsw		word ptr [tmp]
-			cmp		word ptr [tmp],0
-			jnz		no_fpu
-
-			fnstcw		word ptr [tmp]
-			mov		ax,word ptr [tmp]
-			and		ax,0x103F
-			cmp		ax,0x003F
-			jnz		no_fpu
-
-/* NTS: Goddamn it Watcom when will your stupid inline assembler support the TWO features
- *      that would make this code so much easier to write:
- *
- *      a) the ability to refer to a member of a structure
- *      b) the ability to use a #define macro as an offset from a symbol
- *
- *      You realize how error-prone it is to maintain this code without those features? */
-			or		flags,0x01	; CPU_FLAG_FPU
-
-no_fpu:			pop		ax
-		}
-#endif
+		/* it is said that the 386 was pairable with the 287 or the 387. */
+		if (cpu_info.cpu_basic_level == 3)
+			cpu_info.cpu_basic_fpu_level = probe_basic_fpu_287_387();
 	}
-
-	if (flags & CPU_FLAG_FPU) {
-		/* what we assume initially is based on the CPU basic level we detected earlier.
-		 * these assumptions are based on typical CPU+FPU hookups and the compatibility
-		 * of the chips:
-		 *
-		 *    8086/8088      can be paired with 8087
-		 *    286            can be paired with 80287 (or 80387?)
-		 *    386            can be paired with 80287 or 80387
-		 *    486            can be paired with 80487 or integrated into the CPU
-		 *    Pentium        normally integrated into the CPU
-		 *  (anything newer) integrated into the CPU */
-		if (cpu_info.cpu_basic_level == 2/*286*/ || cpu_info.cpu_basic_level == 3/*386*/) {
-#if defined(__GNUC__)
-			level = 3;
-			/* Linux host: TODO */
-#else
-			level = 2;
-
-			__asm {
-				.386
-				.387
-
-				push		ax
-/* 287 vs 387 detection code borrowed from:
- * http://qlibdos32.sourceforge.net/tutor/fpu-detect.asm.txt
- *
- * I have this code execute ONLY on 286 and 386 systems because I'm
- * concerned the test's specific checks might fail on newer processors
- * that do not exactly emulate these small details --J.C.
- *
- * This test can only distinguish a 8087 from 387, it can't exactly detect
- * if it is a 287. So we assume that if it fails the test for a 387, then
- * it's a 287. If it's an 8087, then this code path wouldn't run at all
- * (see "if" statement above)
- *
- * TODO: The test code mentions that it enables FPU interrupts. It also
- *       deliberately divides by zero as part of the test. So far it doesn't
- *       seem to trigger any kind of FPU exception handler, but how do we
- *       make sure that interrupt won't trigger? */
-				fstcw		word ptr [tmp]
-				and		word ptr [tmp],0xFF7F
-				fldcw		word ptr [tmp]
-				fdisi
-				fstcw		word ptr [tmp]
-				fwait
-				mov		ax,word ptr [tmp]
-				and		ax,0x80
-				jz		test_ok2
-				jmp		test_done
-
-test_ok2:			finit
-				fld1
-				fldz
-				fdiv
-				fld		st(0)
-				fchs
-				fcompp
-				fstsw		ax
-				fwait
-				and		ah,0x40
-				jnz		test_done		; if its zero, then a 387
-
-				/* FIXME: In certain cases, this instruction writes some random memory address?
-				          Its not doing it anymore, but it did when this was once coded to jmp
-				          to test_done if not, test_ok3 if so. WTF? (also noteworthy: when this
-					  code did malfunction the program somehow ended up reporting a 487 FPU
-					  when it detected a 386?!?) */
-				mov		byte ptr [level],3
-
-test_done:			pop		ax
-			}
-#endif
-		}
-		else {
-			level = cpu_info.cpu_basic_level;
-		}
-	}
-
-	cpu_info.cpu_flags |= flags;
-	cpu_info.cpu_basic_fpu_level = level;
 }
-
-#if defined(__GNUC__)
-unsigned int probe_basic_cpu_345_86();
-#else
-# if TARGET_BITS == 16
-unsigned int _cdecl probe_basic_cpu_0123_86();
-# endif
-unsigned int _cdecl probe_basic_cpu_345_86();
-#endif
 
 static void probe_basic_cpu_level() {
 	unsigned char level,flags;

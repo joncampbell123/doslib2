@@ -21,6 +21,7 @@
  %endif
 
 segment _TEXT class=CODE
+use16
 
 ;=====================================================================
 ;unsigned int _cdecl _probe_basic_cpu_0123_86();
@@ -144,5 +145,14 @@ segment _BSS class=BSS
 
 group DGROUP _DATA _BSS
 ;======================END 16-bit================
+%endif
+
+;==============32-bit stub to ensure that we show up as an empty 32-bit OBJ file===========
+%if TARGET_BITS == 32
+section .text
+use32
+
+section .data
+use32
 %endif
 
