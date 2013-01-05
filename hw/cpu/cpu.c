@@ -53,19 +53,23 @@ struct cpu_info_t cpu_info = {
 # endif
 #elif TARGET_BITS == 32
 /* defined in cpu.c */
-void do_cpuid(const uint32_t select,struct cpu_cpuid_generic_block *b);
-# pragma aux do_cpuid = \
-	".586p" \
-	"mov ebx,[esi+4]" \
-	"mov ecx,[esi+8]" \
-	"mov edx,[esi+12]" \
-	"cpuid" \
-	"mov [esi],eax" \
-	"mov [esi+4],ebx" \
-	"mov [esi+8],ecx" \
-	"mov [esi+12],edx" \
-	parm [eax] [esi] \
-	modify [eax ebx ecx edx]
+void do_cpuid(const uint32_t select,struct cpu_cpuid_generic_block *b) {
+	__asm {
+		.586p
+		pushad
+		mov	eax,select
+		mov	esi,dword ptr [b]
+		mov	ebx,[esi+4]
+		mov	ecx,[esi+8]
+		mov	edx,[esi+12]
+		cpuid
+		mov	[esi],eax
+		mov	[esi+4],ebx
+		mov	[esi+8],ecx
+		mov	[esi+12],edx
+		popad
+	}
+}
 #elif TARGET_BITS == 16
 /* defined in cpu.c */
 void do_cpuid(const uint32_t select,struct cpu_cpuid_generic_block FAR *b) {
@@ -74,7 +78,7 @@ void do_cpuid(const uint32_t select,struct cpu_cpuid_generic_block FAR *b) {
 # if defined(__LARGE__) || defined(__COMPACT__) || defined(__HUGE__)
 		push	ds
 # endif
-		push	eax
+		pushad
 		mov	eax,select
 # if defined(__LARGE__) || defined(__COMPACT__) || defined(__HUGE__)
 		lds	si,word ptr [b]
@@ -89,7 +93,7 @@ void do_cpuid(const uint32_t select,struct cpu_cpuid_generic_block FAR *b) {
 		mov	[si+4],ebx
 		mov	[si+8],ecx
 		mov	[si+12],edx
-		pop	eax
+		popad
 # if defined(__LARGE__) || defined(__COMPACT__) || defined(__HUGE__)
 		pop	ds
 # endif
