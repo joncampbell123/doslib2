@@ -52,7 +52,20 @@ struct cpu_info_t cpu_info = {
 /* TODO */
 # endif
 #elif TARGET_BITS == 32
-/* defined in cpu.h */
+/* defined in cpu.c */
+void do_cpuid(const uint32_t select,struct cpu_cpuid_generic_block *b);
+# pragma aux do_cpuid = \
+	".586p" \
+	"mov ebx,[esi+4]" \
+	"mov ecx,[esi+8]" \
+	"mov edx,[esi+12]" \
+	"cpuid" \
+	"mov [esi],eax" \
+	"mov [esi+4],ebx" \
+	"mov [esi+8],ecx" \
+	"mov [esi+12],edx" \
+	parm [eax] [esi] \
+	modify [eax ebx ecx edx]
 #elif TARGET_BITS == 16
 /* defined in cpu.c */
 void do_cpuid(const uint32_t select,struct cpu_cpuid_generic_block FAR *b) {

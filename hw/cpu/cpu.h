@@ -8,17 +8,6 @@
 
 #include <misc/useful.h>
 
-/* Stupid watcom inline assembler */
-#if TARGET_BITS == 16
-# define TARGET_BITS_16 1
-#elif TARGET_BITS == 32
-# define TARGET_BITS_32 1
-#endif
-
-#if defined(TARGET_BITS_16) || (defined(TARGET_BITS_32) && (defined(TARGET_MSDOS) || defined(TARGET_WINDOWS_WIN386)))
-# define TARGET_CLI_STI_IS_SAFE
-#endif
-
 #pragma pack(push,1)
 struct cpu_info_t {
 /* offset defines are necessary only because Watcom's stupid inline assembler does not support accessing structure members */
@@ -254,13 +243,6 @@ struct cpu_cpuid_info {
 
 extern struct cpu_info_t cpu_info;
 
-//extern signed char cpu_basic_level;
-//extern signed char cpu_basic_fpu_level;
-//extern unsigned short cpu_flags;
-//extern uint16_t cpu_type_and_mask;
-
-//extern struct cpu_cpuid_info* cpuid_info;
-
 /* CPU ID string buffer length expected: 12 bytes for 3 DWORDs plus ASCIIZ NUL */
 #define CPU_ID_STRING_LENGTH 13
 
@@ -280,21 +262,7 @@ static inline void do_cpuid(const uint32_t select,struct cpu_cpuid_generic_block
 /* TODO */
 # endif
 #elif TARGET_BITS == 32
-/* TODO: #ifdef to detect Watcom C */
-/* TODO: How do we do this to ensure it's a function call not inline? */
 void do_cpuid(const uint32_t select,struct cpu_cpuid_generic_block *b);
-# pragma aux do_cpuid = \
-	".586p" \
-	"mov ebx,[esi+4]" \
-	"mov ecx,[esi+8]" \
-	"mov edx,[esi+12]" \
-	"cpuid" \
-	"mov [esi],eax" \
-	"mov [esi+4],ebx" \
-	"mov [esi+8],ecx" \
-	"mov [esi+12],edx" \
-	parm [eax] [esi] \
-	modify [eax ebx ecx edx]
 #elif TARGET_BITS == 16
 void do_cpuid(const uint32_t select,struct cpu_cpuid_generic_block FAR *b);
 #endif
