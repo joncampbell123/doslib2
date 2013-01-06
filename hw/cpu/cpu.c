@@ -40,7 +40,7 @@ struct cpu_info_t cpu_info = {
  *     0x2308   Intel C/D1, Am386SX/SXL step A1
  *     0x2309   Intel 386CX/386EX/386SXstatic step A
  *
- *     For complete list see [http://www.youtube.com/watch?NR=1&feature=endscreen&v=DUiTZVinZEM]
+ *     For complete list see [http://www.intel-assembler.it/portale/5/identify_cpu/386ID_four_ways_to_identify_your_cpu.asp]
  */
 
 void cpu_copy_id_string(char *tmp/*must be CPU_ID_STRING_LENGTH or more*/,struct cpu_cpuid_00000000_id_info *i) {
