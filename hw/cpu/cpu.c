@@ -8,9 +8,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdint.h>
-
+#include <unistd.h>
 #include <hw/cpu/cpu.h>
-
 #include <misc/useful.h>
 
 struct cpu_info_t cpu_info = {
@@ -44,63 +43,6 @@ struct cpu_info_t cpu_info = {
  *     For complete list see [http://www.youtube.com/watch?NR=1&feature=endscreen&v=DUiTZVinZEM]
  */
 
-/* CPUID function. To avoid redundant asm blocks */
-#if defined(__GNUC__)
-# if defined(__i386__) /* Linux GCC + i386 */
-/* defined in cpu.h */
-# elif defined(__amd64__) /* Linux GCC + x86_64 */
-/* TODO */
-# endif
-#elif TARGET_BITS == 32
-/* defined in cpu.c */
-void do_cpuid(const uint32_t select,struct cpu_cpuid_generic_block *b) {
-	__asm {
-		.586p
-		pushad
-		mov	eax,select
-		mov	esi,dword ptr [b]
-		mov	ebx,[esi+4]
-		mov	ecx,[esi+8]
-		mov	edx,[esi+12]
-		cpuid
-		mov	[esi],eax
-		mov	[esi+4],ebx
-		mov	[esi+8],ecx
-		mov	[esi+12],edx
-		popad
-	}
-}
-#elif TARGET_BITS == 16
-/* defined in cpu.c */
-void do_cpuid(const uint32_t select,struct cpu_cpuid_generic_block FAR *b) {
-	__asm {
-		.586p
-# if defined(__LARGE__) || defined(__COMPACT__) || defined(__HUGE__)
-		push	ds
-# endif
-		pusha
-		mov	eax,select
-# if defined(__LARGE__) || defined(__COMPACT__) || defined(__HUGE__)
-		lds	si,word ptr [b]
-# else
-		mov	si,word ptr [b]
-# endif
-		mov	ebx,[si+4]
-		mov	ecx,[si+8]
-		mov	edx,[si+12]
-		cpuid
-		mov	[si],eax
-		mov	[si+4],ebx
-		mov	[si+8],ecx
-		mov	[si+12],edx
-		popa
-# if defined(__LARGE__) || defined(__COMPACT__) || defined(__HUGE__)
-		pop	ds
-# endif
-	}
-}
-#endif
-
 void cpu_copy_id_string(char *tmp/*must be CPU_ID_STRING_LENGTH or more*/,struct cpu_cpuid_00000000_id_info *i) {
 	*((uint32_t*)(tmp+0)) = i->id_1;
 	*((uint32_t*)(tmp+4)) = i->id_2;
@@ -132,6 +74,8 @@ char *cpu_copy_ext_id_string(char *tmp/*CPU_EXT_ID_STRING_LENGTH*/,struct cpu_cp
 }
 
 static void probe_cpuid() {
+	struct cpu_cpuid_generic_block tmp;
+
 	if (cpu_info.cpuid_info != NULL) return;
 
 	cpu_info.cpuid_info = malloc(sizeof(*cpu_info.cpuid_info));
@@ -172,8 +116,6 @@ static void probe_cpuid() {
 
 	/* modern CPUs report the largest physical address, virtual address, etc. */
 	if (cpu_info.cpuid_info->e80000000.i.cpuid_max >= 0x80000008) {
-		struct cpu_cpuid_generic_block tmp={0};
-
 		do_cpuid(0x80000008,&tmp);
 		cpu_info.cpuid_info->phys_addr_bits = tmp.a & 0xFF;
 		cpu_info.cpuid_info->virt_addr_bits = (tmp.a >> 8) & 0xFF;
@@ -204,19 +146,6 @@ static void probe_cpuid() {
 		cpu_info.cpuid_info->guest_phys_addr_bits = cpu_info.cpuid_info->phys_addr_bits;
 	}
 }
-
-#if defined(__GNUC__)
-unsigned int probe_basic_fpu_287_387();
-unsigned int probe_basic_cpu_345_86();
-unsigned int probe_basic_has_fpu();
-#else
-# if TARGET_BITS == 16
-unsigned int _cdecl probe_basic_cpu_0123_86();
-# endif
-unsigned int _cdecl probe_basic_fpu_287_387();
-unsigned int _cdecl probe_basic_cpu_345_86();
-unsigned int _cdecl probe_basic_has_fpu();
-#endif
 
 static void probe_fpu() {
 	/* If CPUID is available and reports an FPU, then assume
@@ -273,4 +202,18 @@ void probe_cpu() {
 		probe_fpu();
 	}
 }
+
+#ifndef cpu_meets_compile_target
+unsigned int cpu_meets_compile_target() {
+	if (cpu_info.cpu_basic_level < 0) probe_cpu();
+	return (cpu_info.cpu_basic_level >= TARGET_CPU)?1:0;
+}
+#endif
+
+#ifndef cpu_err_out_requirements
+void cpu_err_out_requirements() {
+	static char msg[] = "This program requires a " _cpp_stringify_num(TARGET_CPU) "86 CPU or better.\r\n";
+	write(2/*STDERR*/,msg,sizeof(msg));
+}
+#endif
 

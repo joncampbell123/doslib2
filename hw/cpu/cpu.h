@@ -250,24 +250,42 @@ extern struct cpu_info_t cpu_info;
 #define CPU_EXT_ID_STRING_LENGTH 49
 
 /* CPUID function. To avoid redundant asm blocks */
-#if defined(__GNUC__)
-# if defined(__i386__) /* Linux GCC + i386 */
-static inline void do_cpuid(const uint32_t select,struct cpu_cpuid_generic_block *b) {
-	__asm__ __volatile__ (	"cpuid"
-				: "=a" (b->a), "=b" (b->b), "=c" (b->c), "=d" (b->d) /* outputs */
-				: "a" (select), "b" (b->b), "c" (b->c), "d" (b->d) /* input */
-				: /* clobber */);
-}
-# elif defined(__amd64__) /* Linux GCC + x86_64 */
-/* TODO */
-# endif
-#elif TARGET_BITS == 32
+#if TARGET_BITS == 32
+# if defined(__GNUC__)
 void do_cpuid(const uint32_t select,struct cpu_cpuid_generic_block *b);
+# else
+void _cdecl do_cpuid(const uint32_t select,struct cpu_cpuid_generic_block *b);
+# endif
 #elif TARGET_BITS == 16
-void do_cpuid(const uint32_t select,struct cpu_cpuid_generic_block FAR *b);
+void _cdecl do_cpuid(const uint32_t select,struct cpu_cpuid_generic_block FAR *b);
+#endif
+
+#if defined(__GNUC__)
+unsigned int probe_basic_fpu_287_387();
+unsigned int probe_basic_cpu_345_86();
+unsigned int probe_basic_has_fpu();
+#else
+# if TARGET_BITS == 16
+unsigned int _cdecl probe_basic_cpu_0123_86();
+# endif
+unsigned int _cdecl probe_basic_fpu_287_387();
+unsigned int _cdecl probe_basic_cpu_345_86();
+unsigned int _cdecl probe_basic_has_fpu();
 #endif
 
 void cpu_copy_id_string(char *tmp/*must be CPU_ID_STRING_LENGTH or more*/,struct cpu_cpuid_00000000_id_info *i);
 char *cpu_copy_ext_id_string(char *tmp/*CPU_EXT_ID_STRING_LENGTH*/,struct cpu_cpuid_info *i);
 void probe_cpu();
+
+/* for 8086 target, or 286 targets assuming protected mode, this becomes a macro */
+#if TARGET_BITS == 16 && (TARGET_CPU == 0 || (TARGET_CPU == 2 && defined(TARGET_PROTMODE)))
+# define cpu_meets_compile_target() (1)
+# define cpu_err_out_requirements() { }
+#elif TARGET_BITS == 32 && TARGET_CPU == 3
+# define cpu_meets_compile_target() (1)
+# define cpu_err_out_requirements() { }
+#else
+unsigned int cpu_meets_compile_target();
+void cpu_err_out_requirements();
+#endif
 

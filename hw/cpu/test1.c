@@ -13,29 +13,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdint.h>
-
 #include <hw/cpu/cpu.h>
-
 #include <misc/useful.h>
-
-/* for 8086 target, or 286 targets assuming protected mode, this becomes a macro */
-#if TARGET_BITS == 16 && (TARGET_CPU == 0 || (TARGET_CPU == 2 && defined(TARGET_PROTMODE)))
-# define cpu_meets_compile_target() (1)
-# define cpu_err_out_requirements() { }
-#elif TARGET_BITS == 32 && TARGET_CPU == 3
-# define cpu_meets_compile_target() (1)
-# define cpu_err_out_requirements() { }
-#else
-unsigned int cpu_meets_compile_target() {
-	if (cpu_info.cpu_basic_level < 0) probe_cpu();
-	return (cpu_info.cpu_basic_level >= TARGET_CPU)?1:0;
-}
-
-void cpu_err_out_requirements() {
-	static char msg[] = "This program requires a " _cpp_stringify_num(TARGET_CPU) "86 CPU or better.\r\n";
-	write(2/*STDERR*/,msg,sizeof(msg));
-}
-#endif
 
 int main() {
 	probe_cpu();

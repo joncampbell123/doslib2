@@ -7,7 +7,7 @@ lib_hw_cpu_libcpu=$(abs_lib_dir)/libcpu$(lib_suffix)
 lib_hw_cpu_libcpu_wlink=library $(lib_hw_cpu_libcpu)
 lib_hw_cpu_libcpu_dependencies=
 
-$(lib_hw_cpu_libcpu): $(abs_obj_dir)/cpu$(obj_suffix) $(abs_obj_dir)/det86$(obj_suffix) $(abs_obj_dir)/det386$(obj_suffix) $(abs_obj_dir)/detfpu$(obj_suffix)
+$(lib_hw_cpu_libcpu): $(abs_obj_dir)/cpu$(obj_suffix) $(abs_obj_dir)/det86$(obj_suffix) $(abs_obj_dir)/det386$(obj_suffix) $(abs_obj_dir)/detfpu$(obj_suffix) $(abs_obj_dir)/cpuid$(obj_suffix)
 ifeq ($(target_subdir),linux/host)
 	$(AR) r $@ $^
 else
@@ -21,6 +21,9 @@ $(abs_obj_dir)/det386$(obj_suffix): det386.asm
 	nasm $(NASMFLAGS) -o $@ -f $(NASMFORMAT) $^
 
 $(abs_obj_dir)/detfpu$(obj_suffix): detfpu.asm
+	nasm $(NASMFLAGS) -o $@ -f $(NASMFORMAT) $^
+
+$(abs_obj_dir)/cpuid$(obj_suffix): cpuid.asm
 	nasm $(NASMFLAGS) -o $@ -f $(NASMFORMAT) $^
 
 $(abs_obj_dir)/cpu$(obj_suffix): cpu.c
