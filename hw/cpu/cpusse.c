@@ -95,33 +95,7 @@ void probe_cpu_sse() {
 #  if defined(TARGET_WINDOWS_WIN386)
 	/* TODO: What can we do? DPMI hooks? Do 32-bit DPMI hooks work under Win95 unlike the 16-bit ones? */
 #  else
-	{
-		BOOL (WINAPI *__IsProcessorFeaturePresent)(DWORD feature) =
-			GetProcAddress(GetModuleHandle("KERNEL32.DLL"),"IsProcessorFeaturePresent");
-
-		if (__IsProcessorFeaturePresent != NULL) {
-			MessageBox(NULL,"IPFP","",MB_OK);
-			if (__IsProcessorFeaturePresent(PF_XMMI_INSTRUCTIONS_AVAILABLE))
-				cpu_sse_flags |= CPU_SSE_ENABLED | CPU_SSE_EXCEPTIONS_ENABLED;
-		}
-
-		if (!(cpu_sse_flags & CPU_SSE_ENABLED)) {
-			/* Any kernel too old to have IsProcessorFeaturePresent is too old
-			 * to support SSE instructions. So if we detect HERE that SSE is enabled
-			 * it was probably enabled by one of our hacks and exceptions are probably
-			 * NOT enabled */
-			__try {
-				__asm {
-					.686
-					.xmm
-					xorps xmm0,xmm0
-				}
-				cpu_sse_flags |= CPU_SSE_ENABLED;
-			}
-			__except(1) {
-			}
-		}
-	}
+	cpu_sse_flags |= _win32_test_sse();
 #  endif
 # elif defined(TARGET_MSDOS)
 	/* If the DOS extender is running us on Ring 0 (which is usually the case

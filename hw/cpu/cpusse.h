@@ -32,5 +32,13 @@ unsigned int cpu_sse_disable();
 unsigned int cpu_sse_linux_test();
 # endif
 
+# if TARGET_BITS == 32
+#  if defined(TARGET_WINDOWS)
+#   if !defined(TARGET_WINDOWS_WIN386)
+unsigned int _win32_test_sse();
+#   endif
+#  endif
+# endif
+	
 #endif /* __DOSLIB2_HW_CPU_CPUSSE_H */
 

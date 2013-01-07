@@ -18,7 +18,7 @@ else
 	$(WLIB) -q -b -c $@ $(foreach x,$^,-+$(x))
 endif
 
-$(lib_hw_cpu_libcpusse): $(abs_obj_dir)/cpusse$(obj_suffix) $(abs_obj_dir)/ssetest_linux$(obj_suffix)
+$(lib_hw_cpu_libcpusse): $(abs_obj_dir)/cpusse$(obj_suffix) $(abs_obj_dir)/ssetest_linux$(obj_suffix) $(abs_obj_dir)/ssetest_win32$(obj_suffix)
 ifeq ($(target_subdir),linux/host)
 	$(AR) r $@ $^
 else
@@ -45,6 +45,13 @@ else
 endif
 
 $(abs_obj_dir)/cpusse$(obj_suffix): cpusse.c
+ifeq ($(target_subdir),linux/host)
+	$(CC) $(CFLAGS) -I.. -I../.. -c -o $@ $^
+else
+	$(WCC) $(WCCFLAGS) -fo=$(abs_obj_dir)/.obj -i=.. -i=../.. $^
+endif
+
+$(abs_obj_dir)/ssetest_win32$(obj_suffix): ssetest_win32.c
 ifeq ($(target_subdir),linux/host)
 	$(CC) $(CFLAGS) -I.. -I../.. -c -o $@ $^
 else
