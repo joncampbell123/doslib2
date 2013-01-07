@@ -13,12 +13,18 @@
 #   include <misc/useful.h>
 
 unsigned int _win32_test_sse() {
-	unsigned int r = 0;
+	unsigned int r;
+	HMODULE kernel;
 	BOOL (WINAPI *__IsProcessorFeaturePresent)(DWORD feature);
 
-	if ((__IsProcessorFeaturePresent = (void*)GetProcAddress(GetModuleHandle("KERNEL32.DLL"),"IsProcessorFeaturePresent")) != NULL &&
-		__IsProcessorFeaturePresent(PF_XMMI_INSTRUCTIONS_AVAILABLE))
-		return CPU_SSE_ENABLED | CPU_SSE_EXCEPTIONS_ENABLED;
+	kernel = GetModuleHandle("KERNEL32.DLL");
+	if (kernel != NULL) {
+		__IsProcessorFeaturePresent = (void*)GetProcAddress(kernel,"IsProcessorFeaturePresent");
+		if (__IsProcessorFeaturePresent != NULL) {
+			if (__IsProcessorFeaturePresent(PF_XMMI_INSTRUCTIONS_AVAILABLE))
+				return CPU_SSE_ENABLED | CPU_SSE_EXCEPTIONS_ENABLED;
+		}
+	}
 
 	/* Any kernel too old to have IsProcessorFeaturePresent is too old
 	 * to support SSE instructions. So if we detect HERE that SSE is enabled
@@ -33,7 +39,10 @@ unsigned int _win32_test_sse() {
 
 		r = CPU_SSE_ENABLED;
 	}
-	__except(1) { }
+	__except(EXCEPTION_EXECUTE_HANDLER) {
+		r = 0;
+	}
+
 	return r;
 }
 #  endif

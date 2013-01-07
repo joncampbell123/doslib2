@@ -1,4 +1,8 @@
 ; CPU detection (for 16-bit only) 8086 -> 286 -> 386
+%include "nasmsegs.inc"
+%include "nasm1632.inc"
+
+CODE_SEGMENT
 
 %if TARGET_BITS == 16
 ;================16-bit only==================
@@ -20,17 +24,13 @@
   extern GETWINFLAGS
  %endif
 
-segment _TEXT class=CODE
-use16
-
 ;=====================================================================
 ;unsigned int _cdecl _probe_basic_cpu_0123_86();
 ;=====================================================================
 ; return value: 16-bit integer, lower 8 bits are 0, 2, 3 for 8086, 286, or 386
 ;               upper 8 bits become cpu_flags. this code will set the bit to
 ;               indicate protected mode if detected.
-global _probe_basic_cpu_0123_86
-_probe_basic_cpu_0123_86:
+EXTERN_C_FUNCTION probe_basic_cpu_0123_86
 	push		cx
 	push		bx
 	pushf
@@ -155,20 +155,6 @@ _probe_basic_cpu_0123_86:
 	or		ah,0x04		; set CPU_FLAG_PROTMODE(0x04)
 	jmp		.is_386		; proceed
 
-segment _DATA class=DATA
-
-segment _BSS class=BSS
-
-group DGROUP _DATA _BSS
 ;======================END 16-bit================
-%endif
-
-;==============32-bit stub to ensure that we show up as an empty 32-bit OBJ file===========
-%if TARGET_BITS == 32
-section .text
-use32
-
-section .data
-use32
 %endif
 

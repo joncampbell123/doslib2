@@ -1,84 +1,25 @@
 ; do_cpuid() function
+%include "nasmsegs.inc"
+%include "nasm1632.inc"
 
 %if TARGET_BITS == 16
- %ifndef MMODE
-  %error You must specify MMODE variable (memory model) for 16-bit real mode code
- %endif
-
-; # if defined(__LARGE__) || defined(__COMPACT__) || defined(__HUGE__)
-
- %ifidni MMODE,l
-  %define retnative retf
-  %define cdecl_ofs (6+16)	; RETF + PUSHA + DS
- %else
-  %ifidni MMODE,m
-   %define retnative retf
-   %define cdecl_ofs (6+16)	; RETF + PUSHA + DS
-  %else
-   %define retnative ret
-   %define cdecl_ofs (4+16)	; RET + PUSHA + DS
-  %endif
- %endif
- %define nsi si
- %define nbp bp
- %define nsp sp
- %define pushan pusha
- %define popan popa
+ %define cdecl_ofs (retnative_stack_size+pusha_stack_size+2)	; RETF + PUSHA + DS
 %endif
 %if TARGET_BITS == 32
- %define retnative ret
- %define cdecl_ofs (4+32)	; RET + PUSHA
- %define nsi esi
- %define nbp ebp
- %define nsp esp
- %define pushan pushad
- %define popan popad
+ %define cdecl_ofs (retnative_stack_size+pusha_stack_size)	; RETF + PUSHA
 %endif
 
-%if TARGET_BITS == 16
-segment _TEXT class=CODE
-use16
-%endif
-%if TARGET_BITS == 32
-section .text
-use32
-%endif
+CODE_SEGMENT
 
 ;=====================================================================
 ;=====================================================================
-%ifdef TARGET_LINUX
-global do_cpuid
-do_cpuid:
-%else
-global _do_cpuid
-_do_cpuid:
-%endif
-%if TARGET_BITS == 16
-	push	ds
-%endif
+EXTERN_C_FUNCTION do_cpuid ; void _cdecl do_cpuid(uint32_t regid,cpuid_info *s)
+	push_if_far_argv(ds) ; if the memory model makes data pointers FAR, save DS
 	pushan
 	mov	nbp,nsp
 
 	mov	eax,[nbp+cdecl_ofs]
-%if TARGET_BITS == 32
-	mov	esi,[nbp+cdecl_ofs+4]
-%else
- %ifidni MMODE,l
-	lds	si,[nbp+cdecl_ofs+4]
- %endif
- %ifidni MMODE,c
-	lds	si,[nbp+cdecl_ofs+4]
- %endif
- %ifidni MMODE,h
-	lds	si,[nbp+cdecl_ofs+4]
- %endif
- %ifidni MMODE,m
-	mov	si,[nbp+cdecl_ofs+4]
- %endif
- %ifidni MMODE,s
-	mov	si,[nbp+cdecl_ofs+4]
- %endif
-%endif
+	stack_argv_ptr_load(ds,nsi,nbp+cdecl_ofs+4) ; DS:SI (16-bit far data ptr) or SI (16-bit near dataptr) or ESI (32-bit flat)
 	xor	ebx,ebx
 	xor	ecx,ecx
 	xor	edx,edx
@@ -89,30 +30,6 @@ _do_cpuid:
 	mov	[nsi+12],edx
 
 	popan
-%if TARGET_BITS == 16
-	pop	ds
-%endif
+	pop_if_far_argv(ds)
 	retnative
-
-%if TARGET_BITS == 16
-segment _DATA class=DATA
-use16
-%endif
-%if TARGET_BITS == 32
-section .data
-use32
-%endif
-
-%if TARGET_BITS == 16
-segment _BSS class=BSS
-use16
-%endif
-%if TARGET_BITS == 32
-section .bss
-use32
-%endif
-
-%if TARGET_BITS == 16
-group DGROUP _DATA _BSS
-%endif
 

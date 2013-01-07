@@ -26,16 +26,16 @@ else
 endif
 
 $(abs_obj_dir)/det86$(obj_suffix): det86.asm
-	nasm $(NASMFLAGS) -o $@ -f $(NASMFORMAT) $^
+	nasm -I$(abs_top_srcdir) $(NASMFLAGS) -o $@ -f $(NASMFORMAT) $^
 
 $(abs_obj_dir)/det386$(obj_suffix): det386.asm
-	nasm $(NASMFLAGS) -o $@ -f $(NASMFORMAT) $^
+	nasm -I$(abs_top_srcdir) $(NASMFLAGS) -o $@ -f $(NASMFORMAT) $^
 
 $(abs_obj_dir)/detfpu$(obj_suffix): detfpu.asm
-	nasm $(NASMFLAGS) -o $@ -f $(NASMFORMAT) $^
+	nasm -I$(abs_top_srcdir) $(NASMFLAGS) -o $@ -f $(NASMFORMAT) $^
 
 $(abs_obj_dir)/cpuid$(obj_suffix): cpuid.asm
-	nasm $(NASMFLAGS) -o $@ -f $(NASMFORMAT) $^
+	nasm -I$(abs_top_srcdir) $(NASMFLAGS) -o $@ -f $(NASMFORMAT) $^
 
 $(abs_obj_dir)/cpu$(obj_suffix): cpu.c
 ifeq ($(target_subdir),linux/host)

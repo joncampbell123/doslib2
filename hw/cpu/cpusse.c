@@ -56,7 +56,9 @@ void probe_cpu_sse() {
 
 	cpu_sse_flags = 0;
 	if (cpu_info.cpuid_info == NULL) return; /* if no CPUID info, then no SSE */
+#if 0 /*DEBUG*/
 	if (!cpu_info.cpuid_info->e1.f.d_sse) return; /* if SSE not supported by CPU then stop now */
+#endif
 	cpu_sse_flags |= CPU_SSE_SUPPORTED;
 
 #if TARGET_BITS == 16
@@ -67,6 +69,7 @@ void probe_cpu_sse() {
 	 *       The DPMI hook trick does not work under Windows 95 or later. */
 # endif
 	}
+# if 0 /* DEBUG*/
 	else if (cpu_info.cpu_flags & CPU_FLAG_V86) {
 	/* TODO: If virtual 8086 mode detected, then:
 	 *  
@@ -87,9 +90,12 @@ void probe_cpu_sse() {
 	 *                  at the DPMI server even when we expect the exception to happen in "real mode". */
 	}
 	else {
+# endif
 		/* Real mode: we can do whatever we want including enabling/disabling SSE */
 		cpu_sse_flags |= _direct_cr4_read_sse() | CPU_SSE_CAN_ENABLE | CPU_SSE_CAN_DISABLE;
+# if 0 /*DEBUG*/
 	}
+# endif
 #elif TARGET_BITS == 32
 # if defined(TARGET_WINDOWS)
 #  if defined(TARGET_WINDOWS_WIN386)

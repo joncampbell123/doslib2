@@ -1,41 +1,13 @@
 ; FPU detection
+%include "nasmsegs.inc"
+%include "nasm1632.inc"
+
+CODE_SEGMENT
 
 %if TARGET_BITS == 16
- %ifndef MMODE
-  %error You must specify MMODE variable (memory model) for 16-bit real mode code
- %endif
-
- %ifidni MMODE,l
-  %define retnative retf
- %else
-  %ifidni MMODE,m
-   %define retnative retf
-  %else
-   %define retnative ret
-  %endif
- %endif
- %define nbx bx
- %define stackbase bp
- %define stackpointer sp
-
  %ifdef TARGET_WINDOWS_WIN16
   extern GETWINFLAGS
  %endif
-%endif
-%if TARGET_BITS == 32
- %define nbx ebx
- %define retnative ret
- %define stackbase ebp
- %define stackpointer esp
-%endif
-
-%if TARGET_BITS == 16
-segment _TEXT class=CODE
-use16
-%endif
-%if TARGET_BITS == 32
-section .text
-use32
 %endif
 
 ;=====================================================================
@@ -43,13 +15,7 @@ use32
 ;=====================================================================
 ; return value: 2 if 287, else 3. this function assumes you already
 ;               detected the CPU is a 386 and that FPU is present.
-%ifdef TARGET_LINUX
-global probe_basic_fpu_287_387
-probe_basic_fpu_287_387:
-%else
-global _probe_basic_fpu_287_387
-_probe_basic_fpu_287_387:
-%endif
+EXTERN_C_FUNCTION probe_basic_fpu_287_387
 	push		nbx
 	push		stackbase
 	sub		stackpointer,4
@@ -96,13 +62,7 @@ _probe_basic_fpu_287_387:
 ; return value: whether or not the FPU is present. uses the traditional 8087
 ;               test. this function will not be called if CPUID is present
 ;               because we can then use the CPUID information to detect FPU.
-%ifdef TARGET_LINUX
-global probe_basic_has_fpu
-probe_basic_has_fpu:
-%else
-global _probe_basic_has_fpu
-_probe_basic_has_fpu:
-%endif
+EXTERN_C_FUNCTION probe_basic_has_fpu
 	push		nbx
 	push		stackbase
 	sub		stackpointer,4
@@ -138,26 +98,4 @@ _probe_basic_has_fpu:
 	pop		stackbase
 	pop		nbx
 	retnative
-
-%if TARGET_BITS == 16
-segment _DATA class=DATA
-use16
-%endif
-%if TARGET_BITS == 32
-section .data
-use32
-%endif
-
-%if TARGET_BITS == 16
-segment _BSS class=BSS
-use16
-%endif
-%if TARGET_BITS == 32
-section .bss
-use32
-%endif
-
-%if TARGET_BITS == 16
-group DGROUP _DATA _BSS
-%endif
 

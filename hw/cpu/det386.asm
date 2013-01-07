@@ -1,32 +1,8 @@
 ; CPU detection for 386 -> 486 -> Pentium
+%include "nasmsegs.inc"
+%include "nasm1632.inc"
 
-%if TARGET_BITS == 16
- %ifndef MMODE
-  %error You must specify MMODE variable (memory model) for 16-bit real mode code
- %endif
-
- %ifidni MMODE,l
-  %define retnative retf
- %else
-  %ifidni MMODE,m
-   %define retnative retf
-  %else
-   %define retnative ret
-  %endif
- %endif
-%endif
-%if TARGET_BITS == 32
- %define retnative ret
-%endif
-
-%if TARGET_BITS == 16
-segment _TEXT class=CODE
-use16
-%endif
-%if TARGET_BITS == 32
-section .text
-use32
-%endif
+CODE_SEGMENT
 
 ;=====================================================================
 ;unsigned int _cdecl _probe_basic_cpu_345_86();
@@ -35,13 +11,7 @@ use32
 ;               upper 8 bits become cpu_flags. this code will set the bit to
 ;               indicate CPUID is present. This function is called assuming the
 ;               CPU is a 386 or higher.
-%ifdef TARGET_LINUX
-global probe_basic_cpu_345_86
-probe_basic_cpu_345_86:
-%else
-global _probe_basic_cpu_345_86
-_probe_basic_cpu_345_86:
-%endif
+EXTERN_C_FUNCTION probe_basic_cpu_345_86
 	push		ebx
 	pushfd
 
@@ -100,26 +70,4 @@ _probe_basic_cpu_345_86:
 .done:	popfd
 	pop		ebx
 	retnative
-
-%if TARGET_BITS == 16
-segment _DATA class=DATA
-use16
-%endif
-%if TARGET_BITS == 32
-section .data
-use32
-%endif
-
-%if TARGET_BITS == 16
-segment _BSS class=BSS
-use16
-%endif
-%if TARGET_BITS == 32
-section .bss
-use32
-%endif
-
-%if TARGET_BITS == 16
-group DGROUP _DATA _BSS
-%endif
 
