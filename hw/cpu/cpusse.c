@@ -23,6 +23,12 @@ void reset_cpu_sse_flags() {
 	cpu_sse_flags = CPU_SSE_NOT_YET_DETECTED;
 }
 
+#if TARGET_BITS == 32
+# if (defined(TARGET_WINDOWS) && defined(TARGET_WINDOWS_WIN386)) || defined(TARGET_MSDOS)
+unsigned int _cdecl cpu_sse_dpmi32_test();
+# endif
+#endif
+
 static unsigned int _direct_cr4_read_sse() {
 	/* read CR4 */
 	register unsigned int tst,r = 0;
@@ -56,9 +62,7 @@ void probe_cpu_sse() {
 
 	cpu_sse_flags = 0;
 	if (cpu_info.cpuid_info == NULL) return; /* if no CPUID info, then no SSE */
-#if 0 /*DEBUG*/
 	if (!cpu_info.cpuid_info->e1.f.d_sse) return; /* if SSE not supported by CPU then stop now */
-#endif
 	cpu_sse_flags |= CPU_SSE_SUPPORTED;
 
 #if TARGET_BITS == 16
@@ -69,7 +73,6 @@ void probe_cpu_sse() {
 	 *       The DPMI hook trick does not work under Windows 95 or later. */
 # endif
 	}
-# if 0 /* DEBUG*/
 	else if (cpu_info.cpu_flags & CPU_FLAG_V86) {
 	/* TODO: If virtual 8086 mode detected, then:
 	 *  
@@ -90,16 +93,14 @@ void probe_cpu_sse() {
 	 *                  at the DPMI server even when we expect the exception to happen in "real mode". */
 	}
 	else {
-# endif
 		/* Real mode: we can do whatever we want including enabling/disabling SSE */
 		cpu_sse_flags |= _direct_cr4_read_sse() | CPU_SSE_CAN_ENABLE | CPU_SSE_CAN_DISABLE;
-# if 0 /*DEBUG*/
 	}
-# endif
 #elif TARGET_BITS == 32
 # if defined(TARGET_WINDOWS)
 #  if defined(TARGET_WINDOWS_WIN386)
-	/* TODO: What can we do? DPMI hooks? Do 32-bit DPMI hooks work under Win95 unlike the 16-bit ones? */
+	/*FIXME: There's something very weird about Watcom's Win386 extender that prevents us from doing a proper test */
+	/*cpu_sse_flags |= cpu_sse_dpmi32_test();*/
 #  else
 	cpu_sse_flags |= _win32_test_sse();
 #  endif
@@ -119,7 +120,7 @@ void probe_cpu_sse() {
 		 * instruction and noting whether or not an Invalid Opcode exception happens.
 		 * When EMM386.EXE is active, or from within a DOS Box in Windows this is the
 		 * only way to detect it. */
-		/* TODO */
+		cpu_sse_flags |= cpu_sse_dpmi32_test();
 	}
 # elif defined(TARGET_LINUX)
 	cpu_sse_flags |= cpu_sse_linux_test();

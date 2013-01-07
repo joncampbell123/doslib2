@@ -18,7 +18,7 @@ else
 	$(WLIB) -q -b -c $@ $(foreach x,$^,-+$(x))
 endif
 
-$(lib_hw_cpu_libcpusse): $(abs_obj_dir)/cpusse$(obj_suffix) $(abs_obj_dir)/ssetest_linux$(obj_suffix) $(abs_obj_dir)/ssetest_win32$(obj_suffix)
+$(lib_hw_cpu_libcpusse): $(abs_obj_dir)/cpusse$(obj_suffix) $(abs_obj_dir)/ssetest_linux$(obj_suffix) $(abs_obj_dir)/ssetest_win32$(obj_suffix) $(abs_obj_dir)/ssetest_dpmi32$(obj_suffix)
 ifeq ($(target_subdir),linux/host)
 	$(AR) r $@ $^
 else
@@ -28,13 +28,16 @@ endif
 $(abs_obj_dir)/det86$(obj_suffix): det86.asm
 	nasm -I$(abs_top_srcdir) $(NASMFLAGS) -o $@ -f $(NASMFORMAT) $^
 
+$(abs_obj_dir)/cpuid$(obj_suffix): cpuid.asm
+	nasm -I$(abs_top_srcdir) $(NASMFLAGS) -o $@ -f $(NASMFORMAT) $^
+
 $(abs_obj_dir)/det386$(obj_suffix): det386.asm
 	nasm -I$(abs_top_srcdir) $(NASMFLAGS) -o $@ -f $(NASMFORMAT) $^
 
 $(abs_obj_dir)/detfpu$(obj_suffix): detfpu.asm
 	nasm -I$(abs_top_srcdir) $(NASMFLAGS) -o $@ -f $(NASMFORMAT) $^
 
-$(abs_obj_dir)/cpuid$(obj_suffix): cpuid.asm
+$(abs_obj_dir)/ssetest_dpmi32$(obj_suffix): ssetest_dpmi32.asm
 	nasm -I$(abs_top_srcdir) $(NASMFLAGS) -o $@ -f $(NASMFORMAT) $^
 
 $(abs_obj_dir)/cpu$(obj_suffix): cpu.c
