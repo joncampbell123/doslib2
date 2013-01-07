@@ -5,21 +5,6 @@
 CODE_SEGMENT
 
 %if TARGET_BITS == 16
-;================16-bit only==================
- %ifndef MMODE
-  %error You must specify MMODE variable (memory model) for 16-bit real mode code
- %endif
-
- %ifidni MMODE,l
-  %define retnative retf
- %else
-  %ifidni MMODE,m
-   %define retnative retf
-  %else
-   %define retnative ret
-  %endif
- %endif
-
  %ifdef TARGET_WINDOWS_WIN16
   extern GETWINFLAGS
  %endif
