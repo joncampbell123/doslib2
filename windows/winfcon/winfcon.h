@@ -8,6 +8,9 @@
  * <insert LGPL legal text here>
  */
 
+#ifndef __DOSLIB_WINDOWS_WINFCON_H
+#define __DOSLIB_WINDOWS_WINFCON_H
+
 /* Windows 3.1 and earlier, even for Win32s: there is no system given console.
  * We either have to draw and maintain our own window, or find some other way to printf() and display it. */
 #if defined(TARGET_WINDOWS) && defined(TARGET_WINDOWS_GUI) && !defined(TARGET_WINDOWS_CONSOLE) && defined(WINFCON_ENABLE)
@@ -65,4 +68,6 @@ int WINMAINPROC WinMain(HINSTANCE hInstance,HINSTANCE hPrevInstance,LPSTR lpCmdL
 }
 # endif
 #endif
+
+#endif /* __DOSLIB_WINDOWS_WINFCON_H */
 

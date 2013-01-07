@@ -14,14 +14,69 @@
 #include <string.h>
 #include <stdint.h>
 #include <hw/cpu/cpu.h>
+#include <hw/cpu/cpusse.h>
 #include <misc/useful.h>
 
-int main() {
+int main(int argc,char **argv,char **envp) {
 	probe_cpu();
 
 	if (!cpu_meets_compile_target()) {
 		cpu_err_out_requirements();
 		return -1;
+	}
+
+	if (argc > 1) {
+		if (!strcmp(argv[1],"?")) {
+			fprintf(stderr,"test                         Show all CPU info\n");
+			fprintf(stderr,"test sse                     Turn on SSE extensions\n");
+			fprintf(stderr,"test sseoff                  Turn off SSE extensions\n");
+		}
+		else if (!strcmp(argv[1],"sse")) {
+			probe_cpu_sse();
+
+			if (!(cpu_sse_flags & CPU_SSE_SUPPORTED)) {
+				printf(" - CPU does not support SSE\n");
+				return 1;
+			}
+			if (!(cpu_sse_flags & CPU_SSE_CAN_ENABLE)) {
+				if (cpu_sse_flags & CPU_SSE_ENABLED)
+					printf(" - SSE is already enabled, though I cannot enable it\n");
+				else
+					printf(" - This program cannot enable SSE\n");
+
+				return 1;
+			}
+			if (cpu_sse_flags & CPU_SSE_ENABLED)
+				printf(" - CPU SSE extensions are already enabled, this will enable again\n");
+			if (cpu_sse_flags & CPU_SSE_EXCEPTIONS_ENABLED)
+				printf(" - CPU SSE exceptions are already enabled\n");
+
+			if (!cpu_sse_enable())
+				printf(" ! Unable to enable SSE\n");
+		}
+		else if (!strcmp(argv[1],"sseoff")) {
+			probe_cpu_sse();
+
+			if (!(cpu_sse_flags & CPU_SSE_SUPPORTED)) {
+				printf(" - CPU does not support SSE\n");
+				return 1;
+			}
+			if (!(cpu_sse_flags & CPU_SSE_CAN_DISABLE)) {
+				if (!(cpu_sse_flags & CPU_SSE_ENABLED))
+					printf(" - SSE is already disabled, though I cannot disable it\n");
+				else
+					printf(" - This program cannot disable SSE\n");
+
+				return 1;
+			}
+			if (!(cpu_sse_flags & CPU_SSE_ENABLED))
+				printf(" - CPU SSE extensions are already disabled\n");
+
+			if (!cpu_sse_disable())
+				printf(" ! Unable to disable SSE\n");
+		}
+
+		return 1;
 	}
 
 	printf("CPU level: %d\n",cpu_info.cpu_basic_level);
@@ -136,6 +191,26 @@ int main() {
 				cpu_info.cpuid_info->cpu_cores,
 				cpu_info.cpuid_info->cpu_acpi_id_bits);
 		}
+
+		/* detecting SSE by CPUID is not enough, the OS must have enabled it.
+		 * if we're in pure 16-bit real mode, then it's probably NOT enabled but
+		 * we're free to enable it ourselves.
+		 *
+		 * The detection process is NOT carried out by default. most of these
+		 * projects aren't going to use SSE anyway. we don't want SSE support
+		 * bloating up the core library, nor do we want possible instability
+		 * involved in detecting SSE when the program will not use it anyway. */
+		probe_cpu_sse();
+		if (cpu_sse_flags & CPU_SSE_SUPPORTED)
+			printf(" - CPU supports SSE\n");
+		if (cpu_sse_flags & CPU_SSE_ENABLED)
+			printf(" - CPU SSE extensions are enabled\n");
+		if (cpu_sse_flags & CPU_SSE_EXCEPTIONS_ENABLED)
+			printf(" - CPU SSE exceptions are enabled\n");
+		if (cpu_sse_flags & CPU_SSE_CAN_ENABLE)
+			printf(" - This program can enable SSE if needed\n");
+		if (cpu_sse_flags & CPU_SSE_CAN_DISABLE)
+			printf(" - This program can disable SSE if needed\n");
 	}
 	else if (cpu_info.cpu_type_and_mask != 0) {
 		/* FIXME: Dig out your ancient 386/486 systems and test that this code gets some actual values */

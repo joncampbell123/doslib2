@@ -1,3 +1,6 @@
+#ifndef __DOSLIB2_WINDOWS_APIHELP_H
+#define __DOSLIB2_WINDOWS_APIHELP_H
+
 #if defined(TARGET_WINDOWS)
 # include <windows.h>
 #endif
@@ -103,4 +106,6 @@ static inline unsigned int IsWindowsRealMode() {
 #else /* !TARGET_WINDOWS_WIN16 */
 # define IsWindowsRealMode() (0)
 #endif
+
+#endif /* __DOSLIB2_WINDOWS_APIHELP_H */
 

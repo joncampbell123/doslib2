@@ -1,7 +1,11 @@
 
+#ifndef __DOSLIB2_HW_CPU_CPU_H
+#define __DOSLIB2_HW_CPU_CPU_H
+
 #if defined(TARGET_WINDOWS)
 # include <windows.h>
 #endif
+
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
@@ -249,6 +253,36 @@ extern struct cpu_info_t cpu_info;
 /* extended CPU id string buffer length extended: 48 bytes for 4 x 3 DWORDs plus ASCIIZ NUL */
 #define CPU_EXT_ID_STRING_LENGTH 49
 
+#if defined(TARGET_MSDOS) || defined(TARGET_WINDOWS)
+static unsigned short read_cs_sreg();
+#pragma aux read_cs_sreg = \
+	"mov ax,cs" value [ax]
+static unsigned int read_cr4i_creg();
+# if TARGET_BITS == 32
+#  pragma aux read_cr4i_creg = \
+	".386p" \
+	"mov eax,cr4" value [eax]
+# else
+#  pragma aux read_cr4i_creg = \
+	".386p" \
+	"mov eax,cr4" value [ax]
+# endif
+#endif
+
+static void _sse_enable();
+#pragma aux _sse_enable = \
+	".386p" \
+	"mov eax,cr4" \
+	"or eax,0x200" \
+	"mov cr4,eax"
+
+static void _sse_disable();
+#pragma aux _sse_disable = \
+	".386p" \
+	"mov eax,cr4" \
+	"and eax,0xFFFFFDFF" \
+	"mov cr4,eax"
+
 /* CPUID function. To avoid redundant asm blocks */
 #if TARGET_BITS == 32
 # if defined(__GNUC__)
@@ -288,4 +322,6 @@ void probe_cpu();
 unsigned int cpu_meets_compile_target();
 void cpu_err_out_requirements();
 #endif
+
+#endif /* __DOSLIB2_HW_CPU_CPU_H */
 
