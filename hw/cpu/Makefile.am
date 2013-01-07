@@ -43,5 +43,8 @@ disk:
 	mcopy -i test.dsk ../../build/hw/cpu/dos16r/086l/exe/test1.exe ::d16_086l.exe
 	mcopy -i test.dsk ../../build/hw/cpu/dos16r/086c/exe/test1.exe ::d16_086c.exe
 	mcopy -i test.dsk ../../build/hw/cpu/dos32p/386f/exe/test1.exe ::d32_386f.exe
+	mcopy -i test.dsk ../../build/hw/cpu/win32s/31_386f/exe/test1.exe ::win32s.exe
+	mcopy -i test.dsk ../../build/hw/cpu/win32/95_386f/exe/test1.exe ::win95.exe
+	mcopy -i test.dsk ../../build/hw/cpu/win32/nt_386f/exe/test1.exe ::winnt.exe
 	mcopy -i test.dsk ../../dos4gw.dat ::dos4gw.exe
 

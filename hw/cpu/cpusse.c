@@ -92,8 +92,37 @@ void probe_cpu_sse() {
 	}
 #elif TARGET_BITS == 32
 # if defined(TARGET_WINDOWS)
-	/* TODO: Use GetProcAddress() to call IsProcessorFeaturePresent() with PF_XMMI_INSTRUCTIONS_AVAILABLE */
-	/* TODO: Use code to execute an SSE instruction within a __try __except(1) block to catch the invalid opcode exception to detect SSE */
+#  if defined(TARGET_WINDOWS_WIN386)
+	/* TODO: What can we do? DPMI hooks? Do 32-bit DPMI hooks work under Win95 unlike the 16-bit ones? */
+#  else
+	{
+		BOOL (WINAPI *__IsProcessorFeaturePresent)(DWORD feature) =
+			GetProcAddress(GetModuleHandle("KERNEL32.DLL"),"IsProcessorFeaturePresent");
+
+		if (__IsProcessorFeaturePresent != NULL) {
+			MessageBox(NULL,"IPFP","",MB_OK);
+			if (__IsProcessorFeaturePresent(PF_XMMI_INSTRUCTIONS_AVAILABLE))
+				cpu_sse_flags |= CPU_SSE_ENABLED | CPU_SSE_EXCEPTIONS_ENABLED;
+		}
+
+		if (!(cpu_sse_flags & CPU_SSE_ENABLED)) {
+			/* Any kernel too old to have IsProcessorFeaturePresent is too old
+			 * to support SSE instructions. So if we detect HERE that SSE is enabled
+			 * it was probably enabled by one of our hacks and exceptions are probably
+			 * NOT enabled */
+			__try {
+				__asm {
+					.686
+					.xmm
+					xorps xmm0,xmm0
+				}
+				cpu_sse_flags |= CPU_SSE_ENABLED;
+			}
+			__except(1) {
+			}
+		}
+	}
+#  endif
 # elif defined(TARGET_MSDOS)
 	/* If the DOS extender is running us on Ring 0 (which is usually the case
 	 * unless EMM386.EXE is resident) then we can just read CR4 directly to know if
@@ -107,7 +136,9 @@ void probe_cpu_sse() {
 	else {
 		/* No: Ring 3 probably. We will cause a fault if we try to read CR4.
 		 * The only way to test whether SSE is enabled is to try executing an SSE
-		 * instruction and noting whether or not an Invalid Opcode exception happens. */
+		 * instruction and noting whether or not an Invalid Opcode exception happens.
+		 * When EMM386.EXE is active, or from within a DOS Box in Windows this is the
+		 * only way to detect it. */
 		/* TODO */
 	}
 # elif defined(TARGET_LINUX)
