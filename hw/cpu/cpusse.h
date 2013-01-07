@@ -28,5 +28,9 @@ void reset_cpu_sse_flags();
 unsigned int cpu_sse_enable();
 unsigned int cpu_sse_disable();
 
+# if defined(TARGET_LINUX)
+unsigned int cpu_sse_linux_test();
+# endif
+
 #endif /* __DOSLIB2_HW_CPU_CPUSSE_H */
 

@@ -2,6 +2,11 @@
 # include <windows.h>
 # include <windows/apihelp.h>
 #endif
+#if defined(TARGET_LINUX)
+# include <signal.h>
+# include <unistd.h>
+# include <sys/mman.h>
+#endif
 
 #include <stdio.h>
 #include <assert.h>
@@ -16,6 +21,16 @@ unsigned char cpu_sse_flags = 0x80;
 
 void reset_cpu_sse_flags() {
 	cpu_sse_flags = CPU_SSE_NOT_YET_DETECTED;
+}
+
+static unsigned int _direct_cr4_read_sse() {
+	/* read CR4 */
+	register unsigned int tst,r = 0;
+
+	tst = read_cr4i_creg();
+	if (tst & 0x200) r |= CPU_SSE_ENABLED;
+	if (tst & 0x400) r |= CPU_SSE_EXCEPTIONS_ENABLED;
+	return r;
 }
 
 /* NTS: It is expected that this function will be called multiple times.
@@ -72,15 +87,8 @@ void probe_cpu_sse() {
 	 *                  at the DPMI server even when we expect the exception to happen in "real mode". */
 	}
 	else {
-		unsigned int tst;
-
 		/* Real mode: we can do whatever we want including enabling/disabling SSE */
-		cpu_sse_flags |= CPU_SSE_CAN_ENABLE | CPU_SSE_CAN_DISABLE;
-
-		/* read CR4 */
-		tst = read_cr4i_creg(); /* NTS: On 16-bit builds this only gets the lower 16 bits, which is fine */
-		if (tst & 0x200) cpu_sse_flags |= CPU_SSE_ENABLED;
-		if (tst & 0x400) cpu_sse_flags |= CPU_SSE_EXCEPTIONS_ENABLED;
+		cpu_sse_flags |= _direct_cr4_read_sse() | CPU_SSE_CAN_ENABLE | CPU_SSE_CAN_DISABLE;
 	}
 #elif TARGET_BITS == 32
 # if defined(TARGET_WINDOWS)
@@ -93,15 +101,8 @@ void probe_cpu_sse() {
 	 *
 	 * we can look at bits 1-0 of the code segment to detect Ring 0 execution */
 	if ((read_cs_sreg()&3) == 0) {
-		unsigned int tst;
-
-		/* Yes: Ring 0 execution. Read CR4 directly. That also means we can write CR4 */
-		cpu_sse_flags |= CPU_SSE_CAN_ENABLE | CPU_SSE_CAN_DISABLE;
-
-		/* read CR4 */
-		tst = read_cr4i_creg();
-		if (tst & 0x200) cpu_sse_flags |= CPU_SSE_ENABLED;
-		if (tst & 0x400) cpu_sse_flags |= CPU_SSE_EXCEPTIONS_ENABLED;
+		/* Yes: Ring 0 execution. Read CR4 directly. We can also write CR4 and therefore enable/disable SSE */
+		cpu_sse_flags |= _direct_cr4_read_sse() | CPU_SSE_CAN_ENABLE | CPU_SSE_CAN_DISABLE;
 	}
 	else {
 		/* No: Ring 3 probably. We will cause a fault if we try to read CR4.
@@ -110,7 +111,7 @@ void probe_cpu_sse() {
 		/* TODO */
 	}
 # elif defined(TARGET_LINUX)
-	/* TODO */
+	cpu_sse_flags |= cpu_sse_linux_test();
 # endif
 #endif
 }
