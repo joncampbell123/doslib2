@@ -1,0 +1,54 @@
+ISSUE: DPMI exception handling in Windows 3.1/9x/ME
+TARGETS: 16-bit Windows (win16)
+NOTED BY: Jonathan Campbell
+
+In Windows 3.1 it is well known that you can catch specific exceptions
+by directly calling the DPMI server deep within Windows to set exception
+handlers. If your application is 16-bit and NOT running under the Win32s
+kernel, the exception is handled by Windows and then passed down to
+your exception handler on a 16-bit stack frame as you would expect it to
+do.
+
+The problem: If your application is a 32-bit Watcom Win386 extender
+application, you can set an exception handler from your 32-bit code
+segment and give it a direct pointer into the 32-bit code. When Windows
+calls the exception handler, the CPU will correctly execute 32-bit code,
+but Windows will still give it a 16-bit exception handler frame and
+expect a 16-bit RETF to occur.
+
+In a way this makes sense, since Microsoft probably coded Windows to
+enter DPMI as 16-bit even for "386 enhanced" mode to maintain compatibility
+with the existing 16-bit environment.
+
+It is possible for the Win386 application to deal with this by returning
+with 0x66 RETF (forced 16-bit RETF from 32-bit code) but then that brings
+up the issue that the return will not work if the instruction pointer or
+stack pointer are beyond 64K (since they're 32-bit and not 16-bit). So
+doing that is overall not a safe solution to the problem.
+
+The solution it seems, is that despite being a 32-bit Win386 application,
+any tests involving exceptions are going to have to involve a 16-bit
+code/data segment somehow. Whether that means creating it with DPMI calls
+yourself in the code, or calling a 16-bit external DLL to do it, is up
+to you.
+
+The second problem: Even if you do write the code to accomodate a 16-bit
+stack, modifying the instruction pointer stored on the stack (by DPMI
+standard) doesn't work. If you're writing code to test invalid opcodes
+there's no way to modify the return address to skip over them.
+
+Interesting note: Looking into the Win386 extender source code in Open
+Watcom reveals that Watcom coders had to 0x66 RETF all over the place
+themselves!
+
+TODO: Since Watcom win386 does 0x66 RETF all over the place, and mentions
+      the .REX format tends to think in 64KB chunks anyway, is it remotely
+      possible that Watcom engineers coded Win386 to create a 32-bit flat
+      data space but quietly split the code into 64KB segments? Would that
+      be the reason some programs in the DOSLIB had to use 48-bit pointers
+      (16:32 CS:EIP pointers) for certain things or else crashes would occur?
+
+      If it is true that Win386 code is split into 64KB segments, then it
+      might be possible to assume EIP is < 64KB and in fact exception handlers
+      might be possible despite having to 0x66 RETF all the time.
+

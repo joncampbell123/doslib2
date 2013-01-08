@@ -17,6 +17,12 @@
 #include <hw/cpu/cpusse.h>
 #include <misc/useful.h>
 
+/*DEBUG: Force the SSE test to execute even if CPUID is missing or CPUID indicates lack of SSE.
+ *       You would enable this to test how well our exception handlers work in environments where
+ *       SSE is obviously not supported such as Windows 3.0 in DOSBox (which does not emulate
+ *       anything past a Pentium) */
+/*#define DEBUG_ASSUME_SSE*/
+
 unsigned char cpu_sse_flags = 0x80;
 
 void reset_cpu_sse_flags() {
@@ -24,7 +30,9 @@ void reset_cpu_sse_flags() {
 }
 
 #if TARGET_BITS == 32
-# if (defined(TARGET_WINDOWS) && defined(TARGET_WINDOWS_WIN386)) || defined(TARGET_MSDOS)
+# if defined(TARGET_WINDOWS_WIN386)
+unsigned int _cdecl cpu_sse_dpmi32win386_test();
+# elif defined(TARGET_MSDOS)
 unsigned int _cdecl cpu_sse_dpmi32_test();
 # endif
 #endif
@@ -61,8 +69,10 @@ void probe_cpu_sse() {
 		return;
 
 	cpu_sse_flags = 0;
+#ifndef DEBUG_ASSUME_SSE
 	if (cpu_info.cpuid_info == NULL) return; /* if no CPUID info, then no SSE */
 	if (!cpu_info.cpuid_info->e1.f.d_sse) return; /* if SSE not supported by CPU then stop now */
+#endif
 	cpu_sse_flags |= CPU_SSE_SUPPORTED;
 
 #if TARGET_BITS == 16
@@ -99,8 +109,12 @@ void probe_cpu_sse() {
 #elif TARGET_BITS == 32
 # if defined(TARGET_WINDOWS)
 #  if defined(TARGET_WINDOWS_WIN386)
-	/*FIXME: There's something very weird about Watcom's Win386 extender that prevents us from doing a proper test */
-	/*cpu_sse_flags |= cpu_sse_dpmi32_test();*/
+	/* Watcom win386 has it's own variant of the DPMI32 test because despite being
+	 * 32-bit code, Windows 3.1 DPMI is stuck in 16-bit thinking and the exception handler
+	 * is still called as if 16-bit. Weird. */
+	/* FIXME: Add code to detect Windows 95/98/ME, and use an alternate test that uses TOOLHELP.DLL.
+	 *        Windows 95/98/ME do not honor DPMI exception handlers (unless you're a 32-bit DOS program) */
+	cpu_sse_flags |= cpu_sse_dpmi32win386_test();
 #  else
 	cpu_sse_flags |= _win32_test_sse();
 #  endif

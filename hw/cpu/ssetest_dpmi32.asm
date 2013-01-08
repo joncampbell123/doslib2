@@ -5,11 +5,6 @@
 CODE_SEGMENT
 
 %if TARGET_BITS == 32
- %ifdef TARGET_WINDOWS
-  %ifdef TARGET_WINDOWS_WIN386
-   %define doit
-  %endif
- %endif
  %ifdef TARGET_MSDOS
   %define doit
  %endif
@@ -62,16 +57,9 @@ EXTERN_C_FUNCTION cpu_sse_dpmi32_test
 ;OUR INT6 EXCEPTION HANDLER
 ;=============================================
 our_int6_exception_handler:
-  %ifdef TARGET_WINDOWS_WIN386
-	; FIXME: Exception handling of this nature with win386 is like a
-	;        trip to the friggin Twilight Zone.
-	db		66h
-	retf
-  %else
 	xor		dword [result],0x02	; CPU_SSE_ENABLED(0x02), clear it
 	add		dword [esp+12],3	; skip XORPS xmm0,xmm0 which is 3 bytes long
 	retf
-  %endif
  %endif
 %endif
 
