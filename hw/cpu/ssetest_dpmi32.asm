@@ -2,6 +2,11 @@
 %include "nasm1632.inc"
 %include "nasmenva.inc"
 
+; DEBUG: Enable this %define to replace the SSE instruction with a deliberate
+;        bad opcode to ensure the exception handler works even on modern CPUs
+;        that do in fact support SSE, such as using Windows XP to test this code.
+%define TEST_EXCEPTION_HANDLER
+
 CODE_SEGMENT
 
 %if TARGET_BITS == 32
@@ -39,7 +44,11 @@ EXTERN_C_FUNCTION cpu_sse_dpmi32_test
 ;=====================================================================
 ;Execute an SSE instruction
 ;=====================================================================
-	xorps		xmm0,xmm0		; <- 3 bytes long
+%ifdef TEST_EXCEPTION_HANDLER
+sseins:	db		0xFF,0xFF,0xFF		; <- 3 bytes long deliberate invalid instruction
+%else
+sseins:	xorps		xmm0,xmm0		; <- 3 bytes long
+%endif
 
 ;=====================================================================
 ;Restore old int 6 exception handler
