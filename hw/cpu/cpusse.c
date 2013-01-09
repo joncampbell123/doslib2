@@ -23,6 +23,9 @@
  *       anything past a Pentium) */
 #define DEBUG_ASSUME_SSE
 
+/*DEBUG: Ignore TOOLHELP.DLL. You would enable this to test the DPMI exception handlers */
+/*#define DEBUG_IGNORE_TOOLHELP*/
+
 unsigned char cpu_sse_flags = 0x80;
 
 void reset_cpu_sse_flags() {
@@ -38,6 +41,36 @@ unsigned int _cdecl cpu_sse_dpmi32_test();
 #elif TARGET_BITS == 16
 # if defined(TARGET_WINDOWS)
 unsigned int _cdecl cpu_sse_dpmi16_test();
+unsigned int _cdecl cpu_sse_wintoolhelp_test();
+#  ifndef DEBUG_IGNORE_TOOLHELP
+/* attempts to hook the invalid opcode exception using TOOLHELP.DLL.
+ * this will return 0 if TOOLHELP.DLL is not available */
+BOOL (__stdcall __far *_InterruptUnregisterSSETEST)(HTASK) = NULL;
+BOOL (__stdcall __far *_InterruptRegisterSSETEST)(HTASK,FARPROC) = NULL;
+unsigned int cpu_sse_win16_toolhelp_test(unsigned char *flags) {
+	HINSTANCE dll;
+	int r=0;
+	UINT f;
+
+	f = SetErrorMode(SEM_FAILCRITICALERRORS|SEM_NOOPENFILEERRORBOX);
+	dll = LoadLibrary("TOOLHELP.DLL");
+	if (dll != NULL) {
+		_InterruptUnregisterSSETEST = (BOOL (__stdcall __far *)(HTASK))GetProcAddress(dll,"INTERRUPTUNREGISTER");
+		_InterruptRegisterSSETEST = (BOOL (__stdcall __far *)(HTASK,FARPROC))GetProcAddress(dll,"INTERRUPTREGISTER");
+	}
+
+	if (_InterruptRegisterSSETEST != NULL && _InterruptUnregisterSSETEST != NULL) {
+		*flags |= cpu_sse_wintoolhelp_test();
+		r = 1;
+	}
+
+	if (dll != NULL) FreeLibrary(dll);
+	SetErrorMode(f);
+	return r;
+}
+#  else
+#   define cpu_sse_win16_toolhelp_test(x) (0)
+#  endif
 # endif
 #endif
 
@@ -82,10 +115,12 @@ void probe_cpu_sse() {
 #if TARGET_BITS == 16
 	if (cpu_info.cpu_flags & CPU_FLAG_PROTMODE) {
 # if defined(TARGET_WINDOWS)
-	/* TODO: Load TOOLHELP.DLL, setup exception handler, execute SSE instruction and see if it triggers invalid opcode exception */
-	/* TODO: If Windows 3.1 or 3.0, make DPMI calls to hook invalid opcode exception and execute SSE instruction.
-	 *       The DPMI hook trick does not work under Windows 95 or later. */
-		cpu_sse_flags |= cpu_sse_dpmi16_test();
+	/* If TOOLHELP.DLL is available, use it. Else, use DPMI system calls.
+	 * The DPMI system call method works under Windows 3.0/3.1 and under NTVDM.EXE in Windows NT.
+	 * Windows 95/98/ME however does not honor our DPMI exception handlers, but hooking through
+	 * TOOLHELP.DLL works fine. */
+		if (cpu_sse_win16_toolhelp_test(&cpu_sse_flags) == 0)
+			cpu_sse_flags |= cpu_sse_dpmi16_test();
 # endif
 	}
 	else if (cpu_info.cpu_flags & CPU_FLAG_V86) {

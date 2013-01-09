@@ -23,7 +23,7 @@ CODE_SEGMENT
 ;=====================================================================
 EXTERN_C_FUNCTION cpu_sse_dpmi16_test
 	mov		word [result],0x02	; CPU_SSE_ENABLED(0x02)
-	pushad
+	pusha
 
 ;=====================================================================
 ;Save current int 6 exception handler
@@ -80,7 +80,7 @@ sseins:	xorps		xmm0,xmm0		; <- 3 bytes long
 	mov		dx,word [int6_oexcept]
 	int		31h
 
-	popad
+	popa
 	mov		ax,word [result]
 	retnative
 
