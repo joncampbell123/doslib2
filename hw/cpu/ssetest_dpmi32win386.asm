@@ -182,9 +182,6 @@ int6_oexcept:
 result:
 	dd		0
 
-counter:
-	db		0
-
 alias_cs:
 	dw		0
  %endif

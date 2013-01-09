@@ -35,6 +35,44 @@ void reset_cpu_sse_flags() {
 #if TARGET_BITS == 32
 # if defined(TARGET_WINDOWS_WIN386)
 unsigned int _cdecl cpu_sse_dpmi32win386_test();
+unsigned int _cdecl cpu_sse_wintoolhelp386_test();
+#  ifndef DEBUG_IGNORE_TOOLHELP
+/* attempts to hook the invalid opcode exception using TOOLHELP.DLL.
+ * this will return 0 if TOOLHELP.DLL is not available */
+DWORD _InterruptRegisterSSETEST = 0;
+DWORD _InterruptUnregisterSSETEST = 0;
+unsigned int cpu_sse_win386_toolhelp_test(unsigned char *flags) {
+	/* Check: Do not execute this test under Windows 3.1, it causes an unexplained shutdown
+	 *        to the DOS prompt. But unlike Windows 95 we can fallback to the DPMI exception
+	 *        handler test anyway. */
+	if (WORDSWAP(GetVersion()) == 0x30A)
+		return 0;
+
+	{
+		HINSTANCE dll;
+		int r=0;
+		UINT f;
+
+		f = SetErrorMode(SEM_FAILCRITICALERRORS|SEM_NOOPENFILEERRORBOX);
+		dll = LoadLibrary("TOOLHELP.DLL");
+		if (dll != NULL) {
+			_InterruptUnregisterSSETEST = (DWORD)GetProcAddress(dll,"INTERRUPTUNREGISTER");
+			_InterruptRegisterSSETEST = (DWORD)GetProcAddress(dll,"INTERRUPTREGISTER");
+		}
+
+		if (_InterruptRegisterSSETEST != NULL && _InterruptUnregisterSSETEST != NULL) {
+			*flags |= cpu_sse_wintoolhelp386_test();
+			r = 1;
+		}
+
+		if (dll != NULL) FreeLibrary(dll);
+		SetErrorMode(f);
+		return r;
+	}
+}
+#  else
+#   define cpu_sse_win386_toolhelp_test(x) (0)
+#  endif
 # elif defined(TARGET_MSDOS)
 unsigned int _cdecl cpu_sse_dpmi32_test();
 # endif
@@ -152,9 +190,13 @@ void probe_cpu_sse() {
 	/* Watcom win386 has it's own variant of the DPMI32 test because despite being
 	 * 32-bit code, Windows 3.1 DPMI is stuck in 16-bit thinking and the exception handler
 	 * is still called as if 16-bit. Weird. */
-	/* FIXME: Add code to detect Windows 95/98/ME, and use an alternate test that uses TOOLHELP.DLL.
-	 *        Windows 95/98/ME do not honor DPMI exception handlers (unless you're a 32-bit DOS program) */
-	cpu_sse_flags |= cpu_sse_dpmi32win386_test();
+
+	/* If TOOLHELP.DLL is available, use it. Else, use DPMI system calls.
+	 * The DPMI system call method works under Windows 3.0/3.1 and under NTVDM.EXE in Windows NT.
+	 * Windows 95/98/ME however does not honor our DPMI exception handlers, but hooking through
+	 * TOOLHELP.DLL works fine. */
+	if (cpu_sse_win386_toolhelp_test(&cpu_sse_flags) == 0)
+		cpu_sse_flags |= cpu_sse_dpmi32win386_test();
 #  else
 	cpu_sse_flags |= _win32_test_sse();
 #  endif

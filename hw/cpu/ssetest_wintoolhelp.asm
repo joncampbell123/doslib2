@@ -72,7 +72,7 @@ our_exception_handler:
 	; look at the interrupt number on the stack.
 	push		bp
 	mov		bp,sp
-	cmp		word [bp+2+6],6
+	cmp		byte [bp+2+6],6
 	jnz		.not_udexception	; if it's NOT the invalid opcode exception, then RETF and let toolhelp pass it on
 	; it's an invalid opcode exception. so what we need to do is modify the instruction pointer on the stack
 	add		word [bp+2+10],3	; skip 3-byte XORPS xmm,xmm instruction

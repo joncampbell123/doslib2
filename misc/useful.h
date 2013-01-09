@@ -13,6 +13,8 @@
 #define _cpp_stringify(x) #x
 #define _cpp_stringify_num(x) _cpp_stringify(x)
 
+#define WORDSWAP(x)	((((x) >> 8) | ((x) << 8)) & 0xFFFF)
+
 /* useful FAR definition */
 #ifndef FAR
 # if TARGET_MSDOS == 16
