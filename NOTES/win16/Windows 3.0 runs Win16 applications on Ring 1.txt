@@ -1,0 +1,17 @@
+ISSUE: Windows 3.0 runs Win16 applications on Ring 1, not Ring 3
+TARGETS: 16-bit Windows (win16)
+NOTED BY: Jonathan Campbell
+
+Some debugging with DOSBox has revealed that, if you are writing
+Win16 code to hook exceptions, you will cause crashes and
+instability IF you fail to take into account the privilege
+level your code is running on.
+
+This can happen if the code assumes that it is running on ring 3.
+Under Windows 3.1 and later, this is true. Windows 3.0 however,
+runs applications on Ring 1 (CPL=1).
+
+This is most likely to happen in any case where you are creating
+selectors and using them for exception handlers, data pointers,
+etc.
+

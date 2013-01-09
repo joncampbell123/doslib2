@@ -5,7 +5,7 @@
 ; DEBUG: Enable this %define to replace the SSE instruction with a deliberate
 ;        bad opcode to ensure the exception handler works even on modern CPUs
 ;        that do in fact support SSE, such as using Windows XP to test this code.
-;%define TEST_EXCEPTION_HANDLER
+%define TEST_EXCEPTION_HANDLER
 
 CODE_SEGMENT
 
@@ -26,14 +26,11 @@ CODE_SEGMENT
   ;        That's a BIG problem: If Watcom links this code to a location past 64KB,
   ;        this code will not work properly and crash the application.
   ;
-  ;        The ONLY reason this code happens to work so far, is because I have yet
-  ;        to trigger a scenario where we end up past 64KB-16. But when that happens
-  ;        this routine is programmed to show a message box letting you know. That's
-  ;        when we spring into action.
-  ;
-  ;        In the long run we need to transition to a routine that carries out the
-  ;        test from a 16-bit code/data segment where we can reliably recover.
-  ;        Or at least make the exception handler 16-bit code/data.
+  ;        This code works around the issue by using DPMI to create an alias of our
+  ;        code segment, then changing the base to point right at the exception
+  ;        handler, then passing CS:0 as the exception handler. This ensures the
+  ;        exception handler is well within the first 64KB of the segment and able
+  ;        to work as 32-bit code within the 16-bit world offered by Windows.
   %define doit
  %endif
 
@@ -46,18 +43,44 @@ EXTERN_C_FUNCTION cpu_sse_dpmi32win386_test
 	mov		dword [result],0x02	; CPU_SSE_ENABLED(0x02)
 	pushad
 
-; is our code anywhere near the 64KB limit?
-; for now, this code only warns you if so (for debugging).
-	mov		eax,sseins
-	cmp		eax,0xFFF0		; if the "sseins" label is at 64K-16 or higher
-	jl		.no_64kb_limit_warning
-; show a message box to warn the user or developer.
-	push		byte 0			; MB_OK
-	push		dword _str_danger_text
-	push		dword _str_danger_caption
-	push		byte 0			; NULL
-	call		MESSAGEBOX
-.no_64kb_limit_warning:
+;=====================================================================
+;Allocate a descriptor, make it a 32-bit code segment DPL=3
+;=====================================================================
+; NTS: We WOULD create an alias of our code segment but Windows doesn't
+;      seem to make it a valid code segment...
+	mov		ax,0x0000	; allocate LDT descriptor
+	mov		cx,1		; only 1 please
+	int		31h
+	jc		fail
+	mov		[alias_cs],ax
+
+	mov		ax,0x0008	; set selector limit
+	mov		bx,[alias_cs]
+	xor		cx,cx
+	dec		cx
+	mov		dx,cx		; CX:DX = FFFF:FFFF
+	int		31h
+
+	mov		bx,cs
+	mov		ax,0x0006	; get segment base address
+	int		31h
+	mov		esi,our_int6_exception_handler
+	mov		edi,esi
+	shr		esi,16
+	add		dx,di		; CX:DX += SI:DI
+	adc		cx,si
+	mov		ax,0x0007
+	mov		bx,[alias_cs]
+	int		31h		; set segment base address
+
+	mov		ax,cs		; get the CPL we're running on. we COULD assume ring 3, but 
+	and		ax,3		; Windows 3.0 apparently runs Win16 apps on ring 1 and
+	shl		ax,5		; we'll hard-crash Windows if we don't account for that.
+	mov		bx,[alias_cs]
+	mov		cx,0xC09A	; 32-bit code CPL=0 | (DPL << 5)
+	or		cl,al
+	mov		ax,0x0009	; set descriptor access rights
+	int		31h
 
 ;=====================================================================
 ;Save current int 6 exception handler
@@ -74,7 +97,8 @@ EXTERN_C_FUNCTION cpu_sse_dpmi32win386_test
 	mov		ax,0x0203
 	mov		bl,6
 	mov		cx,cs
-	mov		dx,our_int6_exception_handler
+	mov		cx,[alias_cs]
+	xor		dx,dx
 	int		31h
 
 ;=====================================================================
@@ -95,8 +119,20 @@ sseins:	xorps		xmm0,xmm0		; <- 3 bytes long
 	mov		dx,word [int6_oexcept]
 	int		31h
 
+;=====================================================================
+;Free our code segment alias
+;=====================================================================
+	mov		ax,0x0001
+	mov		bx,[alias_cs]
+	int		31h
+
 	popad
 	mov		eax,dword [result]
+	retnative
+
+fail:
+	popad
+	xor		eax,eax
 	retnative
 
 ;=============================================
@@ -134,16 +170,6 @@ our_int6_exception_handler:
 	db		0x66
 	retf
 
-; TODO: Remove this when we have a chance to recreate a scenario where the exception handler
-;       is 32-bit and located past a 64KB location.
-_str_danger_caption:
-	db		'Danger!',0
-_str_danger_text:
-	db		'Danger! The SSE test subroutine sits close to or past a 64KB offset.',10
-	db		'It is currently not known whether the exception handler will return',10
-	db		'correctly in this case!'
-	db		0
-
  %endif
 %endif
 
@@ -158,5 +184,8 @@ result:
 
 counter:
 	db		0
+
+alias_cs:
+	dw		0
  %endif
 
