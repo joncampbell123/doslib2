@@ -8,8 +8,9 @@ CODE_SEGMENT
  %ifdef TARGET_MSDOS
   %define doit
  %endif
+%endif
 
- %ifdef doit
+%ifdef doit
 ;=====================================================================
 ;unsigned int _cdecl cpu_sse_dpmi32_test();
 ;=====================================================================
@@ -60,18 +61,16 @@ our_int6_exception_handler:
 	xor		dword [result],0x02	; CPU_SSE_ENABLED(0x02), clear it
 	add		dword [esp+12],3	; skip XORPS xmm0,xmm0 which is 3 bytes long
 	retf
- %endif
 %endif
 
 DATA_SEGMENT
 
+%ifdef doit
 int6_oexcept:
 	dd		0
 	dw		0
 
 result:
 	dd		0
-
-counter:
-	db		0
+%endif
 

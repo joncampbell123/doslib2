@@ -35,6 +35,10 @@ unsigned int _cdecl cpu_sse_dpmi32win386_test();
 # elif defined(TARGET_MSDOS)
 unsigned int _cdecl cpu_sse_dpmi32_test();
 # endif
+#elif TARGET_BITS == 16
+# if defined(TARGET_WINDOWS)
+unsigned int _cdecl cpu_sse_dpmi16_test();
+# endif
 #endif
 
 static unsigned int _direct_cr4_read_sse() {
@@ -81,6 +85,7 @@ void probe_cpu_sse() {
 	/* TODO: Load TOOLHELP.DLL, setup exception handler, execute SSE instruction and see if it triggers invalid opcode exception */
 	/* TODO: If Windows 3.1 or 3.0, make DPMI calls to hook invalid opcode exception and execute SSE instruction.
 	 *       The DPMI hook trick does not work under Windows 95 or later. */
+		cpu_sse_flags |= cpu_sse_dpmi16_test();
 # endif
 	}
 	else if (cpu_info.cpu_flags & CPU_FLAG_V86) {
