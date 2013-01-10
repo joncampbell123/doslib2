@@ -100,8 +100,6 @@ EXTERN_C_FUNCTION cpu_sse_wintoolhelp386_test
 	; WE clean up after the call
 	add		esp,4*4
 
-	int		3
-
 	; our hack-fuckery with TOOLHELP.DLL seems to cause TOOLHELP.DLL
 	; to swap our stack for it's stack. be prepared to put it back
 	; where it belongs (YUCK). it also resolves the fact that Watcom's
@@ -122,8 +120,6 @@ sseins:	xorps		xmm0,xmm0		; <- 3 bytes long
 
 	mov		ss,[saved_ss]
 	mov		esp,[saved_esp]
-
-	int		3
 
 ; exception handler may have changes ES. ES == DS normally.
 	push		ds
