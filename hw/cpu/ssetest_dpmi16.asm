@@ -24,6 +24,9 @@ CODE_SEGMENT
 EXTERN_C_FUNCTION cpu_sse_dpmi16_test
 	mov		word [result],0x02	; CPU_SSE_ENABLED(0x02)
 	pusha
+	push		ds
+	mov		ax,seg int6_oexcept
+	mov		ds,ax
 
 ;=====================================================================
 ;Save current int 6 exception handler
@@ -53,7 +56,7 @@ EXTERN_C_FUNCTION cpu_sse_dpmi16_test
 	test		ax,0x0020				; is WF_ENHANCED set?
 	jnz		.done1					; if not...
 	mov		dx,our_int6_exception_handler_win30_286	; use alternate handler for Win 3.0 286 standard mode
-.done1
+.done1:
   %endif
  %endif
 
@@ -80,6 +83,7 @@ sseins:	xorps		xmm0,xmm0		; <- 3 bytes long
 	mov		dx,word [int6_oexcept]
 	int		31h
 
+	pop		ds
 	popa
 	mov		ax,word [result]
 	retnative

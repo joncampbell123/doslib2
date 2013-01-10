@@ -16,6 +16,7 @@
 #include <hw/cpu/cpu.h>
 #include <hw/cpu/cpusse.h>
 #include <misc/useful.h>
+#include <hw/cpu/dpmi.h>
 
 /*DEBUG: Force the SSE test to execute even if CPUID is missing or CPUID indicates lack of SSE.
  *       You would enable this to test how well our exception handlers work in environments where
@@ -109,6 +110,9 @@ unsigned int cpu_sse_win16_toolhelp_test(unsigned char *flags) {
 #  else
 #   define cpu_sse_win16_toolhelp_test(x) (0)
 #  endif
+# elif defined(TARGET_MSDOS)
+unsigned int cpu_sse_vm86_dpmi32_test() { return 0; }
+unsigned int cpu_sse_vm86_dpmi16_test() { return 0; }
 # endif
 #endif
 
@@ -162,23 +166,33 @@ void probe_cpu_sse() {
 # endif
 	}
 	else if (cpu_info.cpu_flags & CPU_FLAG_V86) {
-	/* TODO: If virtual 8086 mode detected, then:
-	 *  
-	 *             a) look for VCPI server, and try to use VCPI to enter 32-bit protected mode where we
-	 *                can then safely read CR4. If successful, then remember to use this technique when
-	 *                the caller wants to enable/disable SSE.
-	 *
-	 *             b) look for DPMI server, enter DPMI protected mode, use DPMI protected mode to hook
-	 *                int 6h (invalid opcode) then abuse the DPMI server "entry points" to jump back
-	 *                to realmode. hook real-mode INT 6h just to be safe. execute an SSE instruction and
-	 *                note whether or not an invalid opcode exception occurs. Jump back into DPMI
-	 *                protected mode, remove the exception hook, and then jump back to real mode.
-	 *
-	 *                ^ In the ideal Windows "DOS box" situation the DOS program could simply hook INT 6h
-	 *                  in the realmode vector table, but Windows it seems will not pass INT 6h down to
-	 *                  the v86 DOS box when it actually happens, it will always execute the DPMI server's
-	 *                  exception handler. Thus to catch Invalid Opcode exceptions, we must hook INT 6h
-	 *                  at the DPMI server even when we expect the exception to happen in "real mode". */
+# if defined(TARGET_MSDOS)
+		/* Possible scenario #1: We're in a Windows DOSBox (or OS/2 DOSBox).
+		 *                       The only way to catch invalid opcode exceptions is to
+		 *                       jump into DPMI protected mode and set an exception handler
+		 *                       because these DPMI servers will typically disregard the
+		 *                       real-mode interrupt vector. */
+		dos_dpmi_probe();
+		if (dos_dpmi_state.flags & DPMI_SERVER_PRESENT) {
+			/* if DPMI is present, then initialize the server then return to real mode
+			 * to continue execution. If a 386 or higher, then first attempt to connect
+			 * as a 32-bit program. If a 286, or 32-bit failed, then attempt to connect
+			 * as a 16-bit program. */
+			if (!(dos_dpmi_state.flags & DPMI_SERVER_INIT) && cpu_info.cpu_basic_level >= 3)
+				dos_dpmi_init_server32();
+			if (!(dos_dpmi_state.flags & DPMI_SERVER_INIT) && cpu_info.cpu_basic_level >= 2)
+				dos_dpmi_init_server16();
+
+			/* if we connected to the DPMI server, then based on the mode we used to connect
+			 * jump into protected mode and set the exception handler, then jump back to real mode. */
+			if (dos_dpmi_state.flags & DPMI_SERVER_INIT) {
+				if (dos_dpmi_state.flags & DPMI_SERVER_INIT_32BIT)
+					cpu_sse_flags |= cpu_sse_vm86_dpmi32_test();
+				else
+					cpu_sse_flags |= cpu_sse_vm86_dpmi16_test();
+			}
+		}
+# endif
 	}
 	else {
 		/* Real mode: we can do whatever we want including enabling/disabling SSE */

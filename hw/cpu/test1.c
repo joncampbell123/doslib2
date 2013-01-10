@@ -16,6 +16,7 @@
 #include <hw/cpu/cpu.h>
 #include <hw/cpu/cpusse.h>
 #include <misc/useful.h>
+#include <hw/cpu/dpmi.h>
 
 int main(int argc,char **argv,char **envp) {
 	probe_cpu();
@@ -216,6 +217,22 @@ int main(int argc,char **argv,char **envp) {
 		/* FIXME: Dig out your ancient 386/486 systems and test that this code gets some actual values */
 		printf(" - CPU type=0x%02X maskrev=0x%02x\n",cpu_info.cpu_type_and_mask>>8,cpu_info.cpu_type_and_mask&0xFF);
 	}
+
+#ifdef DOS_DPMI_AVAILABLE
+	dos_dpmi_probe();
+	if (dos_dpmi_state.flags & DPMI_SERVER_PRESENT) {
+		printf("DPMI server present\n");
+		printf("  Flags: ");
+		if (dos_dpmi_state.flags & DPMI_SERVER_INIT) printf("INIT ");
+		if (dos_dpmi_state.flags & DPMI_SERVER_CAN_DO_32BIT) printf("CAN_DO_32BIT ");
+		if (dos_dpmi_state.flags & DPMI_SERVER_INIT_32BIT) printf("INIT_32BIT ");
+		printf("\n");
+		printf("  Entry point: %04x:%04x\n",dos_dpmi_state.entry_cs,dos_dpmi_state.entry_ip);
+		printf("  Private size: %u paragraphs\n",dos_dpmi_state.dpmi_private_size);
+		printf("  Version: %u.%02u\n",dos_dpmi_state.dpmi_version>>8,dos_dpmi_state.dpmi_version&0xFF);
+		printf("  CPU: %u\n",dos_dpmi_state.dpmi_processor);
+	}
+#endif
 
 #ifdef WIN_STDOUT_CONSOLE
 	_win_endloop_user_echo();
