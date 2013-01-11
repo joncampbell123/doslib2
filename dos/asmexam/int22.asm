@@ -24,6 +24,11 @@
 ;                 alloc/free or file handles since they would be given by DOS to whatever
 ;                 process called us. And I don't think you want COMMAND.COM to be taking on
 ;                 memory blocks we allocated for ourself, right?
+;
+; Known bugs:
+;   - IBM PC-DOS v1.0 & v1.10
+;        The DOS kernel's default CTRL+C handler does not call INT 22h when terminating
+;        this program. It is called however when terminating normally.
 ;--------------------------------------------------------------------------------------
 		bits 16			; 16-bit real mode
 		org 0x100		; DOS .COM executable starts at 0x100 in memory
