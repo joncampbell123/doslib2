@@ -24,6 +24,12 @@
 ;          perhaps whatever sentinel value DOS considers a "no parent" process ID will
 ;          cause erratic behavior---I don't really know. So whatever you do: don't make
 ;          this program your root command shell!
+;
+; NOTES:
+;    - IBM PC-DOS 2.1 -> Works
+;    - MS-DOS 6.22 -> Works
+;    - Windows 95/98/ME -> Works (pure DOS or in a DOS Box)
+;    - Windows XP -> Works (from within NTVDM.EXE)
 ;--------------------------------------------------------------------------------------
 		bits 16			; 16-bit real mode
 		org 0x100		; DOS .COM executable starts at 0x100 in memory
