@@ -125,6 +125,14 @@
                       terminated your program.
    getpid.com         INT 21h AH=0x51 get "process ID"  [MS-DOS 2.0+]
    getpid3.com        INT 21h AH=0x62 documented API    [MS-DOS 3.0+]
+   setpid.com         INT 21h AH=0x50 set "process ID"  [MS-DOS 2.0+]
+                      demonstration. Demonstrates the
+                      feature by abusing it to allocate
+                      memory that DOS associates with
+                      the parent program.
+   setpidm.com        Like setpid.com, but directly     [MS-DOS 2.0+]
+                      modifies the MCB block to assign
+                      ownership.
 * Windows 95 Long File Names
    lfnmkdir.com       Long filename mkdir               [MS-DOS 7.0+/Windows 95,98,ME]
    lfnrmdir.com       Long filename rmdir               [MS-DOS 7.0+/Windows 95,98,ME]

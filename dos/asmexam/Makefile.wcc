@@ -113,8 +113,10 @@ all_programs += $(abs_exe_dir)/dpmi32_0.com
 all_programs += $(abs_exe_dir)/showenv.com
 all_programs += $(abs_exe_dir)/peekm86.com
 all_programs += $(abs_exe_dir)/getpid3.com
+all_programs += $(abs_exe_dir)/setpidm.com
 all_programs += $(abs_exe_dir)/setenv.com
 all_programs += $(abs_exe_dir)/getpid.com
+all_programs += $(abs_exe_dir)/setpid.com
 all_programs += $(abs_exe_dir)/int22.com
 
 all-programs: $(all_programs)
@@ -449,10 +451,16 @@ $(abs_exe_dir)/peekm86.com: peekm86.asm
 $(abs_exe_dir)/getpid3.com: getpid3.asm
 	$(NASM) -o $@ -f bin $(NASMFLAGS) $^
 
+$(abs_exe_dir)/setpidm.com: setpidm.asm
+	$(NASM) -o $@ -f bin $(NASMFLAGS) $^
+
 $(abs_exe_dir)/setenv.com: setenv.asm
 	$(NASM) -o $@ -f bin $(NASMFLAGS) $^
 
 $(abs_exe_dir)/getpid.com: getpid.asm
+	$(NASM) -o $@ -f bin $(NASMFLAGS) $^
+
+$(abs_exe_dir)/setpid.com: setpid.asm
 	$(NASM) -o $@ -f bin $(NASMFLAGS) $^
 
 $(abs_exe_dir)/int22.com: int22.asm
