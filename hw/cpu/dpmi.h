@@ -9,7 +9,11 @@ struct _dos_dpmi_state {
 	unsigned short			dpmi_version;
 	unsigned char			dpmi_processor;
 	unsigned short			dpmi_private_segment;
-};
+	unsigned short			dpmi_cs;		/* code segment given by DPMI server */
+	unsigned short			dpmi_ds;		/* data segment given by DPMI server */
+	unsigned short			dpmi_es;		/* ES segment given by DPMI server */
+	unsigned short			dpmi_ss;		/* SS segment given by DPMI server */
+};								/* =20 bytes */
 # pragma pack(pop)
 
 extern struct _dos_dpmi_state dos_dpmi_state;

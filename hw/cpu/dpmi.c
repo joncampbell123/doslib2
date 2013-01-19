@@ -17,10 +17,21 @@ struct _dos_dpmi_state		dos_dpmi_state = {
 	0,			/* +5 dpmi_private_size */ 
 	0,			/* +7 dpmi_version */
 	0,			/* +9 dpmi_cpu */
-	0			/* +10 dpmi_private_segment */
+	0,			/* +10 dpmi_private_segment */
+	0,			/* +12 dpmi_cs */
+	0,			/* +14 dpmi_ds */
+	0,			/* +16 dpmi_es */
+	0			/* +18 dpmi_ss */
+				/* =20 */
 };
 
 unsigned int dos_dpmi_probe() {
+	/*DEBUG: TODO REMOVE WHEN FINISHED*/
+	if (sizeof(dos_dpmi_state) != 20) {
+		fprintf(stderr,"ERROR: dos_dpmi_state struct is not correct size\n");
+		return 0;
+	}
+
 	if (!(dos_dpmi_state.flags & DPMI_SERVER_PROBED)) {
 		dos_dpmi_state.flags |= DPMI_SERVER_PROBED;
 
@@ -29,6 +40,7 @@ unsigned int dos_dpmi_probe() {
 			push		bx
 			push		si
 			push		di
+			push		ds
 			push		es
 
 			mov		ax,0x1687
@@ -57,6 +69,7 @@ unsigned int dos_dpmi_probe() {
 no32bit:
 
 nodpmi:			pop		es
+			pop		ds
 			pop		di
 			pop		si
 			pop		bx
@@ -71,7 +84,75 @@ unsigned int dos_dpmi_init_server32() {
 	return 0;
 }
 
+#if 0
+# pragma pack(push,1)
+struct _dos_dpmi_state {
+	unsigned char			flags;
+	unsigned short			entry_ip,entry_cs;
+	unsigned short			dpmi_private_size;	/* in paragraphs */
+	unsigned short			dpmi_version;
+	unsigned char			dpmi_processor;
+	unsigned short			dpmi_private_segment;
+	unsigned short			dpmi_cs;		/* code segment given by DPMI server */
+	unsigned short			dpmi_ds;		/* data segment given by DPMI server */
+	unsigned short			dpmi_es;		/* ES segment given by DPMI server */
+	unsigned short			dpmi_ss;		/* SS segment given by DPMI server */
+};
+# pragma pack(pop)
+
+extern struct _dos_dpmi_state dos_dpmi_state;
+
+# define DPMI_SERVER_PROBED		0x01
+# define DPMI_SERVER_PRESENT		0x02
+# define DPMI_SERVER_INIT		0x04
+# define DPMI_SERVER_CAN_DO_32BIT	0x08
+# define DPMI_SERVER_INIT_32BIT		0x10
+#endif
+
 unsigned int dos_dpmi_init_server16() {
+	if (!(dos_dpmi_state.flags & DPMI_SERVER_PROBED))
+		return 1;
+	if (!(dos_dpmi_state.flags & DPMI_SERVER_PRESENT))
+		return 2;
+	if (dos_dpmi_state.entry_cs == 0) /* if no entry point, fail */
+		return 5;
+
+	/* if DPMI is already initialized... */
+	if (dos_dpmi_state.flags & DPMI_SERVER_INIT) {
+		if (dos_dpmi_state.flags & DPMI_SERVER_INIT_32BIT)
+			return 3; /* if initialized as 32-bit, then error out */
+
+		return 0; /* else if inited as 16-bit it's ok, no work to do */
+	}
+
+	/* if the DPMI server needs a private area, then allocate one */
+	if (dos_dpmi_state.dpmi_private_size != 0 && dos_dpmi_state.dpmi_private_segment == 0) {
+		__asm {
+			.286
+			push	ds
+			pusha
+#  if defined(__LARGE__) || defined(__COMPACT__) || defined(__HUGE__)
+			mov	si,seg dos_dpmi_state
+			mov	ds,si
+#  endif
+			mov	si,offset dos_dpmi_state
+			mov	ah,0x48
+			mov	bx,word ptr [si+5] ; dpmi_private_size
+			int	21h
+			jc	errout1
+			mov	word ptr [si+10],ax ; dpmi_private_segment
+
+errout1:		popa
+			pop	ds
+		}
+
+		if (dos_dpmi_state.dpmi_private_size == 0)
+			return 4;
+	}
+
+	/* TODO: Hook the INT 22h vector in the PSP so that our code can gain control
+	 *       and forcibly terminate the DPMI server */
+
 	return 0;
 }
 

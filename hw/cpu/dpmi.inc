@@ -9,6 +9,11 @@ struc _dos_dpmi_state
 	.dpmi_version		resw	1	; +7 unsigned short	dpmi_version;
 	.dpmi_processor		resb	1	; +9 unsigned char	dpmi_processor;
 	.dpmi_private_segment	resw	1	; +10 unsigned short	dpmi_private_segment;
+	.dpmi_cs		resw	1	; +12 unsigned short	dpmi_cs;
+	.dpmi_ds		resw	1	; +14 unsigned short	dpmi_ds;
+	.dpmi_es		resw	1	; +16 unsigned short	dpmi_es;
+	.dpmi_ss		resw	1	; +18 unsigned short	dpmi_ss;
+						; +20
 endstruc
 
 extern dos_dpmi_state;
