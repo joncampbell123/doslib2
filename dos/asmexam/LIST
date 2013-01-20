@@ -171,6 +171,12 @@
    dpmi32_0.com       Example code to enter 32-bit prot [DPMI 0.9+]
                       mode.
 * Windows DOS box
-   win31ver.com       Detect Windows and print the
-                      version of the Windows kernel     [Windows 3.1,95,98,ME]
+   win31ver.com       Detect Windows and print the      [Windows 3.1,95,98,ME]
+                      version of the Windows kernel
+   winolver.com       Detect Windows and print the      [Windows 3.0,2.x]
+                      version of the Windows kernel
+   w95sysrg.com       Ask Windows the location of the   [MS-DOS 7.0+/Windows 95,98,ME]
+                      System registry hive
+   w95sysrs.com       Change the location of the System [MS-DOS 7.0+/Windows 95,98,ME]
+                      registry hive (!!BE CAREFUL!!)
 

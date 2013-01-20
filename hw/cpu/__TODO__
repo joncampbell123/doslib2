@@ -1,0 +1,20 @@
+Todo list for next development free-time:
+
+ - For 16-bit MS-DOS apps: dpmie16.asm should provide a function that
+   allows other code to call protected mode routines. The reason for
+   that is in large model EXEs (multiple code segments) we cannot
+   assume the code segment given matches up with other code segment
+   pointers. If we truly want to enable DPMI entry & exit we have to
+   have a "proxy" call routine which allocates descriptors if needed,
+   sets their bases to whatever realmode segments it was called with,
+   and then jumps into protected mode and calls the realmode proc
+   from protected mode using those segments. This is the final step
+   before you will be able to implement the SSE tests for 16-bit
+   MS-DOS apps from within the Windows DPMI DOS box.
+
+ - SSE testing code for 16-bit MS-DOS from within Windows 3.0, 3.1,
+   95, 98, ME, XP, etc.
+
+ - For 16-bit Windows apps: If the DOS version number implies that
+   were running under OS/2, then do not carry out the SSE test.
+
