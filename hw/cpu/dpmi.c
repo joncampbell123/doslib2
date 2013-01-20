@@ -11,6 +11,8 @@
 
 #if defined(TARGET_MSDOS) && TARGET_BITS == 16
 
+void __cdecl _dos_dpmi_init_server16_enter();
+
 struct _dos_dpmi_state		dos_dpmi_state = {
 	0,			/* +0 flags */
 	0,0,			/* +1 IP:CS */
@@ -21,13 +23,15 @@ struct _dos_dpmi_state		dos_dpmi_state = {
 	0,			/* +12 dpmi_cs */
 	0,			/* +14 dpmi_ds */
 	0,			/* +16 dpmi_es */
-	0			/* +18 dpmi_ss */
-				/* =20 */
+	0,			/* +18 dpmi_ss */
+	0,0,			/* +20 real-to-prot entry */
+	0,0,0			/* +24 prot-to-real entry */
+				/* =30 */
 };
 
 unsigned int dos_dpmi_probe() {
 	/*DEBUG: TODO REMOVE WHEN FINISHED*/
-	if (sizeof(dos_dpmi_state) != 20) {
+	if (sizeof(dos_dpmi_state) != 30) {
 		fprintf(stderr,"ERROR: dos_dpmi_state struct is not correct size\n");
 		return 0;
 	}
@@ -109,7 +113,7 @@ extern struct _dos_dpmi_state dos_dpmi_state;
 # define DPMI_SERVER_INIT_32BIT		0x10
 #endif
 
-unsigned int dos_dpmi_init_server16() {
+static unsigned int _dos_dpmi_initcomm_check1() {
 	if (!(dos_dpmi_state.flags & DPMI_SERVER_PROBED))
 		return 1;
 	if (!(dos_dpmi_state.flags & DPMI_SERVER_PRESENT))
@@ -117,14 +121,10 @@ unsigned int dos_dpmi_init_server16() {
 	if (dos_dpmi_state.entry_cs == 0) /* if no entry point, fail */
 		return 5;
 
-	/* if DPMI is already initialized... */
-	if (dos_dpmi_state.flags & DPMI_SERVER_INIT) {
-		if (dos_dpmi_state.flags & DPMI_SERVER_INIT_32BIT)
-			return 3; /* if initialized as 32-bit, then error out */
+	return 0;
+}
 
-		return 0; /* else if inited as 16-bit it's ok, no work to do */
-	}
-
+static unsigned int _dos_dpmi_initcomm_alloc_private() {
 	/* if the DPMI server needs a private area, then allocate one */
 	if (dos_dpmi_state.dpmi_private_size != 0 && dos_dpmi_state.dpmi_private_segment == 0) {
 		__asm {
@@ -149,6 +149,30 @@ errout1:		popa
 		if (dos_dpmi_state.dpmi_private_size == 0)
 			return 4;
 	}
+
+	return 0;
+}
+
+unsigned int dos_dpmi_init_server16() {
+	unsigned int r;
+
+	if ((r=_dos_dpmi_initcomm_check1()) != 0)
+		return r;
+
+	/* if DPMI is already initialized... */
+	if (dos_dpmi_state.flags & DPMI_SERVER_INIT) {
+		if (dos_dpmi_state.flags & DPMI_SERVER_INIT_32BIT)
+			return 3; /* if initialized as 32-bit, then error out */
+
+		return 0; /* else if inited as 16-bit it's ok, no work to do */
+	}
+
+	if ((r=_dos_dpmi_initcomm_alloc_private()) != 0)
+		return r;
+
+	_dos_dpmi_init_server16_enter();
+	if (!(dos_dpmi_state.flags & DPMI_SERVER_INIT))
+		return 5;
 
 	/* TODO: Hook the INT 22h vector in the PSP so that our code can gain control
 	 *       and forcibly terminate the DPMI server */

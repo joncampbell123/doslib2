@@ -1,7 +1,7 @@
 %ifdef TARGET_MSDOS
  %if TARGET_BITS == 16
 
-struc _dos_dpmi_state
+struc s_dos_dpmi_state
 	.flags			resb	1	; +0 unsigned char	flags;
 	.entry_ip		resw	1	; +1 unsigned short	entry_ip;
 	.entry_cs		resw	1	; +3 unsigned short	entry_cs;
@@ -13,10 +13,13 @@ struc _dos_dpmi_state
 	.dpmi_ds		resw	1	; +14 unsigned short	dpmi_ds;
 	.dpmi_es		resw	1	; +16 unsigned short	dpmi_es;
 	.dpmi_ss		resw	1	; +18 unsigned short	dpmi_ss;
-						; +20
+	.r2p_entry_ip		resw	1	; +20 unsigned short	r2p_entry_ip;
+	.r2p_entry_cs		resw	1	; +22 unsigned short	r2p_entry_cs;
+	.p2r_entry		resw	3	; +24 unsigned short	p2r_entry[3];
+						; +30
 endstruc
 
-extern dos_dpmi_state;
+extern _dos_dpmi_state
 
  %define DPMI_SERVER_PROBED		0x01
  %define DPMI_SERVER_PRESENT		0x02

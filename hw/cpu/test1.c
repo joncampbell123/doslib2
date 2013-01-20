@@ -228,9 +228,30 @@ int main(int argc,char **argv,char **envp) {
 		if (dos_dpmi_state.flags & DPMI_SERVER_INIT_32BIT) printf("INIT_32BIT ");
 		printf("\n");
 		printf("  Entry point: %04x:%04x\n",dos_dpmi_state.entry_cs,dos_dpmi_state.entry_ip);
-		printf("  Private size: %u paragraphs\n",dos_dpmi_state.dpmi_private_size);
+		printf("  Private size: %u paragraphs at 0x%04x\n",dos_dpmi_state.dpmi_private_size,dos_dpmi_state.dpmi_private_segment);
 		printf("  Version: %u.%02u\n",dos_dpmi_state.dpmi_version>>8,dos_dpmi_state.dpmi_version&0xFF);
 		printf("  CPU: %u\n",dos_dpmi_state.dpmi_processor);
+		if (dos_dpmi_state.flags & DPMI_SERVER_INIT) {
+			printf("  DPMI CS=0x%04x DS=0x%04x ES=0x%04x SS=0x%04x\n",
+				dos_dpmi_state.dpmi_cs,
+				dos_dpmi_state.dpmi_ds,
+				dos_dpmi_state.dpmi_es,
+				dos_dpmi_state.dpmi_ss);
+			printf("  DPMI real-to-prot: %04x:%04x\n",
+				dos_dpmi_state.r2p_entry_cs,
+				dos_dpmi_state.r2p_entry_ip);
+			if (dos_dpmi_state.flags & DPMI_SERVER_INIT_32BIT) {
+				printf("  DPMI prot-to-real[16]: %04x:%04x%04x\n",
+					dos_dpmi_state.p2r_entry[2],
+					dos_dpmi_state.p2r_entry[1],
+					dos_dpmi_state.p2r_entry[0]);
+			}
+			else {
+				printf("  DPMI prot-to-real[16]: %04x:%04x\n",
+					dos_dpmi_state.p2r_entry[1],
+					dos_dpmi_state.p2r_entry[0]);
+			}
+		}
 	}
 #endif
 

@@ -11,7 +11,7 @@ lib_hw_cpu_libcpusse=$(abs_lib_dir)/libcpusse$(lib_suffix)
 lib_hw_cpu_libcpusse_wlink=library $(lib_hw_cpu_libcpusse)
 lib_hw_cpu_libcpusse_dependencies=$(lib_hw_cpu_libcpu)
 
-$(lib_hw_cpu_libcpu): $(abs_obj_dir)/cpu$(obj_suffix) $(abs_obj_dir)/det86$(obj_suffix) $(abs_obj_dir)/det386$(obj_suffix) $(abs_obj_dir)/detfpu$(obj_suffix) $(abs_obj_dir)/cpuid$(obj_suffix) $(abs_obj_dir)/dpmi$(obj_suffix)
+$(lib_hw_cpu_libcpu): $(abs_obj_dir)/cpu$(obj_suffix) $(abs_obj_dir)/det86$(obj_suffix) $(abs_obj_dir)/det386$(obj_suffix) $(abs_obj_dir)/detfpu$(obj_suffix) $(abs_obj_dir)/cpuid$(obj_suffix) $(abs_obj_dir)/dpmi$(obj_suffix) $(abs_obj_dir)/dpmie16$(obj_suffix)
 ifeq ($(target_subdir),linux/host)
 	$(AR) r $@ $^
 else
@@ -35,6 +35,9 @@ $(abs_obj_dir)/det386$(obj_suffix): det386.asm
 	nasm -I$(abs_top_srcdir) $(NASMFLAGS) -o $@ -f $(NASMFORMAT) $^
 
 $(abs_obj_dir)/detfpu$(obj_suffix): detfpu.asm
+	nasm -I$(abs_top_srcdir) $(NASMFLAGS) -o $@ -f $(NASMFORMAT) $^
+
+$(abs_obj_dir)/dpmie16$(obj_suffix): dpmie16.asm
 	nasm -I$(abs_top_srcdir) $(NASMFLAGS) -o $@ -f $(NASMFORMAT) $^
 
 $(abs_obj_dir)/ssetest_dpmi16$(obj_suffix): ssetest_dpmi16.asm
