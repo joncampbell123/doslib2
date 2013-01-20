@@ -157,6 +157,7 @@ void probe_cpu_sse() {
 #if TARGET_BITS == 16
 	if (cpu_info.cpu_flags & CPU_FLAG_PROTMODE) {
 # if defined(TARGET_WINDOWS)
+	/* FIXME: Under OS/2 2.x, this crashes when run from within the WIN-OS/2 compatibility layer. */
 	/* If TOOLHELP.DLL is available, use it. Else, use DPMI system calls.
 	 * The DPMI system call method works under Windows 3.0/3.1 and under NTVDM.EXE in Windows NT.
 	 * Windows 95/98/ME however does not honor our DPMI exception handlers, but hooking through

@@ -12,6 +12,7 @@
 #if defined(TARGET_MSDOS) && TARGET_BITS == 16
 
 void __cdecl _dos_dpmi_init_server16_enter();
+void __cdecl _dos_dpmi_init_server32_enter();
 
 struct _dos_dpmi_state		dos_dpmi_state = {
 	0,			/* +0 flags */
@@ -25,19 +26,21 @@ struct _dos_dpmi_state		dos_dpmi_state = {
 	0,			/* +16 dpmi_es */
 	0,			/* +18 dpmi_ss */
 	0,0,			/* +20 real-to-prot entry */
-	0,0,0			/* +24 prot-to-real entry */
-				/* =30 */
+	0,0,0,			/* +24 prot-to-real entry */
+	0			/* +30 program segment prefix */
+				/* =32 */
 };
 
 unsigned int dos_dpmi_probe() {
 	/*DEBUG: TODO REMOVE WHEN FINISHED*/
-	if (sizeof(dos_dpmi_state) != 30) {
+	if (sizeof(dos_dpmi_state) != 32) {
 		fprintf(stderr,"ERROR: dos_dpmi_state struct is not correct size\n");
 		return 0;
 	}
 
 	if (!(dos_dpmi_state.flags & DPMI_SERVER_PROBED)) {
-		dos_dpmi_state.flags |= DPMI_SERVER_PROBED;
+		/* most DPMI servers require protected-mode INT 21h termination */
+		dos_dpmi_state.flags |= DPMI_SERVER_PROBED | DPMI_SERVER_NEEDS_PROT_TERM;
 
 		__asm {
 			push		ax
@@ -72,6 +75,23 @@ unsigned int dos_dpmi_probe() {
 			or		byte ptr [bx],DPMI_SERVER_CAN_DO_32BIT
 no32bit:
 
+			; check: is this Windows? TODO This should eventually become part of the DOS lib
+			; NTS: This system call will only succeed under Windows 3.1/95/98/ME. It cannot be
+			; used to detect Windows 3.0 or Windows XP. However Windows 3.x and XP require the
+			; protected mode INT 21h exit anyway, were only concerned with Windows 95/98/ME
+			; who do NOT need the protected mode exit hack. In fact, attempting the hack under
+			; those versions of Windows will cause a GPF because the DPMI shutdown will have
+			; invalidated the protected mode selectors we obtained.
+			mov		si,bx			; the call will obliterate BX
+			mov		ax,0x160A
+			int		2Fh
+			or		ax,ax			; on return: AX=0 BX=version CX=mode (2=standard or 3=enhanced)
+			jnz		not_windows_9x
+			cmp		bx,0x400		; Windows 95 or higher? (v4.00 or higher)
+			jl		not_windows_9x
+			and		byte ptr [si],(0xFF - DPMI_SERVER_NEEDS_PROT_TERM) ; Its Win9x/ME. Do NOT do the protmode hack
+not_windows_9x:		
+
 nodpmi:			pop		es
 			pop		ds
 			pop		di
@@ -83,35 +103,6 @@ nodpmi:			pop		es
 
 	return dos_dpmi_state.flags;
 }
-
-unsigned int dos_dpmi_init_server32() {
-	return 0;
-}
-
-#if 0
-# pragma pack(push,1)
-struct _dos_dpmi_state {
-	unsigned char			flags;
-	unsigned short			entry_ip,entry_cs;
-	unsigned short			dpmi_private_size;	/* in paragraphs */
-	unsigned short			dpmi_version;
-	unsigned char			dpmi_processor;
-	unsigned short			dpmi_private_segment;
-	unsigned short			dpmi_cs;		/* code segment given by DPMI server */
-	unsigned short			dpmi_ds;		/* data segment given by DPMI server */
-	unsigned short			dpmi_es;		/* ES segment given by DPMI server */
-	unsigned short			dpmi_ss;		/* SS segment given by DPMI server */
-};
-# pragma pack(pop)
-
-extern struct _dos_dpmi_state dos_dpmi_state;
-
-# define DPMI_SERVER_PROBED		0x01
-# define DPMI_SERVER_PRESENT		0x02
-# define DPMI_SERVER_INIT		0x04
-# define DPMI_SERVER_CAN_DO_32BIT	0x08
-# define DPMI_SERVER_INIT_32BIT		0x10
-#endif
 
 static unsigned int _dos_dpmi_initcomm_check1() {
 	if (!(dos_dpmi_state.flags & DPMI_SERVER_PROBED))
@@ -171,6 +162,33 @@ unsigned int dos_dpmi_init_server16() {
 		return r;
 
 	_dos_dpmi_init_server16_enter();
+	if (!(dos_dpmi_state.flags & DPMI_SERVER_INIT))
+		return 5;
+
+	/* TODO: Hook the INT 22h vector in the PSP so that our code can gain control
+	 *       and forcibly terminate the DPMI server */
+
+	return 0;
+}
+
+unsigned int dos_dpmi_init_server32() {
+	unsigned int r;
+
+	if ((r=_dos_dpmi_initcomm_check1()) != 0)
+		return r;
+
+	/* if DPMI is already initialized... */
+	if (dos_dpmi_state.flags & DPMI_SERVER_INIT) {
+		if (!(dos_dpmi_state.flags & DPMI_SERVER_INIT_32BIT))
+			return 3; /* if not initialized as 32-bit, then error out */
+
+		return 0; /* else if inited as 16-bit it's ok, no work to do */
+	}
+
+	if ((r=_dos_dpmi_initcomm_alloc_private()) != 0)
+		return r;
+
+	_dos_dpmi_init_server32_enter();
 	if (!(dos_dpmi_state.flags & DPMI_SERVER_INIT))
 		return 5;
 

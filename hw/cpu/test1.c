@@ -18,6 +18,47 @@
 #include <misc/useful.h>
 #include <hw/cpu/dpmi.h>
 
+static void print_dpmi_state() {
+#ifdef DOS_DPMI_AVAILABLE
+	if (dos_dpmi_state.flags & DPMI_SERVER_PRESENT) {
+		printf("DPMI server present\n");
+		printf("  Flags: 0x%02x ",dos_dpmi_state.flags);
+		if (dos_dpmi_state.flags & DPMI_SERVER_INIT) printf("INIT ");
+		if (dos_dpmi_state.flags & DPMI_SERVER_CAN_DO_32BIT) printf("CAN_DO_32BIT ");
+		if (dos_dpmi_state.flags & DPMI_SERVER_INIT_32BIT) printf("INIT_32BIT ");
+		if (dos_dpmi_state.flags & DPMI_SERVER_NEEDS_PROT_TERM) printf("NEEDS_PROTMODE_EXIT ");
+		printf("\n");
+		printf("  Entry point: %04x:%04x\n",dos_dpmi_state.entry_cs,dos_dpmi_state.entry_ip);
+		printf("  Private size: %u paragraphs at 0x%04x\n",dos_dpmi_state.dpmi_private_size,dos_dpmi_state.dpmi_private_segment);
+		printf("  Version: %u.%02u\n",dos_dpmi_state.dpmi_version>>8,dos_dpmi_state.dpmi_version&0xFF);
+		printf("  CPU: %u\n",dos_dpmi_state.dpmi_processor);
+		if (dos_dpmi_state.flags & DPMI_SERVER_INIT) {
+			printf("  DPMI CS=0x%04x DS=0x%04x ES=0x%04x SS=0x%04x\n",
+				dos_dpmi_state.dpmi_cs,
+				dos_dpmi_state.dpmi_ds,
+				dos_dpmi_state.dpmi_es,
+				dos_dpmi_state.dpmi_ss);
+			printf("  DPMI real-to-prot: %04x:%04x\n",
+				dos_dpmi_state.r2p_entry_cs,
+				dos_dpmi_state.r2p_entry_ip);
+			if (dos_dpmi_state.flags & DPMI_SERVER_INIT_32BIT) {
+				printf("  DPMI prot-to-real[16]: %04x:%04x%04x\n",
+					dos_dpmi_state.p2r_entry[2],
+					dos_dpmi_state.p2r_entry[1],
+					dos_dpmi_state.p2r_entry[0]);
+			}
+			else {
+				printf("  DPMI prot-to-real[16]: %04x:%04x\n",
+					dos_dpmi_state.p2r_entry[1],
+					dos_dpmi_state.p2r_entry[0]);
+			}
+			printf("  PSP segment tracked: 0x%04x\n",
+				dos_dpmi_state.my_psp);
+		}
+	}
+#endif
+}
+
 int main(int argc,char **argv,char **envp) {
 	probe_cpu();
 
@@ -31,6 +72,40 @@ int main(int argc,char **argv,char **envp) {
 			fprintf(stderr,"test                         Show all CPU info\n");
 			fprintf(stderr,"test sse                     Turn on SSE extensions\n");
 			fprintf(stderr,"test sseoff                  Turn off SSE extensions\n");
+			fprintf(stderr,"test dpmi16                  Test DPMI 16-bit entry\n");
+			fprintf(stderr,"test dpmi32                  Test DPMI 32-bit entry\n");
+		}
+		else if (!strcmp(argv[1],"dpmi16")) {
+#ifdef DOS_DPMI_AVAILABLE
+			dos_dpmi_probe();
+			if (!(dos_dpmi_state.flags & DPMI_SERVER_PRESENT))
+				fprintf(stderr,"DPMI server not detected\n");
+
+			dos_dpmi_init_server16();
+			if (!(dos_dpmi_state.flags & DPMI_SERVER_INIT))
+				fprintf(stderr,"DPMI server not initialized\n");
+			if (dos_dpmi_state.flags & DPMI_SERVER_INIT_32BIT)
+				fprintf(stderr,"Unexpected: DPMI server init'd as 32-bit\n");
+
+			print_dpmi_state();
+#endif
+		}
+		else if (!strcmp(argv[1],"dpmi32")) {
+#ifdef DOS_DPMI_AVAILABLE
+			dos_dpmi_probe();
+			if (!(dos_dpmi_state.flags & DPMI_SERVER_PRESENT))
+				fprintf(stderr,"DPMI server not detected\n");
+			if (!(dos_dpmi_state.flags & DPMI_SERVER_CAN_DO_32BIT))
+				fprintf(stderr,"DPMI server does not support 32-bit\n");
+
+			dos_dpmi_init_server32();
+			if (!(dos_dpmi_state.flags & DPMI_SERVER_INIT))
+				fprintf(stderr,"DPMI server not initialized\n");
+			if (!(dos_dpmi_state.flags & DPMI_SERVER_INIT_32BIT))
+				fprintf(stderr,"Unexpected: DPMI server init'd as 16-bit\n");
+
+			print_dpmi_state();
+#endif
 		}
 		else if (!strcmp(argv[1],"sse")) {
 			probe_cpu_sse();
@@ -220,39 +295,7 @@ int main(int argc,char **argv,char **envp) {
 
 #ifdef DOS_DPMI_AVAILABLE
 	dos_dpmi_probe();
-	if (dos_dpmi_state.flags & DPMI_SERVER_PRESENT) {
-		printf("DPMI server present\n");
-		printf("  Flags: ");
-		if (dos_dpmi_state.flags & DPMI_SERVER_INIT) printf("INIT ");
-		if (dos_dpmi_state.flags & DPMI_SERVER_CAN_DO_32BIT) printf("CAN_DO_32BIT ");
-		if (dos_dpmi_state.flags & DPMI_SERVER_INIT_32BIT) printf("INIT_32BIT ");
-		printf("\n");
-		printf("  Entry point: %04x:%04x\n",dos_dpmi_state.entry_cs,dos_dpmi_state.entry_ip);
-		printf("  Private size: %u paragraphs at 0x%04x\n",dos_dpmi_state.dpmi_private_size,dos_dpmi_state.dpmi_private_segment);
-		printf("  Version: %u.%02u\n",dos_dpmi_state.dpmi_version>>8,dos_dpmi_state.dpmi_version&0xFF);
-		printf("  CPU: %u\n",dos_dpmi_state.dpmi_processor);
-		if (dos_dpmi_state.flags & DPMI_SERVER_INIT) {
-			printf("  DPMI CS=0x%04x DS=0x%04x ES=0x%04x SS=0x%04x\n",
-				dos_dpmi_state.dpmi_cs,
-				dos_dpmi_state.dpmi_ds,
-				dos_dpmi_state.dpmi_es,
-				dos_dpmi_state.dpmi_ss);
-			printf("  DPMI real-to-prot: %04x:%04x\n",
-				dos_dpmi_state.r2p_entry_cs,
-				dos_dpmi_state.r2p_entry_ip);
-			if (dos_dpmi_state.flags & DPMI_SERVER_INIT_32BIT) {
-				printf("  DPMI prot-to-real[16]: %04x:%04x%04x\n",
-					dos_dpmi_state.p2r_entry[2],
-					dos_dpmi_state.p2r_entry[1],
-					dos_dpmi_state.p2r_entry[0]);
-			}
-			else {
-				printf("  DPMI prot-to-real[16]: %04x:%04x\n",
-					dos_dpmi_state.p2r_entry[1],
-					dos_dpmi_state.p2r_entry[0]);
-			}
-		}
-	}
+	print_dpmi_state();
 #endif
 
 #ifdef WIN_STDOUT_CONSOLE

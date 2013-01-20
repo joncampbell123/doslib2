@@ -15,7 +15,8 @@ struct _dos_dpmi_state {
 	unsigned short			dpmi_ss;		/* SS segment given by DPMI server */
 	unsigned short			r2p_entry_ip,r2p_entry_cs; /* real-to-prot raw switch */
 	unsigned short			p2r_entry[3];		/* prot-to-real raw switch (16:16 if 16-bit, 16:32 if 32-bit) */
-};								/* =30 bytes */
+	unsigned short			my_psp;			/* PSP segment */
+};								/* =32 bytes */
 # pragma pack(pop)
 
 extern struct _dos_dpmi_state dos_dpmi_state;
@@ -25,6 +26,14 @@ extern struct _dos_dpmi_state dos_dpmi_state;
 # define DPMI_SERVER_INIT		0x04
 # define DPMI_SERVER_CAN_DO_32BIT	0x08
 # define DPMI_SERVER_INIT_32BIT		0x10
+# define DPMI_SERVER_NEEDS_PROT_TERM	0x20
+/* ^ Explanation: Most DPMI servers assume the DOS program will stay in protected mode
+ *   and will only terminate from protected mode. If the DOS program terminates from
+ *   real mode the DPMI server will most likely not get the message and remain in memory.
+ *   Memory leaks and (in the case of Windows 3.1 or XP) descriptor leaks will occur.
+ *   This flag will be set for those scenarios. In the few known cases where the DPMI
+ *   server will actually catch the realmode case (such as the Windows 95/98/ME DOS box)
+ *   this flag will NOT be set. */
 
 unsigned int dos_dpmi_probe();
 unsigned int dos_dpmi_init_server32();
