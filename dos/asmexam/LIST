@@ -170,4 +170,7 @@
                       mode.
    dpmi32_0.com       Example code to enter 32-bit prot [DPMI 0.9+]
                       mode.
+* Windows DOS box
+   win31ver.com       Detect Windows and print the
+                      version of the Windows kernel     [Windows 3.1,95,98,ME]
 

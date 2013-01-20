@@ -118,6 +118,7 @@ all_programs += $(abs_exe_dir)/setenv.com
 all_programs += $(abs_exe_dir)/getpid.com
 all_programs += $(abs_exe_dir)/setpid.com
 all_programs += $(abs_exe_dir)/int22.com
+all_programs += $(abs_exe_dir)/win31ver.com
 
 all-programs: $(all_programs)
 
@@ -464,6 +465,9 @@ $(abs_exe_dir)/setpid.com: setpid.asm
 	$(NASM) -o $@ -f bin $(NASMFLAGS) $^
 
 $(abs_exe_dir)/int22.com: int22.asm
+	$(NASM) -o $@ -f bin $(NASMFLAGS) $^
+
+$(abs_exe_dir)/win31ver.com: win31ver.asm
 	$(NASM) -o $@ -f bin $(NASMFLAGS) $^
 
 all-txt: $(abs_exe_dir)/emm.txt
