@@ -2,10 +2,6 @@
 
 $project = 'doslib2';
 
-print "Ensuring the build tree is clean...\n";
-$x = system("./git-update-all");
-die unless $x == 0;
-
 if (!open(S,"git --no-pager log --max-count=1 |")) { exit 1; }
 my $lcommit = "x";
 my $i,$lcdate = "unknown";
