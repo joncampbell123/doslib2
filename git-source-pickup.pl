@@ -2,6 +2,10 @@
 
 $project = 'doslib2';
 
+print "Ensuring the build tree is clean...\n";
+$x = system("./git-update-all");
+die unless $x == 0;
+
 if (!open(S,"git --no-pager log --max-count=1 |")) { exit 1; }
 my $lcommit = "x";
 my $i,$lcdate = "unknown";
@@ -51,10 +55,6 @@ close(S);
 my $pwd = `pwd`; chomp $pwd;
 my $filename = "../".($as ne "" ? $as : $project)."-$lcdate-commit-$lcommit-src.tar";
 if (!( -f "$filename.xz" )) {
-	print "Ensuring the build tree is clean...\n";
-	$x = system("./git-update-all");
-	die unless $x == 0;
-
 	print "Packing source (all build files except LIB,OBJ,etc.)\n";
 	print "  to: $filename\n";
 
