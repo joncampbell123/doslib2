@@ -49,10 +49,15 @@ close(S);
 
 #my $filename = $project."-rev-".sprintf("%08u",$lcrev)."-src.tar.bz2";
 my $pwd = `pwd`; chomp $pwd;
+my $what = '';
 
 my $filename = "../".($as ne "" ? $as : $project)."-$lcdate-commit-$lcommit-src.tar";
 die unless -f "$filename.xz";
+$what .= "$filename.xz ";
 
 my $filename = "../".($as ne "" ? $as : $project)."-$lcdate-commit-$lcommit-binary.tar";
 die unless -f "$filename.xz";
+$what .= "$filename.xz ";
+
+$x = system("scp -p -P 52222 $what root\@192.168.250.1:/mnt/main/jmc-storage/docs/Projects/DOSLIB2/");
 
