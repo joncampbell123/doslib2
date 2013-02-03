@@ -1,11 +1,7 @@
 %include "nasmsegs.inc"
 %include "nasm1632.inc"
 %include "nasmenva.inc"
-
-; DEBUG: Enable this %define to replace the SSE instruction with a deliberate
-;        bad opcode to ensure the exception handler works even on modern CPUs
-;        that do in fact support SSE, such as using Windows XP to test this code.
-%define TEST_EXCEPTION_HANDLER
+%include "dpmi.inc"
 
 CODE_SEGMENT
 

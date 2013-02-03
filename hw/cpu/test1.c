@@ -22,8 +22,8 @@
 # include <dos.h>
 #endif
 
-static void print_dpmi_state() {
 #ifdef DOS_DPMI_AVAILABLE
+static void print_dpmi_state() {
 	if (dos_dpmi_state.flags & DPMI_SERVER_PRESENT) {
 		printf("DPMI server present. Info at %04x:%04x\n",FP_SEG(&dos_dpmi_state),FP_OFF(&dos_dpmi_state));
 		printf("  Flags: 0x%02x ",dos_dpmi_state.flags);
@@ -60,10 +60,12 @@ static void print_dpmi_state() {
 		printf("  PSP segment tracked: 0x%04x\n",
 			dos_dpmi_state.my_psp);
 	}
-#endif
 }
+#endif
 
 int main(int argc,char **argv,char **envp) {
+	int ignorearg=0;
+
 	probe_cpu();
 
 	if (!cpu_meets_compile_target()) {
@@ -72,6 +74,16 @@ int main(int argc,char **argv,char **envp) {
 	}
 
 	if (argc > 1) {
+		if (!strcmp(argv[1],"-dpmi16")) {
+#ifdef DOS_DPMI_AVAILABLE
+			dos_dpmi_probe();
+			dos_dpmi_init_server16();
+#endif
+			ignorearg++;
+		}
+	}
+
+	if (argc > 1 && ignorearg == 0) {
 		if (!strcmp(argv[1],"?")) {
 			fprintf(stderr,"test                         Show all CPU info\n");
 			fprintf(stderr,"test sse                     Turn on SSE extensions\n");
@@ -80,6 +92,7 @@ int main(int argc,char **argv,char **envp) {
 			fprintf(stderr,"test dpmi32                  Test DPMI 32-bit entry\n");
 			fprintf(stderr,"test dpmicall16              Test DPMI 16-bit calling\n");
 			fprintf(stderr,"test dpmicall16in32          Test DPMI 16-bit calling (from 32-bit)\n");
+			fprintf(stderr,"test -dpmi16                 Init 16-bit DPMI then test\n");
 		}
 		else if (!strcmp(argv[1],"dpmicall16")) {
 #ifdef DOS_DPMI_AVAILABLE

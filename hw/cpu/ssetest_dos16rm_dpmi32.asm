@@ -5,19 +5,53 @@
 
 CODE_SEGMENT
 
-%if TARGET_BITS == 32
- %ifdef TARGET_MSDOS
-  %define doit
+%if TARGET_BITS == 16
+ %ifidni MMODE,l
+  %define callnative call far
+ %else
+  %ifidni MMODE,m
+   %define callnative call far
+  %else
+   %define callnative call
+  %endif
  %endif
 %endif
 
-%ifdef doit
+%if TARGET_BITS == 16
+ %ifdef TARGET_MSDOS
+extern _dos_dpmi_protcall16
 ;=====================================================================
-;unsigned int _cdecl cpu_sse_dpmi32_test();
+;unsigned int _cdecl cpu_sse_vm86_dpmi32_test();
 ;=====================================================================
-EXTERN_C_FUNCTION cpu_sse_dpmi32_test
-	mov		dword [result],0x02	; CPU_SSE_ENABLED(0x02)
-	pushad
+EXTERN_C_FUNCTION cpu_sse_vm86_dpmi32_test
+	push		ds
+	push		es
+
+	mov		ax,seg result
+	mov		ds,ax
+
+	push		cs					; <- dos_dpmi_protcall16((void far*)test_protmode)
+	push		cpu_sse_vm86_dpmi32_test_protmode
+	callnative	_dos_dpmi_protcall16
+	add		sp,4
+	mov		ax,word [result]
+
+	pop		es
+	pop		ds
+	retnative
+
+cpu_sse_vm86_dpmi32_test_protmode:
+	pusha
+	push		ds
+	; NTS: The protmode call puts our remapped DS in ES here
+	mov		ax,es
+	mov		ds,ax
+	; Aaannnd for whatever weird reason we have to adjust (E)BP
+	; or else on INT 3 Windows 3.1 DPMI will corrupt the stack just
+	; below it for whatever fucking reason.
+	mov		bp,sp
+	; OK. set the result
+	mov		word [result],0x02	; CPU_SSE_ENABLED(0x02)
 
 ;=====================================================================
 ;Save current int 6 exception handler
@@ -31,10 +65,10 @@ EXTERN_C_FUNCTION cpu_sse_dpmi32_test
 ;=====================================================================
 ;Set our int 6 exception handler
 ;=====================================================================
+	mov		edx,our_int6_exception_handler32	; default: DPMI 32-bit handler
 	mov		ax,0x0203
 	mov		bl,6
 	mov		cx,cs
-	mov		edx,our_int6_exception_handler
 	int		31h
 
 ;=====================================================================
@@ -54,28 +88,35 @@ sseins:	xorps		xmm0,xmm0		; <- 3 bytes long
 	mov		cx,word [int6_oexcept+4]
 	mov		edx,dword [int6_oexcept]
 	int		31h
-
-	popad
-	mov		eax,dword [result]
-	retnative
+; WARNING WARNING!!!
+; Do NOT insert an INT 3h ANYWHERE IN THIS PART OF THE CODE.
+; The Windows 3.1 kernel for whatever fucking reason will corrupt the stack on return
+; from INT 3h. Unfortunately it likes to corrupt the very part of the stack containing the
+; return address.
+; Even weirder: NTVDM.EXE under Windows XP faithfully emulates this corruption!
+	pop		ds
+	popa
+	retf
 
 ;=============================================
 ;OUR INT6 EXCEPTION HANDLER
 ;=============================================
-our_int6_exception_handler:
+our_int6_exception_handler32:
 	xor		dword [result],0x02	; CPU_SSE_ENABLED(0x02), clear it
 	add		dword [esp+12],3	; skip XORPS xmm0,xmm0 which is 3 bytes long
-	retf
+	o32 retf
+ %endif
 %endif
 
 DATA_SEGMENT
 
-%ifdef doit
+%if TARGET_BITS == 16
+ %ifdef TARGET_MSDOS
 int6_oexcept:
-	dd		0
-	dw		0
+	dw		0,0,0
 
 result:
-	dd		0
+	dw		0
+ %endif
 %endif
 

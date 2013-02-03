@@ -22,7 +22,7 @@
  *       You would enable this to test how well our exception handlers work in environments where
  *       SSE is obviously not supported such as Windows 3.0 in DOSBox (which does not emulate
  *       anything past a Pentium) */
-#define DEBUG_ASSUME_SSE
+/*#define DEBUG_ASSUME_SSE*/
 
 /*DEBUG: Ignore TOOLHELP.DLL. You would enable this to test the DPMI exception handlers */
 /*#define DEBUG_IGNORE_TOOLHELP*/
@@ -111,8 +111,8 @@ unsigned int cpu_sse_win16_toolhelp_test(unsigned char *flags) {
 #   define cpu_sse_win16_toolhelp_test(x) (0)
 #  endif
 # elif defined(TARGET_MSDOS)
-unsigned int cpu_sse_vm86_dpmi32_test() { return 0; }
-unsigned int cpu_sse_vm86_dpmi16_test() { return 0; }
+unsigned int _cdecl cpu_sse_vm86_dpmi16_test();
+unsigned int _cdecl cpu_sse_vm86_dpmi32_test();
 # endif
 #endif
 
@@ -179,6 +179,10 @@ void probe_cpu_sse() {
 			 * to continue execution. If a 386 or higher, then first attempt to connect
 			 * as a 32-bit program. If a 286, or 32-bit failed, then attempt to connect
 			 * as a 16-bit program. */
+			/* FIXME: Wait WHAT?? The 286 must less anything older than the Pentium III
+			 *        would NEVER have SSE extensions! Why am I even taking the 286 into
+			 *        account here?!?!? YOU SHOULD ONLY CARE THAT WE ARE ABLE TO INIT 16-BIT
+			 *        OR 32-BIT DPMI! */
 			if (!(dos_dpmi_state.flags & DPMI_SERVER_INIT) && cpu_info.cpu_basic_level >= 3)
 				dos_dpmi_init_server32();
 			if (!(dos_dpmi_state.flags & DPMI_SERVER_INIT) && cpu_info.cpu_basic_level >= 2)
@@ -193,6 +197,10 @@ void probe_cpu_sse() {
 					cpu_sse_flags |= cpu_sse_vm86_dpmi16_test();
 			}
 		}
+
+		/* TODO: If DPMI not present, see if EMM386.EXE VCPI is present, so we can use an
+		 *       alternate function that jumps into protected mode via VCPI to do privileged things
+		 *       like read the control register. */
 # endif
 	}
 	else {

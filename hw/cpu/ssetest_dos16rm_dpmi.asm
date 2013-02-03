@@ -6,23 +6,52 @@
 CODE_SEGMENT
 
 %if TARGET_BITS == 16
- %ifdef TARGET_WINDOWS_WIN16
-  extern GETWINFLAGS
-  extern GETVERSION
+ %ifidni MMODE,l
+  %define callnative call far
+ %else
+  %ifidni MMODE,m
+   %define callnative call far
+  %else
+   %define callnative call
+  %endif
  %endif
-; NOTE: This works from under any 16-bit DPMI server, except from within
-;       Windows 95/98/ME (use TOOLHELP.DLL in that case). When targeting
-;       Windows 3.0, an alternate exception handler must be used when
-;       running in 286 standard mode.
+%endif
+
+%if TARGET_BITS == 16
+ %ifdef TARGET_MSDOS
+extern _dos_dpmi_protcall16
 ;=====================================================================
-;unsigned int _cdecl cpu_sse_dpmi16_test();
+;unsigned int _cdecl cpu_sse_vm86_dpmi16_test();
 ;=====================================================================
-EXTERN_C_FUNCTION cpu_sse_dpmi16_test
-	mov		word [result],0x02	; CPU_SSE_ENABLED(0x02)
+EXTERN_C_FUNCTION cpu_sse_vm86_dpmi16_test
+	push		ds
+	push		es
+
+	mov		ax,seg result
+	mov		ds,ax
+
+	push		cs					; <- dos_dpmi_protcall16((void far*)test_protmode)
+	push		cpu_sse_vm86_dpmi16_test_protmode
+	callnative	_dos_dpmi_protcall16
+	add		sp,4
+	mov		ax,word [result]
+
+	pop		es
+	pop		ds
+	retnative
+
+cpu_sse_vm86_dpmi16_test_protmode:
 	pusha
 	push		ds
-	mov		ax,seg int6_oexcept
+	; NTS: The protmode call puts our remapped DS in ES here
+	mov		ax,es
 	mov		ds,ax
+	; Aaannnd for whatever weird reason we have to adjust (E)BP
+	; or else on INT 3 Windows 3.1 DPMI will corrupt the stack just
+	; below it for whatever fucking reason.
+	mov		bp,sp
+	; OK. set the result
+	mov		word [result],0x02	; CPU_SSE_ENABLED(0x02)
 
 ;=====================================================================
 ;Save current int 6 exception handler
@@ -36,26 +65,7 @@ EXTERN_C_FUNCTION cpu_sse_dpmi16_test
 ;=====================================================================
 ;Set our int 6 exception handler
 ;=====================================================================
-	mov		dx,our_int6_exception_handler		; default: DPMI 16-bit handler
-
- %ifdef TARGET_WINDOWS_WIN16					; Windows 3.0: 286 standard mode exception handler works differently
-  %if TARGET_WINDOWS_VERSION < 31				; NTS: We do NOT test for real mode because cpusse.c will not call us in that case
-	push		dx
-	call far	GETVERSION				; what version of Windows is this?
-	pop		dx
-	xchg		al,ah					; lo byte has major, swap it
-	cmp		ax,0x30A				; is this Windows 3.10 or higher?
-	jae		.done1					; skip the test if so
-	push		dx
-	call far	GETWINFLAGS
-	pop		dx
-	test		ax,0x0020				; is WF_ENHANCED set?
-	jnz		.done1					; if not...
-	mov		dx,our_int6_exception_handler_win30_286	; use alternate handler for Win 3.0 286 standard mode
-.done1:
-  %endif
- %endif
-
+	mov		dx,our_int6_exception_handler16	; default: DPMI 16-bit handler
 	mov		ax,0x0203
 	mov		bl,6
 	mov		cx,cs
@@ -78,46 +88,38 @@ sseins:	xorps		xmm0,xmm0		; <- 3 bytes long
 	mov		cx,word [int6_oexcept+2]
 	mov		dx,word [int6_oexcept]
 	int		31h
-
+; WARNING WARNING!!!
+; Do NOT insert an INT 3h ANYWHERE IN THIS PART OF THE CODE.
+; The Windows 3.1 kernel for whatever fucking reason will corrupt the stack on return
+; from INT 3h. Unfortunately it likes to corrupt the very part of the stack containing the
+; return address.
+; Even weirder: NTVDM.EXE under Windows XP faithfully emulates this corruption!
 	pop		ds
 	popa
-	mov		ax,word [result]
-	retnative
+	retf
 
 ;=============================================
 ;OUR INT6 EXCEPTION HANDLER
 ;=============================================
-our_int6_exception_handler:
+our_int6_exception_handler16:
 	push		bp
 	mov		bp,sp
 	xor		word [result],0x02	; CPU_SSE_ENABLED(0x02), clear it
 	add		word [bp+6+2],3		; skip XORPS xmm0,xmm0 which is 3 bytes long
 	pop		bp
 	retf
-
-;=============================================
-;OUR INT6 EXCEPTION HANDLER (ALT WINDOWS 3.0 STANDARD MODE)
-;=============================================
- %ifdef TARGET_WINDOWS_WIN16
-  %if TARGET_WINDOWS_VERSION < 31
-our_int6_exception_handler_win30_286:
-	push		bp
-	mov		bp,sp
-	xor		word [result],0x02	; CPU_SSE_ENABLED(0x02), clear it
-	add		word [bp+2],3		; skip XORPS xmm0,xmm0 which is 3 bytes long
-	pop		bp
-	iret
-  %endif
  %endif
 %endif
 
 DATA_SEGMENT
 
 %if TARGET_BITS == 16
+ %ifdef TARGET_MSDOS
 int6_oexcept:
 	dw		0,0
 
 result:
 	dw		0
+ %endif
 %endif
 

@@ -362,12 +362,14 @@ EXTERN_C_FUNCTION dos_dpmi_protcall16
 	int		31h
 
 ; make the FAR call
+	push		ds			; save DS
 	mov		ax,[bp+26+retnative_stack_size] ; push cs+ds+ss+es+ds + pusha + retnative -> reach into offset value of far ptr
 	mov		word [_dos_dpmi_farcall+0],ax
 	mov		ax,word [_dos_dpmi_state+s_dos_dpmi_state.call_cs]
 	mov		word [_dos_dpmi_farcall+2],ax
 	mov		es,word [_dos_dpmi_state+s_dos_dpmi_state.call_ds]
 	call far	word [_dos_dpmi_farcall]
+	pop		ds			; restore DS
 
 ; jump back into real mode
 	mov		di,.back_to_real	; DI = return IP
