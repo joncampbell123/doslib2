@@ -63,6 +63,21 @@ EXTERN_C_FUNCTION _dos_dpmi_init_server16_enter
 	mov		word [_dos_dpmi_state+s_dos_dpmi_state.p2r_entry+0],di	; SI:DI prot-to-real entry point
 	mov		word [_dos_dpmi_state+s_dos_dpmi_state.p2r_entry+2],si
 
+; selector increment
+	mov		ax,0x0003
+	int		31h
+	mov		word [_dos_dpmi_state+s_dos_dpmi_state.selector_increment],ax
+
+; two selectors for the call CS & DS
+	xor		ax,ax			; AX=0x0000 allocate LDT descriptors
+	mov		cx,2			; two of them please
+	int		31h
+	jc		.fail_alloc
+	mov		word [_dos_dpmi_state+s_dos_dpmi_state.call_cs],ax
+	add		ax,word [_dos_dpmi_state+s_dos_dpmi_state.selector_increment]
+	mov		word [_dos_dpmi_state+s_dos_dpmi_state.call_ds],ax
+.fail_alloc:
+
 ; jump back into real mode
 	mov		di,.back_to_real	; DI = return IP
 	pop		si			; SI = return CS
@@ -149,8 +164,23 @@ EXTERN_C_FUNCTION _dos_dpmi_init_server32_enter
 	int		31h
 	mov		word [_dos_dpmi_state+s_dos_dpmi_state.r2p_entry_ip],cx	; BX:CX real-to-prot entry point
 	mov		word [_dos_dpmi_state+s_dos_dpmi_state.r2p_entry_cs],bx
-	mov		word [_dos_dpmi_state+s_dos_dpmi_state.p2r_entry+0],di	; SI:DDI prot-to-real entry point
+	mov		dword [_dos_dpmi_state+s_dos_dpmi_state.p2r_entry+0],edi ; SI:EDI prot-to-real entry point
 	mov		word [_dos_dpmi_state+s_dos_dpmi_state.p2r_entry+4],si
+
+; selector increment
+	mov		ax,0x0003
+	int		31h
+	mov		word [_dos_dpmi_state+s_dos_dpmi_state.selector_increment],ax
+
+; two selectors for the call CS & DS
+	xor		ax,ax			; AX=0x0000 allocate LDT descriptors
+	mov		cx,2			; two of them please
+	int		31h
+	jc		.fail_alloc
+	mov		word [_dos_dpmi_state+s_dos_dpmi_state.call_cs],ax
+	add		ax,word [_dos_dpmi_state+s_dos_dpmi_state.selector_increment]
+	mov		word [_dos_dpmi_state+s_dos_dpmi_state.call_ds],ax
+.fail_alloc:
 
 ; jump back into real mode
 	mov		edi,.back_to_real	; DI = return IP

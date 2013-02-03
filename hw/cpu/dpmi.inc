@@ -17,7 +17,10 @@ struc s_dos_dpmi_state
 	.r2p_entry_cs		resw	1	; +22 unsigned short	r2p_entry_cs;
 	.p2r_entry		resw	3	; +24 unsigned short	p2r_entry[3];
 	.my_psp			resw	1	; +30 unsigned short	my_psp;
-						; +32
+	.selector_increment	resw	1	; +32 unsigned short	selector_increment;
+	.call_cs		resw	1	; +34 unsigned short	call_cs;
+	.call_ds		resw	1	; +36 unsigned short	call_ds;
+						; +38
 endstruc
 
 extern _dos_dpmi_state

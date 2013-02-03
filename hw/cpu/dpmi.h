@@ -16,7 +16,9 @@ struct _dos_dpmi_state {
 	unsigned short			r2p_entry_ip,r2p_entry_cs; /* real-to-prot raw switch */
 	unsigned short			p2r_entry[3];		/* prot-to-real raw switch (16:16 if 16-bit, 16:32 if 32-bit) */
 	unsigned short			my_psp;			/* PSP segment */
-};								/* =32 bytes */
+	unsigned short			selector_increment;	/* selector increment value (usually 8) */
+	unsigned short			call_cs,call_ds;	/* alternate CS and DS for calling subroutines */
+};								/* =38 bytes */
 # pragma pack(pop)
 
 extern struct _dos_dpmi_state dos_dpmi_state;

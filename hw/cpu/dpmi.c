@@ -33,7 +33,7 @@ struct _dos_dpmi_state		dos_dpmi_state = {
 
 unsigned int dos_dpmi_probe() {
 	/*DEBUG: TODO REMOVE WHEN FINISHED*/
-	if (sizeof(dos_dpmi_state) != 32) {
+	if (sizeof(dos_dpmi_state) != 38) {
 		fprintf(stderr,"ERROR: dos_dpmi_state struct is not correct size\n");
 		return 0;
 	}

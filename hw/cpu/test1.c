@@ -31,6 +31,8 @@ static void print_dpmi_state() {
 		printf("  Entry point: %04x:%04x\n",dos_dpmi_state.entry_cs,dos_dpmi_state.entry_ip);
 		printf("  Private size: %u paragraphs at 0x%04x\n",dos_dpmi_state.dpmi_private_size,dos_dpmi_state.dpmi_private_segment);
 		printf("  Version: %u.%02u\n",dos_dpmi_state.dpmi_version>>8,dos_dpmi_state.dpmi_version&0xFF);
+		printf("  Selector increment: %u\n",dos_dpmi_state.selector_increment);
+		printf("  Protmode subroutine CS=%04X DS=%04X\n",dos_dpmi_state.call_cs,dos_dpmi_state.call_ds);
 		printf("  CPU: %u\n",dos_dpmi_state.dpmi_processor);
 		if (dos_dpmi_state.flags & DPMI_SERVER_INIT) {
 			printf("  DPMI CS=0x%04x DS=0x%04x ES=0x%04x SS=0x%04x\n",
