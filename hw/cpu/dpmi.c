@@ -1,4 +1,13 @@
 
+/* TODO: Is there any way to detect that the DPMI server is CWSDPMI.EXE?
+ *       If it is, then we must NOT attempt 16-bit protected mode. CWSDPMI.EXE
+ *       will dump back to dos if we attempt it. */
+
+/* TODO: Attempting 16-bit DPMI when HDPMI32.EXE is active causes a nasty
+ *       crash and endless fault loop in DOSBox. Same results if attempting
+ *       32-bit DPMI when HDPMI16.EXE is active. How do we detect that HDPMIxx.EXE
+ *       is active and which version so we only use the interface that is supported? */
+
 #include <stdio.h>
 #include <assert.h>
 #include <stdlib.h>
@@ -13,23 +22,6 @@
 
 void __cdecl _dos_dpmi_init_server16_enter();
 void __cdecl _dos_dpmi_init_server32_enter();
-
-struct _dos_dpmi_state		dos_dpmi_state = {
-	0,			/* +0 flags */
-	0,0,			/* +1 IP:CS */
-	0,			/* +5 dpmi_private_size */ 
-	0,			/* +7 dpmi_version */
-	0,			/* +9 dpmi_cpu */
-	0,			/* +10 dpmi_private_segment */
-	0,			/* +12 dpmi_cs */
-	0,			/* +14 dpmi_ds */
-	0,			/* +16 dpmi_es */
-	0,			/* +18 dpmi_ss */
-	0,0,			/* +20 real-to-prot entry */
-	0,0,0,			/* +24 prot-to-real entry */
-	0			/* +30 program segment prefix */
-				/* =32 */
-};
 
 unsigned int dos_dpmi_probe() {
 	/*DEBUG: TODO REMOVE WHEN FINISHED*/

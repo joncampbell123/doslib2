@@ -1,3 +1,5 @@
+%define DPMIE16_ASM
+
 %include "nasmsegs.inc"
 %include "nasm1632.inc"
 %include "nasmenva.inc"
@@ -26,14 +28,16 @@ CODE_SEGMENT
 EXTERN_C_FUNCTION _dos_dpmi_init_server16_enter
 	pusha
 	push		ds
-	push		es
-	push		ss
-	push		cs
 
   %ifdef DATA_IS_FAR
 	mov		bx,seg _dos_dpmi_state
 	mov		ds,bx
+	push		ds
   %endif
+
+	push		es
+	push		ss
+	push		cs
 
 ; copy down the program segment prefix of this program.
 ; we need this for management purposes and for our INT 22h handler.
@@ -88,6 +92,7 @@ EXTERN_C_FUNCTION _dos_dpmi_init_server16_enter
 	call far	word [_dos_dpmi_state+s_dos_dpmi_state.p2r_entry]
 
 .back_to_real:
+	int3
 	or		byte [_dos_dpmi_state+s_dos_dpmi_state.flags],0x04	; set the INIT bit
 
 ; hook INT 22h (through our PSP) so that this code executes after DOS has shutdown our program.
@@ -108,6 +113,10 @@ EXTERN_C_FUNCTION _dos_dpmi_init_server16_enter
 	mov		[cs:saved_ss],ss
 	pop		es
 .skip_int22_hook:
+
+  %ifdef DATA_IS_FAR
+	pop		ds
+  %endif
 
 	popa
 	retnative
@@ -130,14 +139,16 @@ fail_entry:
 EXTERN_C_FUNCTION _dos_dpmi_init_server32_enter
 	pusha
 	push		ds
-	push		es
-	push		ss
-	push		cs
 
   %ifdef DATA_IS_FAR
 	mov		bx,seg _dos_dpmi_state
 	mov		ds,bx
+	push		ds
   %endif
+
+	push		es
+	push		ss
+	push		cs
 
 ; copy down the program segment prefix of this program.
 ; we need this for management purposes and for our INT 22h handler.
@@ -212,6 +223,10 @@ EXTERN_C_FUNCTION _dos_dpmi_init_server32_enter
 	mov		[cs:saved_ss],ss
 	pop		es
 .skip_int22_hook:
+
+  %ifdef DATA_IS_FAR
+	pop		ds
+  %endif
 
 	popa
 	retnative
@@ -313,6 +328,18 @@ int22_hook:
 	sti
 	jmp far		[cs:old_int22]
 
+;===================================================================
+;void __cdecl dos_dpmi_protcall16(void far *proc);
+;===================================================================
+;WARNING: This call assumes you initialized the DPMI server
+EXTERN_C_FUNCTION dos_dpmi_protcall16
+	retnative
+
+; test subroutine
+global dos_dpmi_protcall16_test_
+dos_dpmi_protcall16_test_:
+	retf
+
  %endif
 %endif
 
@@ -320,6 +347,30 @@ DATA_SEGMENT
 
 %if TARGET_BITS == 16
  %ifdef TARGET_MSDOS
+global _dos_dpmi_protcall_test_flag
+_dos_dpmi_protcall_test_flag:
+	db		0
+
+global _dos_dpmi_state
+_dos_dpmi_state:
+	db		0	;    0 flags
+	dw		0,0	;    1 IP, CS
+	dw		0	;    5 dpmi_private_size
+	dw		0	;    7 dpmi_version
+	db		0	;    9 dpmi_cpu
+	dw		0	;   10 dpmi_private_segment
+	dw		0	;   12 dpmi_cs
+	dw		0	;   14 dpmi_ds
+	dw		0	;   16 dpmi_es
+	dw		0	;   18 dpmi_ss
+	dw		0,0	;   20 real-to-prot entry
+	dw		0,0,0	;   24 prot-to-real entry
+	dw		0	;   30 program segment prefix
+	dw		0	;   32 selector increment
+	dw		0	;   34 call_cs
+	dw		0	;   36 call_ds
+				;  =38 total
+
  %endif
 %endif
 

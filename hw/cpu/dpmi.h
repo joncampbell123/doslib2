@@ -41,5 +41,11 @@ unsigned int dos_dpmi_probe();
 unsigned int dos_dpmi_init_server32();
 unsigned int dos_dpmi_init_server16();
 
+/* once you init DPMI, you can make subroutine calls back into protected mode */
+void __cdecl dos_dpmi_protcall16(void far *proc);
+
+void dos_dpmi_protcall16_test();
+extern unsigned char dos_dpmi_protcall_test_flag;
+
 #endif
 

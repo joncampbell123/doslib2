@@ -23,7 +23,9 @@ struc s_dos_dpmi_state
 						; +38
 endstruc
 
+  %ifndef DPMIE16_ASM
 extern _dos_dpmi_state
+  %endif
 
  %define DPMI_SERVER_PROBED		0x01
  %define DPMI_SERVER_PRESENT		0x02

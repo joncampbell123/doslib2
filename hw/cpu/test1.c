@@ -18,10 +18,14 @@
 #include <misc/useful.h>
 #include <hw/cpu/dpmi.h>
 
+#ifdef DOS_DPMI_AVAILABLE
+# include <dos.h>
+#endif
+
 static void print_dpmi_state() {
 #ifdef DOS_DPMI_AVAILABLE
 	if (dos_dpmi_state.flags & DPMI_SERVER_PRESENT) {
-		printf("DPMI server present\n");
+		printf("DPMI server present. Info at %04x:%04x\n",FP_SEG(&dos_dpmi_state),FP_OFF(&dos_dpmi_state));
 		printf("  Flags: 0x%02x ",dos_dpmi_state.flags);
 		if (dos_dpmi_state.flags & DPMI_SERVER_INIT) printf("INIT ");
 		if (dos_dpmi_state.flags & DPMI_SERVER_CAN_DO_32BIT) printf("CAN_DO_32BIT ");
@@ -34,29 +38,27 @@ static void print_dpmi_state() {
 		printf("  Selector increment: %u\n",dos_dpmi_state.selector_increment);
 		printf("  Protmode subroutine CS=%04X DS=%04X\n",dos_dpmi_state.call_cs,dos_dpmi_state.call_ds);
 		printf("  CPU: %u\n",dos_dpmi_state.dpmi_processor);
-		if (dos_dpmi_state.flags & DPMI_SERVER_INIT) {
-			printf("  DPMI CS=0x%04x DS=0x%04x ES=0x%04x SS=0x%04x\n",
-				dos_dpmi_state.dpmi_cs,
-				dos_dpmi_state.dpmi_ds,
-				dos_dpmi_state.dpmi_es,
-				dos_dpmi_state.dpmi_ss);
-			printf("  DPMI real-to-prot: %04x:%04x\n",
-				dos_dpmi_state.r2p_entry_cs,
-				dos_dpmi_state.r2p_entry_ip);
-			if (dos_dpmi_state.flags & DPMI_SERVER_INIT_32BIT) {
-				printf("  DPMI prot-to-real[16]: %04x:%04x%04x\n",
-					dos_dpmi_state.p2r_entry[2],
-					dos_dpmi_state.p2r_entry[1],
-					dos_dpmi_state.p2r_entry[0]);
-			}
-			else {
-				printf("  DPMI prot-to-real[16]: %04x:%04x\n",
-					dos_dpmi_state.p2r_entry[1],
-					dos_dpmi_state.p2r_entry[0]);
-			}
-			printf("  PSP segment tracked: 0x%04x\n",
-				dos_dpmi_state.my_psp);
+		printf("  DPMI CS=0x%04x DS=0x%04x ES=0x%04x SS=0x%04x\n",
+			dos_dpmi_state.dpmi_cs,
+			dos_dpmi_state.dpmi_ds,
+			dos_dpmi_state.dpmi_es,
+			dos_dpmi_state.dpmi_ss);
+		printf("  DPMI real-to-prot: %04x:%04x\n",
+			dos_dpmi_state.r2p_entry_cs,
+			dos_dpmi_state.r2p_entry_ip);
+		if (dos_dpmi_state.flags & DPMI_SERVER_INIT_32BIT) {
+			printf("  DPMI prot-to-real[32]: %04x:%04x%04x\n",
+				dos_dpmi_state.p2r_entry[2],
+				dos_dpmi_state.p2r_entry[1],
+				dos_dpmi_state.p2r_entry[0]);
 		}
+		else {
+			printf("  DPMI prot-to-real[16]: %04x:%04x\n",
+				dos_dpmi_state.p2r_entry[1],
+				dos_dpmi_state.p2r_entry[0]);
+		}
+		printf("  PSP segment tracked: 0x%04x\n",
+			dos_dpmi_state.my_psp);
 	}
 #endif
 }
@@ -76,6 +78,25 @@ int main(int argc,char **argv,char **envp) {
 			fprintf(stderr,"test sseoff                  Turn off SSE extensions\n");
 			fprintf(stderr,"test dpmi16                  Test DPMI 16-bit entry\n");
 			fprintf(stderr,"test dpmi32                  Test DPMI 32-bit entry\n");
+			fprintf(stderr,"test dpmicall16              Test DPMI 16-bit calling\n");
+		}
+		else if (!strcmp(argv[1],"dpmicall16")) {
+#ifdef DOS_DPMI_AVAILABLE
+			dos_dpmi_probe();
+			if (!(dos_dpmi_state.flags & DPMI_SERVER_PRESENT))
+				fprintf(stderr,"DPMI server not detected\n");
+
+			dos_dpmi_init_server16();
+			if (!(dos_dpmi_state.flags & DPMI_SERVER_INIT))
+				fprintf(stderr,"DPMI server not initialized\n");
+			if (dos_dpmi_state.flags & DPMI_SERVER_INIT_32BIT)
+				fprintf(stderr,"Unexpected: DPMI server init'd as 32-bit\n");
+
+			print_dpmi_state();
+			dos_dpmi_protcall_test_flag = 0;
+			dos_dpmi_protcall16(dos_dpmi_protcall16_test);
+			printf("Test flag result 0x%02X\n",dos_dpmi_protcall_test_flag);
+#endif
 		}
 		else if (!strcmp(argv[1],"dpmi16")) {
 #ifdef DOS_DPMI_AVAILABLE
@@ -103,7 +124,7 @@ int main(int argc,char **argv,char **envp) {
 			dos_dpmi_init_server32();
 			if (!(dos_dpmi_state.flags & DPMI_SERVER_INIT))
 				fprintf(stderr,"DPMI server not initialized\n");
-			if (!(dos_dpmi_state.flags & DPMI_SERVER_INIT_32BIT))
+			else if (!(dos_dpmi_state.flags & DPMI_SERVER_INIT_32BIT))
 				fprintf(stderr,"Unexpected: DPMI server init'd as 16-bit\n");
 
 			print_dpmi_state();
