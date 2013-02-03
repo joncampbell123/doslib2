@@ -79,6 +79,7 @@ int main(int argc,char **argv,char **envp) {
 			fprintf(stderr,"test dpmi16                  Test DPMI 16-bit entry\n");
 			fprintf(stderr,"test dpmi32                  Test DPMI 32-bit entry\n");
 			fprintf(stderr,"test dpmicall16              Test DPMI 16-bit calling\n");
+			fprintf(stderr,"test dpmicall16in32          Test DPMI 16-bit calling (from 32-bit)\n");
 		}
 		else if (!strcmp(argv[1],"dpmicall16")) {
 #ifdef DOS_DPMI_AVAILABLE
@@ -94,8 +95,30 @@ int main(int argc,char **argv,char **envp) {
 
 			print_dpmi_state();
 			dos_dpmi_protcall_test_flag = 0;
-			dos_dpmi_protcall16(dos_dpmi_protcall16_test);
-			printf("Test flag result 0x%02X\n",dos_dpmi_protcall_test_flag);
+			if (dos_dpmi_state.flags & DPMI_SERVER_INIT) {
+				dos_dpmi_protcall16(dos_dpmi_protcall16_test);
+				printf("Test flag result 0x%02X\n",dos_dpmi_protcall_test_flag);
+			}
+#endif
+		}
+		else if (!strcmp(argv[1],"dpmicall16in32")) {
+#ifdef DOS_DPMI_AVAILABLE
+			dos_dpmi_probe();
+			if (!(dos_dpmi_state.flags & DPMI_SERVER_PRESENT))
+				fprintf(stderr,"DPMI server not detected\n");
+
+			dos_dpmi_init_server32();
+			if (!(dos_dpmi_state.flags & DPMI_SERVER_INIT))
+				fprintf(stderr,"DPMI server not initialized\n");
+			else if (!(dos_dpmi_state.flags & DPMI_SERVER_INIT_32BIT))
+				fprintf(stderr,"Unexpected: DPMI server init'd as 16-bit\n");
+
+			print_dpmi_state();
+			dos_dpmi_protcall_test_flag = 0;
+			if (dos_dpmi_state.flags & DPMI_SERVER_INIT) {
+				dos_dpmi_protcall16(dos_dpmi_protcall16_test);
+				printf("Test flag result 0x%02X\n",dos_dpmi_protcall_test_flag);
+			}
 #endif
 		}
 		else if (!strcmp(argv[1],"dpmi16")) {

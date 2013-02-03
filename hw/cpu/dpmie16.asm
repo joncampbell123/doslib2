@@ -51,14 +51,6 @@ EXTERN_C_FUNCTION _dos_dpmi_init_server16_enter
 	call far	word [_dos_dpmi_state+s_dos_dpmi_state.entry_ip]
 	jc		fail_entry
 
-; we're in 16-bit protected mode.
-; the DPMI server has created protected mode aliases of the real mode segments we entered by
-; save off those segments.
-	mov		word [_dos_dpmi_state+s_dos_dpmi_state.dpmi_cs],cs
-	mov		word [_dos_dpmi_state+s_dos_dpmi_state.dpmi_ds],ds
-	mov		word [_dos_dpmi_state+s_dos_dpmi_state.dpmi_es],es
-	mov		word [_dos_dpmi_state+s_dos_dpmi_state.dpmi_ss],ss
-
 ; next, we need the raw entry points for jumping back and forth between real and protected mode
 	mov		ax,0x0306
 	int		31h
@@ -66,21 +58,11 @@ EXTERN_C_FUNCTION _dos_dpmi_init_server16_enter
 	mov		word [_dos_dpmi_state+s_dos_dpmi_state.r2p_entry_cs],bx
 	mov		word [_dos_dpmi_state+s_dos_dpmi_state.p2r_entry+0],di	; SI:DI prot-to-real entry point
 	mov		word [_dos_dpmi_state+s_dos_dpmi_state.p2r_entry+2],si
+	mov		word [_dos_dpmi_p2r_call],_dos_dpmi_p2r_call16
+	mov		word [_dos_dpmi_call16_zero_upper32],_dos_dpmi_call16_zero_upper32_none
 
-; selector increment
-	mov		ax,0x0003
-	int		31h
-	mov		word [_dos_dpmi_state+s_dos_dpmi_state.selector_increment],ax
-
-; two selectors for the call CS & DS
-	xor		ax,ax			; AX=0x0000 allocate LDT descriptors
-	mov		cx,2			; two of them please
-	int		31h
-	jc		.fail_alloc
-	mov		word [_dos_dpmi_state+s_dos_dpmi_state.call_cs],ax
-	add		ax,word [_dos_dpmi_state+s_dos_dpmi_state.selector_increment]
-	mov		word [_dos_dpmi_state+s_dos_dpmi_state.call_ds],ax
-.fail_alloc:
+; other common code
+	call		_common_prot16_initial_entry_setup
 
 ; jump back into real mode
 	mov		di,.back_to_real	; DI = return IP
@@ -92,27 +74,10 @@ EXTERN_C_FUNCTION _dos_dpmi_init_server16_enter
 	call far	word [_dos_dpmi_state+s_dos_dpmi_state.p2r_entry]
 
 .back_to_real:
-	int3
 	or		byte [_dos_dpmi_state+s_dos_dpmi_state.flags],0x04	; set the INIT bit
 
-; hook INT 22h (through our PSP) so that this code executes after DOS has shutdown our program.
-; if the DPMI server is able to catch realmode INT 21h termination (Windows 9x/ME), then skip this step
-; because it's likely the DPMI server's selectors are now invalid.
-	test		byte [_dos_dpmi_state+s_dos_dpmi_state.flags],0x20	; Is DPMI_SERVER_NEEDS_PROT_TERM set?
-	jz		.skip_int22_hook					; skip this step if not
-	push		es
-	mov		es,[_dos_dpmi_state+s_dos_dpmi_state.my_psp]
-	mov		ax,[es:0xA]
-	mov		bx,[es:0xC]
-	mov		[cs:old_int22],ax
-	mov		[cs:old_int22+2],bx
-	mov		word [es:0xA],int22_hook
-	mov		[es:0xC],cs
-	mov		[cs:saved_ds],ds
-	mov		[cs:saved_sp],sp
-	mov		[cs:saved_ss],ss
-	pop		es
-.skip_int22_hook:
+; other common code: INT 22h hook
+	call		_common_prot16_initial_int22_hook
 
   %ifdef DATA_IS_FAR
 	pop		ds
@@ -162,14 +127,6 @@ EXTERN_C_FUNCTION _dos_dpmi_init_server32_enter
 	call far	word [_dos_dpmi_state+s_dos_dpmi_state.entry_ip]
 	jc		.fail_entry
 
-; we're in 32-bit protected mode... well... 16-bit code & data with the B bit set.
-; the DPMI server has created protected mode aliases of the real mode segments we entered by
-; save off those segments.
-	mov		word [_dos_dpmi_state+s_dos_dpmi_state.dpmi_cs],cs
-	mov		word [_dos_dpmi_state+s_dos_dpmi_state.dpmi_ds],ds
-	mov		word [_dos_dpmi_state+s_dos_dpmi_state.dpmi_es],es
-	mov		word [_dos_dpmi_state+s_dos_dpmi_state.dpmi_ss],ss
-
 ; next, we need the raw entry points for jumping back and forth between real and protected mode
 	mov		ax,0x0306
 	int		31h
@@ -177,21 +134,11 @@ EXTERN_C_FUNCTION _dos_dpmi_init_server32_enter
 	mov		word [_dos_dpmi_state+s_dos_dpmi_state.r2p_entry_cs],bx
 	mov		dword [_dos_dpmi_state+s_dos_dpmi_state.p2r_entry+0],edi ; SI:EDI prot-to-real entry point
 	mov		word [_dos_dpmi_state+s_dos_dpmi_state.p2r_entry+4],si
+	mov		word [_dos_dpmi_p2r_call],_dos_dpmi_p2r_call32
+	mov		word [_dos_dpmi_call16_zero_upper32],_dos_dpmi_call16_zero_upper32_doit
 
-; selector increment
-	mov		ax,0x0003
-	int		31h
-	mov		word [_dos_dpmi_state+s_dos_dpmi_state.selector_increment],ax
-
-; two selectors for the call CS & DS
-	xor		ax,ax			; AX=0x0000 allocate LDT descriptors
-	mov		cx,2			; two of them please
-	int		31h
-	jc		.fail_alloc
-	mov		word [_dos_dpmi_state+s_dos_dpmi_state.call_cs],ax
-	add		ax,word [_dos_dpmi_state+s_dos_dpmi_state.selector_increment]
-	mov		word [_dos_dpmi_state+s_dos_dpmi_state.call_ds],ax
-.fail_alloc:
+; other common code
+	call		_common_prot16_initial_entry_setup
 
 ; jump back into real mode
 	mov		edi,.back_to_real	; DI = return IP
@@ -205,24 +152,8 @@ EXTERN_C_FUNCTION _dos_dpmi_init_server32_enter
 .back_to_real:
 	or		byte [_dos_dpmi_state+s_dos_dpmi_state.flags],0x14	; set the INIT bit and INIT_32BIT
 
-; hook INT 22h (through our PSP) so that this code executes after DOS has shutdown our program.
-; if the DPMI server is able to catch realmode INT 21h termination (Windows 9x/ME), then skip this step
-; because it's likely the DPMI server's selectors are now invalid.
-	test		byte [_dos_dpmi_state+s_dos_dpmi_state.flags],0x20	; Is DPMI_SERVER_NEEDS_PROT_TERM set?
-	jz		.skip_int22_hook					; skip this step if not
-	push		es
-	mov		es,[_dos_dpmi_state+s_dos_dpmi_state.my_psp]
-	mov		ax,[es:0xA]
-	mov		bx,[es:0xC]
-	mov		[cs:old_int22],ax
-	mov		[cs:old_int22+2],bx
-	mov		word [es:0xA],int22_hook
-	mov		[es:0xC],cs
-	mov		[cs:saved_ds],ds
-	mov		[cs:saved_sp],sp
-	mov		[cs:saved_ss],ss
-	pop		es
-.skip_int22_hook:
+; other common code: INT 22h hook
+	call		_common_prot16_initial_int22_hook
 
   %ifdef DATA_IS_FAR
 	pop		ds
@@ -331,13 +262,211 @@ int22_hook:
 ;===================================================================
 ;void __cdecl dos_dpmi_protcall16(void far *proc);
 ;===================================================================
-;WARNING: This call assumes you initialized the DPMI server
+;WARNING: This call assumes you initialized the DPMI server.
+;WARNING: This code also assumes that you will be using the same stack segment
+;         when calling this code. If your stack segment changes, you are in BIG TROUBLE.
+;
+;      <DWORD void far *>
+;      <return address>  <- SS:SP [at start]
+;      <PUSHA>
+;      <PUSH DS>
 EXTERN_C_FUNCTION dos_dpmi_protcall16
+	pusha
+	push		ds
+
+  %ifdef DATA_IS_FAR
+	mov		bx,seg _dos_dpmi_state
+	mov		ds,bx
+  %endif
+
+	push		ds
+	push		es
+	push		ss
+	push		cs
+
+	test		byte [_dos_dpmi_state+s_dos_dpmi_state.flags],0x04	; is the INIT set?
+	jz		.exitout						; skip if not
+
+	test		word [_dos_dpmi_state+s_dos_dpmi_state.call_cs],0xFFFF	; if call_cs == 0 skip
+	jz		.exitout
+
+	test		word [_dos_dpmi_state+s_dos_dpmi_state.call_ds],0xFFFF	; if call_ds == 0 skip
+	jz		.exitout
+
+; jump to protected mode
+	call		word [_dos_dpmi_call16_zero_upper32]			; if 32-bit server MAKE SURE the upper half of the 16-bit registers are clear
+	mov		ax,word [_dos_dpmi_state+s_dos_dpmi_state.dpmi_ds]	; AX = DS
+	mov		cx,word [_dos_dpmi_state+s_dos_dpmi_state.dpmi_es]	; CX = ES
+	mov		dx,word [_dos_dpmi_state+s_dos_dpmi_state.dpmi_ss]	; DX = SS
+	mov		si,word [_dos_dpmi_state+s_dos_dpmi_state.dpmi_cs]	; SI = CS
+	mov		bx,sp							; BX = SP
+	mov		di,.enter_prot16					; DI = IP
+	call far	word [_dos_dpmi_state+s_dos_dpmi_state.r2p_entry_ip]
+
+; we're in protected mode
+.enter_prot16:
+
+; OK. Set the call_cs descriptor to be a 16-bit code segment
+	mov		ax,0x0009
+	mov		bx,word [_dos_dpmi_state+s_dos_dpmi_state.call_cs]
+	mov		cx,cs
+	and		cx,3
+	shl		cx,5			; bits 6:5 = our CPL
+	or		cx,0x009A		; (CPL << 5) | 16-bit byte granular present code readable
+	int		31h
+
+; OK. Set the call_ds descriptor to be a 16-bit data segment
+	mov		ax,0x0009
+	mov		bx,word [_dos_dpmi_state+s_dos_dpmi_state.call_ds]
+	mov		cx,cs
+	and		cx,3
+	shl		cx,5			; bits 6:5 = our CPL
+	or		cx,0x0092		; (CPL << 5) | 16-bit byte granular present data writeable
+	int		31h
+
+; Set call_cs limit to 0xFFFF
+	mov		ax,0x0008
+	mov		bx,word [_dos_dpmi_state+s_dos_dpmi_state.call_cs]
+	xor		cx,cx
+	mov		dx,cx
+	dec		dx			; CX:DX = 0x0000:0xFFFF
+	int		31h
+
+; Set call_cs limit to 0xFFFF
+	mov		ax,0x0008
+	mov		bx,word [_dos_dpmi_state+s_dos_dpmi_state.call_ds]
+	xor		cx,cx
+	mov		dx,cx
+	dec		dx			; CX:DX = 0x0000:0xFFFF
+	int		31h
+
+; in the following code we monkey with the stack. 16-bit code cannot directly use [sp+...]
+	mov		bp,sp
+
+; Set call_cs base to the realmode code segment value on stack (given to us as the func ptr)
+	mov		ax,0x0007
+	mov		bx,word [_dos_dpmi_state+s_dos_dpmi_state.call_cs]
+	mov		cx,[bp+26+retnative_stack_size+2] ; push cs+ds+ss+es+ds + pusha + retnative -> reach into segment value of far ptr
+	mov		dx,cx
+	shr		cx,12
+	shl		dx,4			; CX:DX = segment << 4
+	int		31h
+
+; Set call_ds base to the realmode data segment value on stack
+	mov		ax,0x0007
+	mov		bx,word [_dos_dpmi_state+s_dos_dpmi_state.call_ds]
+	mov		cx,[bp+8]		; first saved DS value on the stack
+	mov		dx,cx
+	shr		cx,12
+	shl		dx,4			; CX:DX = segment << 4
+	int		31h
+
+; make the FAR call
+	mov		ax,[bp+26+retnative_stack_size] ; push cs+ds+ss+es+ds + pusha + retnative -> reach into offset value of far ptr
+	mov		word [_dos_dpmi_farcall+0],ax
+	mov		ax,word [_dos_dpmi_state+s_dos_dpmi_state.call_cs]
+	mov		word [_dos_dpmi_farcall+2],ax
+	mov		es,word [_dos_dpmi_state+s_dos_dpmi_state.call_ds]
+	call far	word [_dos_dpmi_farcall]
+
+; jump back into real mode
+	mov		di,.back_to_real	; DI = return IP
+	pop		si			; SI = return CS
+	pop		dx			; DX = return SS
+	pop		cx			; CX = return ES
+	pop		ax			; AX = return DS
+	mov		bx,sp			; BX = return SP
+	call		word [_dos_dpmi_p2r_call]
+.back_to_real:
+	pop		ds
+	popa
+	retnative
+.exitout:
+	add		sp,2			; we can't "pop cs" nor would we want to
+	pop		ss
+	pop		es
+	pop		ds
+	pop		ds
+	popa
 	retnative
 
-; test subroutine
+; handy function to use correct prot-to-real call (PRIVATE)
+_dos_dpmi_p2r_call:
+	dw		0
+_dos_dpmi_p2r_call16:
+	call far	word [_dos_dpmi_state+s_dos_dpmi_state.p2r_entry]
+	ret
+_dos_dpmi_p2r_call32:
+	call far	dword [_dos_dpmi_state+s_dos_dpmi_state.p2r_entry]
+	ret
+
+; handy function to ensure 16-bit calls on a 32-bit server zero the upper registers
+_dos_dpmi_call16_zero_upper32:
+	dw		0
+_dos_dpmi_call16_zero_upper32_doit:
+	and		eax,0xFFFF
+	and		ebx,0xFFFF
+	and		ecx,0xFFFF
+	and		edx,0xFFFF
+	and		esi,0xFFFF
+	and		edi,0xFFFF
+_dos_dpmi_call16_zero_upper32_none:
+	ret
+
+; COMMON CODE (PRIVATE): Hook INT 22h if the DPMI server does not catch real-mode termination cases
+_common_prot16_initial_int22_hook:
+; hook INT 22h (through our PSP) so that this code executes after DOS has shutdown our program.
+; if the DPMI server is able to catch realmode INT 21h termination (Windows 9x/ME), then skip this step
+; because it's likely the DPMI server's selectors are now invalid.
+	test		byte [_dos_dpmi_state+s_dos_dpmi_state.flags],0x20	; Is DPMI_SERVER_NEEDS_PROT_TERM set?
+	jz		.skip_int22_hook					; skip this step if not
+	push		es
+	mov		es,[_dos_dpmi_state+s_dos_dpmi_state.my_psp]
+	mov		ax,[es:0xA]
+	mov		bx,[es:0xC]
+	mov		[cs:old_int22],ax
+	mov		[cs:old_int22+2],bx
+	mov		word [es:0xA],int22_hook
+	mov		[es:0xC],cs
+	mov		[cs:saved_ds],ds
+	mov		[cs:saved_sp],sp
+	mov		[cs:saved_ss],ss
+	pop		es
+.skip_int22_hook:
+	ret
+
+; COMMON CODE (PRIVATE): Called by both 16-bit and 32-bit entry
+_common_prot16_initial_entry_setup:
+; we're in 16-bit protected mode.
+; the DPMI server has created protected mode aliases of the real mode segments we entered by
+; save off those segments.
+	mov		word [_dos_dpmi_state+s_dos_dpmi_state.dpmi_cs],cs
+	mov		word [_dos_dpmi_state+s_dos_dpmi_state.dpmi_ds],ds
+	mov		word [_dos_dpmi_state+s_dos_dpmi_state.dpmi_es],es
+	mov		word [_dos_dpmi_state+s_dos_dpmi_state.dpmi_ss],ss
+
+; selector increment
+	mov		ax,0x0003
+	int		31h
+	mov		word [_dos_dpmi_state+s_dos_dpmi_state.selector_increment],ax
+
+; two selectors for the call CS & DS
+	xor		ax,ax			; AX=0x0000 allocate LDT descriptors
+	mov		cx,2			; two of them please
+	int		31h
+	jc		.fail_alloc
+	mov		word [_dos_dpmi_state+s_dos_dpmi_state.call_cs],ax
+	add		ax,word [_dos_dpmi_state+s_dos_dpmi_state.selector_increment]
+	mov		word [_dos_dpmi_state+s_dos_dpmi_state.call_ds],ax
+.fail_alloc:
+	ret
+
+; test subroutine.
+; note that the subroutine is always called with DS = segment/selector containing DPMI call data.
+; ES is set to a translated selector of what DS was on entry.
 global dos_dpmi_protcall16_test_
 dos_dpmi_protcall16_test_:
+	inc		byte [_dos_dpmi_protcall_test_flag]	; <- WARNING: This works because on entry DS = this data segment
 	retf
 
  %endif
@@ -350,6 +479,9 @@ DATA_SEGMENT
 global _dos_dpmi_protcall_test_flag
 _dos_dpmi_protcall_test_flag:
 	db		0
+
+_dos_dpmi_farcall:
+	dw		0,0,0
 
 global _dos_dpmi_state
 _dos_dpmi_state:

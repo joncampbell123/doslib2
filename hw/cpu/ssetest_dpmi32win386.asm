@@ -139,7 +139,6 @@ fail:
 ;OUR INT6 EXCEPTION HANDLER
 ;=============================================
 our_int6_exception_handler:
-	int		3
 ; NOTE:  So here's the bizarre situation: Windows calls this 32-bit exception handler
 ;        with a 16-bit DPMI exception handler frame. Okay, we can deal with that.
 ;        The bigger issue is: What happens if sooner or later Watcom assigns this
