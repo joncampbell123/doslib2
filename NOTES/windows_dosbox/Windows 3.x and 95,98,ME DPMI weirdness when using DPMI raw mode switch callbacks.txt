@@ -1,0 +1,49 @@
+ISSUE: DPMI weirdness when using raw mode switch entry points
+TARGETS: MS-DOS real-mode applications using DPMI within Windows 3.0/3.1/95/98/ME/NT/2000/XP/etc...
+NOTED BY: Jonathan Campbell
+
+If, like certain libraries in this source code, you are using the raw mode switch functions
+returned by DPMI function AX=0x0306, there is an undocumented but very important step you must
+take when you enter protected mode.
+
+According to [http://www.delorie.com/djgpp/doc/dpmi/api/310306.html] you can enter back into
+protected mode by FAR JMPing to the real-to-protected mode address, having set up the registers
+like this:
+
+        AX = selector to load into DS
+        CX = selector to load into ES
+        DX = selector to load into SS
+     [E]BX = value to load into [E]SP
+        SI = selector to load into CS
+     [E]DI = value to load into [E]IP
+
+   Under Windows, these values are loaded as expected, and as long as your code does not modify
+   the stack pointer while in protected mode, it will execute correctly. However what is NOT
+   documented is that, while in protected mode, if interrupts are processed or generated Windows
+   will NOT use the current value of the stack pointer at the point of invocation. It will
+   instead reload the stack pointer value you had when you entered protected mode. This means
+   that if your routine had pushed data onto the stack and was either interrupted or making
+   system calls, the Windows kernel will trash that part of the stack and use it for it's
+   interrupt handler.
+
+   Undocumented addition to that list:
+        SS = real-mode stack segment for Windows to use when handling interrupts
+     [E]SP = stack value for Windows to use when handling interrupts
+
+The workaround to avoid this problem, is to subtract SP by some constant value as if you are
+allocating space on the stack, THEN enter protected mode via the raw mode switch entry point.
+Once you are in protected mode, restore SP by adding the constant back and then carry on
+with your subroutine. Because SP was adjusted during the transition, Windows will use that
+adjusted stack pointer if interrupts happen and will trash the unused portion of your stack
+and leave your real stack alone.
+
+Potential problems: The constant value you chose ultimately decides how much stack you have
+while in protected mode. Pick a high enough value to ensure you have enough room for your
+code to execute, but not too high that you waste memory. Once you pick a constant size, and
+enter protected mode, your code MUST NOT exceed that stack pointer or else the data you store
+there will once again get trashed every time Windows handles an interrupt while in protected
+mode!
+
+It is unfortunate that Windows 3.0/3.1/95/98/ME all seem to have this issue. It is even more
+unfortunate that this bug is faithfully emulated by Windows XP's NTVDM.EXE.
+
