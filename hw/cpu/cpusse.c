@@ -22,7 +22,7 @@
  *       You would enable this to test how well our exception handlers work in environments where
  *       SSE is obviously not supported such as Windows 3.0 in DOSBox (which does not emulate
  *       anything past a Pentium) */
-/*#define DEBUG_ASSUME_SSE*/
+#define DEBUG_ASSUME_SSE
 
 /*DEBUG: Ignore TOOLHELP.DLL. You would enable this to test the DPMI exception handlers */
 /*#define DEBUG_IGNORE_TOOLHELP*/

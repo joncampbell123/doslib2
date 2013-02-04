@@ -71,7 +71,7 @@ EXTERN_C_FUNCTION _dos_dpmi_init_server16_enter
 	pop		cx			; CX = return ES
 	pop		ax			; AX = return DS
 	mov		bx,sp			; BX = return SP
-	call far	word [_dos_dpmi_state+s_dos_dpmi_state.p2r_entry]
+	jmp far		word [_dos_dpmi_state+s_dos_dpmi_state.p2r_entry]
 
 .back_to_real:
 	or		byte [_dos_dpmi_state+s_dos_dpmi_state.flags],0x04	; set the INIT bit
@@ -147,7 +147,7 @@ EXTERN_C_FUNCTION _dos_dpmi_init_server32_enter
 	pop		cx			; CX = return ES
 	pop		ax			; AX = return DS
 	mov		ebx,esp			; BX = return SP
-	call far	dword [_dos_dpmi_state+s_dos_dpmi_state.p2r_entry]
+	jmp far		dword [_dos_dpmi_state+s_dos_dpmi_state.p2r_entry]
 
 .back_to_real:
 	or		byte [_dos_dpmi_state+s_dos_dpmi_state.flags],0x14	; set the INIT bit and INIT_32BIT
@@ -247,7 +247,7 @@ int22_hook:
 	mov		cx,[_dos_dpmi_state+s_dos_dpmi_state.dpmi_es]; CX = return ES
 	mov		ax,[_dos_dpmi_state+s_dos_dpmi_state.dpmi_ds]; AX = return DS
 	mov		bx,sp			; BX = return SP
-	call far	word [_dos_dpmi_state+s_dos_dpmi_state.r2p_entry_ip]
+	jmp far		word [_dos_dpmi_state+s_dos_dpmi_state.r2p_entry_ip]
 .final_r2p:
 ; we're in protected mode where the DPMI server is paying attention, do INT 21h AH=0x4C.
 ; note that this routine is probably still in the PSP as the INT 22h termination handler,
@@ -299,12 +299,35 @@ EXTERN_C_FUNCTION dos_dpmi_protcall16
 	mov		cx,word [_dos_dpmi_state+s_dos_dpmi_state.dpmi_es]	; CX = ES
 	mov		dx,word [_dos_dpmi_state+s_dos_dpmi_state.dpmi_ss]	; DX = SS
 	mov		si,word [_dos_dpmi_state+s_dos_dpmi_state.dpmi_cs]	; SI = CS
-	mov		bx,sp							; BX = SP
 	mov		di,.enter_prot16					; DI = IP
-	call far	word [_dos_dpmi_state+s_dos_dpmi_state.r2p_entry_ip]
+; HACK!!!! It turns out the Windows DPMI kernel has a weird bug when it comes to the stack.
+;          If we enter protected mode with a specific SP value, then when Windows handles
+;          an interrupt it will always use that stack value EVEN IF WE LATER CHANGE THE VALUE.
+;          For example if we enter protected mode with SP=0x1234, then push some values onto
+;          the stack, even though OUR stack pointer becomes 0x1230 the Windows kernel
+;          interrupt handler will still push it's stack values to SP=0x1234 thus corrupting
+;          our data!
+;
+;          It's interesting to note that whatever our SP stack pointer was set to, becomes
+;          the memory address used in this manner, even though BX is supposed to (by DPMI
+;          standards) become the stack pointer.
+;
+; WORKAROUND: subtract SP by 0x100 prior to entering to allow for plenty of stack space, jump
+;             to protected mode, and then immediately bump SP up by 0x100 to use the stack
+;             normally. Return to real mode afterwards with no stack adjustment at all.
+;
+; Yuck. Ready? Do it.
+	sub		sp,0x100						; SP -= 0x100
+	mov		bx,sp							; BX = SP
+; Now we can enter protected mode
+	jmp far		word [_dos_dpmi_state+s_dos_dpmi_state.r2p_entry_ip]
 
 ; we're in protected mode
 .enter_prot16:
+; HACK!!! See workaround described just before the jump to protmode. Hopefully if Windows
+; handles an interrupt it's stack pointer will stomp on the area 0x100 bytes below our stack
+; and leave our stack data alone.
+	add		sp,0x100
 
 ; OK. Set the call_cs descriptor to be a 16-bit code segment
 	mov		ax,0x0009
@@ -361,13 +384,14 @@ EXTERN_C_FUNCTION dos_dpmi_protcall16
 	shl		dx,4			; CX:DX = segment << 4
 	int		31h
 
-; make the FAR call
-	push		ds			; save DS
 	mov		ax,[bp+26+retnative_stack_size] ; push cs+ds+ss+es+ds + pusha + retnative -> reach into offset value of far ptr
 	mov		word [_dos_dpmi_farcall+0],ax
 	mov		ax,word [_dos_dpmi_state+s_dos_dpmi_state.call_cs]
 	mov		word [_dos_dpmi_farcall+2],ax
 	mov		es,word [_dos_dpmi_state+s_dos_dpmi_state.call_ds]
+
+; make the FAR call
+	push		ds			; save DS
 	call far	word [_dos_dpmi_farcall]
 	pop		ds			; restore DS
 
@@ -378,7 +402,7 @@ EXTERN_C_FUNCTION dos_dpmi_protcall16
 	pop		cx			; CX = return ES
 	pop		ax			; AX = return DS
 	mov		bx,sp			; BX = return SP
-	call		word [_dos_dpmi_p2r_call]
+	jmp		word [_dos_dpmi_p2r_call]
 .back_to_real:
 	pop		ds
 	popa
@@ -396,11 +420,9 @@ EXTERN_C_FUNCTION dos_dpmi_protcall16
 _dos_dpmi_p2r_call:
 	dw		0
 _dos_dpmi_p2r_call16:
-	call far	word [_dos_dpmi_state+s_dos_dpmi_state.p2r_entry]
-	ret
+	jmp far		word [_dos_dpmi_state+s_dos_dpmi_state.p2r_entry]
 _dos_dpmi_p2r_call32:
-	call far	dword [_dos_dpmi_state+s_dos_dpmi_state.p2r_entry]
-	ret
+	jmp far		dword [_dos_dpmi_state+s_dos_dpmi_state.p2r_entry]
 
 ; handy function to ensure 16-bit calls on a 32-bit server zero the upper registers
 _dos_dpmi_call16_zero_upper32:
@@ -471,13 +493,8 @@ dos_dpmi_protcall16_test_:
 	inc		byte [_dos_dpmi_protcall_test_flag]	; <- WARNING: This works because on entry DS = this data segment
 	retf
 
- %endif
-%endif
+segment _DATA class=DATA
 
-DATA_SEGMENT
-
-%if TARGET_BITS == 16
- %ifdef TARGET_MSDOS
 global _dos_dpmi_protcall_test_flag
 _dos_dpmi_protcall_test_flag:
 	db		0

@@ -108,13 +108,7 @@ our_int6_exception_handler16:
 	add		word [bp+6+2],3		; skip XORPS xmm0,xmm0 which is 3 bytes long
 	pop		bp
 	retf
- %endif
-%endif
 
-DATA_SEGMENT
-
-%if TARGET_BITS == 16
- %ifdef TARGET_MSDOS
 int6_oexcept:
 	dw		0,0
 
