@@ -197,10 +197,28 @@ saved_sp:
 	dw		0
 saved_ss:
 	dw		0
+caller_sp:
+	dw		0
+caller_ss:
+	dw		0
 int22_hook:
+; NTS: We change the stack pointer to our own. But we have to restore it before
+;      passing on because some programs seriously get confused otherwise
 	cli
-	mov		ds,[cs:saved_ds]
+
+	push		ax
+	push		bx
+	mov		ax,[cs:caller_sp]
+	mov		bx,[cs:caller_ss]
+	mov		[cs:caller_sp],sp
+	mov		[cs:caller_ss],ss
+
 	lss		sp,[cs:saved_sp]
+
+	push		ds
+	push		bx
+	push		ax
+	mov		ds,[cs:saved_ds]
 
 ; TODO: By this point we're executing in the context of the parent process. We got here
 ; because we overwrote the old copy of INT 22h that was in our PSP, which DOS has likely
@@ -237,6 +255,8 @@ int22_hook:
 ; NTS: Apparently the DOS kernel doesn't mind terminating our process twice, which is
 ;      why we are able to get away with doing it this way.
 	mov		bx,[_dos_dpmi_state+s_dos_dpmi_state.my_psp]
+	or		bx,bx
+	jz		.continue
 	mov		ah,0x50			; set current PSP address
 	int		21h
 
@@ -256,6 +276,16 @@ int22_hook:
 	mov		ax,0x4C00
 	int		21h
 .continue:
+	pop		ax
+	pop		bx
+	pop		ds
+	cli
+	mov		sp,[cs:caller_sp]
+	mov		ss,[cs:caller_ss]
+	mov		[cs:caller_sp],ax
+	mov		[cs:caller_ss],bx
+	pop		bx
+	pop		ax
 	sti
 	jmp far		[cs:old_int22]
 
@@ -444,6 +474,8 @@ _common_prot16_initial_int22_hook:
 ; because it's likely the DPMI server's selectors are now invalid.
 	test		byte [_dos_dpmi_state+s_dos_dpmi_state.flags],0x20	; Is DPMI_SERVER_NEEDS_PROT_TERM set?
 	jz		.skip_int22_hook					; skip this step if not
+	test		byte [_dos_dpmi_hooked_int22],0x01			; did we already hook?
+	jnz		.skip_int22_hook					; skip if so
 	push		es
 	mov		es,[_dos_dpmi_state+s_dos_dpmi_state.my_psp]
 	mov		ax,[es:0xA]
@@ -455,6 +487,7 @@ _common_prot16_initial_int22_hook:
 	mov		[cs:saved_ds],ds
 	mov		[cs:saved_sp],sp
 	mov		[cs:saved_ss],ss
+	or		byte [_dos_dpmi_hooked_int22],0x01
 	pop		es
 .skip_int22_hook:
 	ret
@@ -493,7 +526,120 @@ dos_dpmi_protcall16_test_:
 	inc		byte [_dos_dpmi_protcall_test_flag]	; <- WARNING: This works because on entry DS = this data segment
 	retf
 
+;======================================================
+;void __cdecl dos_dpmi_shutdown();
+;======================================================
+EXTERN_C_FUNCTION dos_dpmi_shutdown
+	pusha
+	push		ds
+	push		es
+  %ifdef DATA_IS_FAR
+	mov		ax,seg _dos_dpmi_state
+	mov		ds,ax
+  %endif
+	test		byte [_dos_dpmi_state+s_dos_dpmi_state.flags],0x04	; is the INIT bit still set?
+	jz		.continue						; skip if not
+
+; FIX: This hack DOESN'T WORK in the NTVDM.EXE DOS Box provided by Windows XP.
+;      In that situation the caller is stuck with whatever way the DPMI is setup and no way to change.
+	mov		ax,0x3306
+	xor		bx,bx
+	xor		dx,dx
+	int		21h
+	cmp		bx,0x3205						; Windows NT returns version 5.50
+	jz		.continue
+
+; OK
+	and		byte [_dos_dpmi_state+s_dos_dpmi_state.flags],~0x04	; clear INIT bit
+
+; clear interrupts
+	cli
+
+; hook INT 21h
+	xor		ax,ax
+	mov		es,ax
+	mov		ax,word [es:(0x21*4)+0]
+	mov		bx,word [es:(0x21*4)+2]
+	mov		word [cs:.old_int21+0],ax
+	mov		word [cs:.old_int21+2],bx
+	mov		word [es:(0x21*4)+0],.int21_hook
+	mov		word [es:(0x21*4)+2],cs
+
+; now, jump into protected mode
+	call		word [_dos_dpmi_call16_zero_upper32]
+	push		word [cs:saved_ds]
+	push		word [cs:saved_ss]
+	push		word [cs:saved_sp]
+	mov		[cs:saved_ds],ds
+	mov		[cs:saved_sp],sp
+	mov		[cs:saved_ss],ss
+	mov		di,.final_r2p		; DI = return IP
+	mov		si,[_dos_dpmi_state+s_dos_dpmi_state.dpmi_cs]; SI = return CS
+	mov		dx,[_dos_dpmi_state+s_dos_dpmi_state.dpmi_ss]; DX = return SS
+	mov		cx,[_dos_dpmi_state+s_dos_dpmi_state.dpmi_es]; CX = return ES
+	mov		ax,[_dos_dpmi_state+s_dos_dpmi_state.dpmi_ds]; AX = return DS
+	mov		bx,sp			; BX = return SP
+	jmp far		word [_dos_dpmi_state+s_dos_dpmi_state.r2p_entry_ip]
+.final_r2p:
+	mov		ax,0x4C00
+	int		21h
+; execution will jump here when the DPMI server has called INT 21h AH=4C
+.int21_exit:
+	add		sp,6			; dump stack frame
+; we cannot assume our data segment is intact, and we cannot assume the stack is ours
+	mov		ds,[cs:saved_ds]
+	lss		sp,[cs:saved_sp]
+	pop		word [cs:saved_sp]
+	pop		word [cs:saved_ss]
+	pop		word [cs:saved_ds]
+; restore INT 21h vector
+	xor		ax,ax
+	mov		es,ax
+	mov		ax,word [cs:.old_int21+0]
+	mov		bx,word [cs:.old_int21+2]
+	mov		word [es:(0x21*4)+0],ax
+	mov		word [es:(0x21*4)+2],bx
+; if a memory block is involved then free it (assuming DPMI has not done so already)
+	mov		ax,word [_dos_dpmi_state+s_dos_dpmi_state.dpmi_private_segment]
+	or		ax,ax
+	jz		.no_private
+	mov		es,ax
+	mov		ah,0x49
+	int		21h
+	mov		word [_dos_dpmi_state+s_dos_dpmi_state.dpmi_private_segment],0
+.no_private:
+; zero the DPMI information struct. The reason we do this is that most DPMI servers like
+; CWSDPMI.EXE are programmed to unload themselves from memory when a DPMI client terminates.
+; We can't assume the DPMI server will be there again, doing this forces the support code
+; to probe for DPMI again.
+	cld
+	xor		ax,ax
+	mov		cx,38/2		; zero all (FIXME: hardcoded)
+	mov		es,[cs:saved_ds]
+	mov		di,_dos_dpmi_state
+	rep		stosb
+; enable interrupts
+	sti
+; now return
+.continue:
+	pop		es
+	pop		ds
+	popa
+	retnative
+.old_int21:
+	dw		0,0
+.int21_hook:
+	cmp		ah,0x4C
+	jz		.int21_exit
+	cmp		ah,0x00
+	jz		.int21_exit
+	jmp far		[cs:.old_int21]
+
 segment _DATA class=DATA
+
+global _dos_dpmi_hooked_int22
+_dos_dpmi_hooked_int22:
+	db		0
 
 global _dos_dpmi_protcall_test_flag
 _dos_dpmi_protcall_test_flag:

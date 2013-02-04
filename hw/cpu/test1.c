@@ -32,6 +32,7 @@ static void print_dpmi_state() {
 		if (dos_dpmi_state.flags & DPMI_SERVER_INIT_32BIT) printf("INIT_32BIT ");
 		if (dos_dpmi_state.flags & DPMI_SERVER_NEEDS_PROT_TERM) printf("NEEDS_PROTMODE_EXIT ");
 		printf("\n");
+		printf("  INT 22 hooked: %u\n",dos_dpmi_hooked_int22);
 		printf("  Entry point: %04x:%04x\n",dos_dpmi_state.entry_cs,dos_dpmi_state.entry_ip);
 		printf("  Private size: %u paragraphs at 0x%04x\n",dos_dpmi_state.dpmi_private_size,dos_dpmi_state.dpmi_private_segment);
 		printf("  Version: %u.%02u\n",dos_dpmi_state.dpmi_version>>8,dos_dpmi_state.dpmi_version&0xFF);
@@ -93,6 +94,58 @@ int main(int argc,char **argv,char **envp) {
 			fprintf(stderr,"test dpmicall16              Test DPMI 16-bit calling\n");
 			fprintf(stderr,"test dpmicall16in32          Test DPMI 16-bit calling (from 32-bit)\n");
 			fprintf(stderr,"test -dpmi16                 Init 16-bit DPMI then test\n");
+			fprintf(stderr,"test dpmi16exit              Enter 16-bit DPMI, then leave, then exit\n");
+			fprintf(stderr,"test dpmi16exitm             Enter 16-bit DPMI, then leave, then exit (x200)\n");
+		}
+		else if (!strcmp(argv[1],"dpmi16exit")) {
+#ifdef DOS_DPMI_AVAILABLE
+			dos_dpmi_probe();
+			if (!(dos_dpmi_state.flags & DPMI_SERVER_PRESENT))
+				fprintf(stderr,"DPMI server not detected\n");
+
+			dos_dpmi_init_server16();
+			if (!(dos_dpmi_state.flags & DPMI_SERVER_INIT))
+				fprintf(stderr,"DPMI server not initialized\n");
+			if (dos_dpmi_state.flags & DPMI_SERVER_INIT_32BIT)
+				fprintf(stderr,"Unexpected: DPMI server init'd as 32-bit\n");
+
+			print_dpmi_state();
+			printf("Exiting DPMI\n");
+			dos_dpmi_shutdown();
+			printf("Post exit state\n");
+			print_dpmi_state();
+			if (dos_dpmi_state.flags & DPMI_SERVER_INIT)
+				fprintf(stderr,"DPMI server shutdown not successful\n");
+			printf("Probing now\n");
+			dos_dpmi_probe();
+			print_dpmi_state();
+#endif
+		}
+		else if (!strcmp(argv[1],"dpmi16exitm")) {
+#ifdef DOS_DPMI_AVAILABLE
+			int i;
+
+			for (i=0;i < 200;i++) {
+				printf("#%d\n",i+1);
+				dos_dpmi_probe();
+				if (!(dos_dpmi_state.flags & DPMI_SERVER_PRESENT))
+					fprintf(stderr,"DPMI server not detected\n");
+
+				dos_dpmi_init_server16();
+				if (!(dos_dpmi_state.flags & DPMI_SERVER_INIT))
+					fprintf(stderr,"DPMI server not initialized\n");
+				if (dos_dpmi_state.flags & DPMI_SERVER_INIT_32BIT)
+					fprintf(stderr,"Unexpected: DPMI server init'd as 32-bit\n");
+
+				print_dpmi_state();
+				printf("Exiting DPMI\n");
+				dos_dpmi_shutdown();
+				printf("Post exit state\n");
+				print_dpmi_state();
+				if (dos_dpmi_state.flags & DPMI_SERVER_INIT)
+					fprintf(stderr,"DPMI server shutdown not successful\n");
+			}
+#endif
 		}
 		else if (!strcmp(argv[1],"dpmicall16")) {
 #ifdef DOS_DPMI_AVAILABLE
