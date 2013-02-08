@@ -23,6 +23,11 @@ __call16_w:
 ;          Windows 95 and 98 seem to run this code perfectly fine with no ill
 ;          effects. Windows XP NTVDM.EXE does not have any issues with this
 ;          code either.
+;
+;          ^NTS: On stock installs of Windows 3.1 and 3.0 (VGA driver) I am
+;                unable to reproduce this issue (2013/02/07 J.C)
+;          ^NTS: On stock installs of Windows 3.1 and 3.0 (S3 SVGA driver) I am
+;                unable to reproduce this issue (2013/02/07 J.C)
 
 ; NOTE: This test, using TOOLHELP.DLL to catch the exception, is the
 ;       recommended way to carry out the test. In fact under Windows 95/98/ME

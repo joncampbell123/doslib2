@@ -175,17 +175,10 @@ void probe_cpu_sse() {
 		 *                       real-mode interrupt vector. */
 		dos_dpmi_probe();
 		if (dos_dpmi_state.flags & DPMI_SERVER_PRESENT) {
-			/* if DPMI is present, then initialize the server then return to real mode
-			 * to continue execution. If a 386 or higher, then first attempt to connect
-			 * as a 32-bit program. If a 286, or 32-bit failed, then attempt to connect
-			 * as a 16-bit program. */
-			/* FIXME: Wait WHAT?? The 286 must less anything older than the Pentium III
-			 *        would NEVER have SSE extensions! Why am I even taking the 286 into
-			 *        account here?!?!? YOU SHOULD ONLY CARE THAT WE ARE ABLE TO INIT 16-BIT
-			 *        OR 32-BIT DPMI! */
-			if (!(dos_dpmi_state.flags & DPMI_SERVER_INIT) && cpu_info.cpu_basic_level >= 3)
+			/* initialize the DPMI server, trying first a 32-bit server then a 16-bit server */
+			if (!(dos_dpmi_state.flags & DPMI_SERVER_INIT))
 				dos_dpmi_init_server32();
-			if (!(dos_dpmi_state.flags & DPMI_SERVER_INIT) && cpu_info.cpu_basic_level >= 2)
+			if (!(dos_dpmi_state.flags & DPMI_SERVER_INIT))
 				dos_dpmi_init_server16();
 
 			/* if we connected to the DPMI server, then based on the mode we used to connect
