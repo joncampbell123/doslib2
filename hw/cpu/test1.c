@@ -69,6 +69,10 @@ struct _dos_emm_state {
 	unsigned char			flags;
 	unsigned char			emm_version_major,emm_version_minor;
 	unsigned char			vcpi_version_major,vcpi_version_minor;
+	/* TODO: segment value of 8K for VCPI page tables (4K page dir + 4K page table) */
+	/* TODO: segment value for GDT table */
+	/* TODO: segment value for IDT table (which we'll maintain as 1 entry long) */
+	/* TODO: GDTR and IDTR */
 };
 # pragma pack(pop)
 
