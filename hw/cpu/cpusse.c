@@ -191,9 +191,20 @@ void probe_cpu_sse() {
 			}
 		}
 
-		/* TODO: If DPMI not present, see if EMM386.EXE VCPI is present, so we can use an
-		 *       alternate function that jumps into protected mode via VCPI to do privileged things
-		 *       like read the control register. */
+		/* Scenario #2: We're in plain DOS or Windows 95 pure DOS mode. EMM386.EXE or some other
+		 *              expanded memory manager is present and active and running the DOS world
+		 *              (including this program) in virtual 8086 mode. VCPI is provided by the
+		 *              memory manager. DPMI is not available.
+		 *
+		 *              Solution: Use VCPI to jump into protected mode (ring 0) and read the control
+		 *                        register to see if SSE is enabled, then jump back */
+		/* TODO: This code must NOT attempt VCPI access if running in a Windows DOS box. Windows 3.1/9x/ME
+		 *       will catch any attempt to call VCPI and halt the DOS Box with a message box telling
+		 *       the user the program requires MS-DOS mode, which is annoying. Windows NT does not
+		 *       emulate VCPI at all, so this test will silently and gracefully fail the way we want it to. */
+		if (!(dos_dpmi_state.flags & DPMI_SERVER_INIT)) {
+			/* TODO */
+		}
 # endif
 	}
 	else {

@@ -62,6 +62,85 @@ static void print_dpmi_state() {
 			dos_dpmi_state.my_psp);
 	}
 }
+
+/* TODO: into library, eventually into it's own */
+# pragma pack(push,1)
+struct _dos_emm_state {
+	unsigned char			flags;
+	unsigned char			emm_version_major,emm_version_minor;
+	unsigned char			vcpi_version_major,vcpi_version_minor;
+};
+# pragma pack(pop)
+
+#define DOS_EMM_PROBED			0x01
+#define DOS_EMM_PRESENT			0x02
+#define DOS_EMM_ACTIVE			0x04
+#define DOS_EMM_VCPI_PRESENT		0x08
+
+struct _dos_emm_state dos_emm_state = {0};
+
+static void print_vcpi_state() {
+	if (dos_emm_state.flags & DOS_EMM_PRESENT) {
+		printf("EMM (expanded memory manager) present\n");
+		if (dos_emm_state.flags & DOS_EMM_ACTIVE) printf(" - Active\n");
+		printf(" - Version %u.%u\n",dos_emm_state.emm_version_major,dos_emm_state.emm_version_minor);
+	}
+	if (dos_emm_state.flags & DOS_EMM_VCPI_PRESENT) {
+		printf("VCPI present\n");
+		printf(" - Version %u.%u\n",dos_emm_state.vcpi_version_major,dos_emm_state.vcpi_version_minor);
+	}
+
+}
+
+static void dos_vcpi_probe() {
+	unsigned char far *int67,far *sig;
+
+	if (dos_emm_state.flags & DOS_EMM_PROBED) return;
+
+	/* locate INT 67h */
+	int67 = (unsigned char far*)_dos_getvect(0x67);
+	if (int67 == 0) return;
+
+	/* and then look for the EMMXXXX0 signature */
+	/* NTS: Microsoft EMM386.EXE changes it to $MMXXXX0 when you "disable" EMM386.EXE */
+	sig = MK_FP(FP_SEG(int67),10);
+	if (_fmemcmp(sig,"EMMXXXX0",8) == 0) {
+		dos_emm_state.flags |= DOS_EMM_PRESENT | DOS_EMM_ACTIVE;
+	}
+	else if (_fmemcmp(sig,"$MMXXXX0",8) == 0) {
+		dos_emm_state.flags |= DOS_EMM_PRESENT;
+	}
+
+	if (dos_emm_state.flags & DOS_EMM_PRESENT) {
+		unsigned int x=0,y=0;
+
+		__asm {
+			mov	ah,0x46		; get version
+			int	67h
+			mov	x,ax
+		}
+
+		if ((x&0xFF00) == 0) {
+			dos_emm_state.emm_version_major = (x & 0xFF) >> 4;
+			dos_emm_state.emm_version_minor = x & 0xF;
+		}
+
+		__asm {
+			mov	ax,0xDE00	; VCPI presence detect
+			int	67h
+			mov	x,ax
+			mov	y,bx
+		}
+
+		if ((x&0xFF00) == 0) {
+			dos_emm_state.flags |= DOS_EMM_VCPI_PRESENT;
+			dos_emm_state.vcpi_version_major = y >> 8;
+			dos_emm_state.vcpi_version_minor = y & 0xFF;
+		}
+	}
+
+	dos_emm_state.flags |= DOS_EMM_PROBED;
+}
 #endif
 
 int main(int argc,char **argv,char **envp) {
@@ -96,6 +175,13 @@ int main(int argc,char **argv,char **envp) {
 			fprintf(stderr,"test -dpmi16                 Init 16-bit DPMI then test\n");
 			fprintf(stderr,"test dpmi16exit              Enter 16-bit DPMI, then leave, then exit\n");
 			fprintf(stderr,"test dpmi16exitm             Enter 16-bit DPMI, then leave, then exit (x200)\n");
+			fprintf(stderr,"test vcpi                    Test VCPI detection\n"); /* REMOVE */
+		}
+		else if (!strcmp(argv[1],"vcpi")) {
+#ifdef DOS_DPMI_AVAILABLE
+			dos_vcpi_probe();
+			print_vcpi_state();
+#endif
 		}
 		else if (!strcmp(argv[1],"dpmi16exit")) {
 #ifdef DOS_DPMI_AVAILABLE
