@@ -1,6 +1,6 @@
 -include ../config.mak
 
-SUBDIRS = asmexam
+SUBDIRS = asmexam empty
 ACLOCAL_AMFLAGS = 
 
 library_includedir = $(includedir)/doslib2/test
