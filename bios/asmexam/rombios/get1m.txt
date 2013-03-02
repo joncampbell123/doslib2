@@ -1,0 +1,59 @@
+GET1M.COM
+
+  Captures to disk the contents of adapter ROM and the BIOS in the area
+  0xC0000 to 0xFFFFF in 64KB segments.
+
+Target hardware:
+
+  Old 8088/286/386 systems with the full ROM BIOS exposed at 0xF0000-0xFFFFF.
+
+Not recommended for:
+
+  - Newer 386/486/Pentium systems with ROM shadowing enabled.
+
+  - Newer 386/486 systems where only part of the ROM is exposed in the
+    0xE0000-0xFFFFF area.
+
+  - Newer systems with compressed ROM (most systems today). These systems
+    have the actual ROM contents at 0xFFFF0000 (4GB minus ROM size) and the
+    code there decompresses itself to RAM at 0xF0000 and then uses the
+    motherboard chipset to make it readonly.
+
+  - Windows or OS/2 "DOS boxes". Windows mucks with the adapter ROM area and
+    maps things in there like system structures, etc. A snapshot from within
+    a DOS box would produce an incorrect capture.
+
+Recommendations:
+
+  - If you suspect there's more to the BIOS that provided in the "legacy" BIOS
+    area, and the system is a 286, you may try the GET16286.COM program which
+    uses the 286's protected mode to copy off the 0xFF0000-0xFFFFFF area
+    (16MB minus ROM size).
+
+  - Likewise for a 386SX, you may wish to use GET16M.COM program to capture
+    the 0xFF0000-0xFFFFFF area (16MB minus ROM size) in case there is more
+    exposed. Explanation: the 386SX only has an 24-bit external address bus
+    and therefore can only access up to 16MB.
+
+  - For a 486SX, try GET64M.COM to capture the 0x03FF0000-0x03FFFFFF region
+    to see if it differs from the legacy area or the top of 4GB. Explanation:
+    the 486SX has 26-bit external address bus and maxes out at 64MB.
+
+  - Pentium or newer: Very likely the BIOS decompresses itself from ROM. Don't
+    use this program, unless you KNOW for a fact that the BIOS is one of the
+    few that doesn't shadow itself or decompress. Use the GET4G.COM program to
+    capture from the 0xFFFF0000-0xFFFFFFFF region (4GB minus ROM size) where
+    the actual ROM contents are mapped. You might run this program on such a
+    system though if you wish to study what the decompressed ROM image looks
+    like.
+
+  - Modern CPUs with 36-bit or 40-bit external address bus: I'm not certain
+    where the actual BIOS is mapped. I know that you can still read the BIOS
+    from the top of the 4GB region as usual in most systems, but that might
+    be a compatability map. I don't know if Intel continued the practice of
+    resetting the instruction pointer to the highest memory address possible
+    on CPU reset i.e. if modern CPUs fetch from an address like
+    0xFF'FFFF'FFF0 (highest 40-bit address). You may be able to capture ROM
+    using GET4G.COM (From top of 4GB), GET64G.COM (From top of 36-bit 64GB
+    limit), or GET1T.COM (from the top of the 40-bit 1024GB limit).
+

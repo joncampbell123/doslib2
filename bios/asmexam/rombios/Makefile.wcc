@@ -3,11 +3,11 @@ ifdef target_subdir
 
 all-targets-abs-dirs: $(abs_exe_dir) $(abs_lib_dir) $(abs_obj_dir)
 
-all_programs  = $(abs_exe_dir)/mode7.com
+all_programs  = $(abs_exe_dir)/get1m.com
 
 all-programs: $(all_programs)
 
-$(abs_exe_dir)/mode7.com: mode7.asm
+$(abs_exe_dir)/get1m.com: get1m.asm
 	$(NASM) -o $@ -f bin $(NASMFLAGS) $^
 
 all-txt:
