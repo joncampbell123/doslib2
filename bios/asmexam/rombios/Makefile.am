@@ -20,7 +20,7 @@ all:
 
 clean:
 	@rm -f *~
-	@rm -v *.dsk
+	@rm -fv *.dsk
 	+@for i in "" $(BUILD_targets); do\
 		if [ x"$$i" != x ]; then \
 			$(MAKE) --no-print-directory -$(MAKEFLAGS) clean-targets target_subdir=$$i || break;\
