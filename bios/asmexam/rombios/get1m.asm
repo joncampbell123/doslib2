@@ -18,9 +18,9 @@
 ; DISK UTILIZATION NOTICE:
 ;
 ; The program creates 4 files: PC_C0000.ROM, PC_D0000.ROM, etc... (you get the idea).
-; Each one is 64KB in size. If the program knows that it's running on a 360KB disk it
-; will pause once per 64KB so that you have a chance to remove the disk and move off
-; the contents to make more room.
+; Each one is 64KB in size. If there is insufficient room for the next file, the program
+; will pause and wait for you to remove the disk, move off the files, then re-insert the
+; disk for more fragments.
 ;
 ; Not compatible with:
 ; MS-DOS 1.x
@@ -40,24 +40,6 @@ init_detect:
 		ret			; quiet exit
 .not_dos1:
 
-; Is the current drive (that we'll be writing to) a 360KB 5.25" floppy or smaller?
-; Since DPB fields shift around prior to MS-DOS 4.0 it's more reliable to check the media ID
-		mov	ah,0x32
-		xor	dl,dl		; AH=0x32 get DPB from current drive
-		int	21h
-		or	al,al
-		jz	.dpb_ok
-		ret			; quiet exit
-.dpb_ok:	mov	al,[bx+0x16]	; INT 21h will return with DS:BX set to the DPB
-		cmp	al,0xFD		; read the media ID byte which will be:
-					;   FFh    floppy, double-sided, 8 sectors per track (320K)
-					;   FEh    floppy, single-sided, 8 sectors per track (160K)
-					;   FDh    floppy, double-sided, 9 sectors per track (360K)
-					;   FCh    floppy, single-sided, 9 sectors per track (180K)
-		jb	.not_360
-		inc	byte [cs:pause_360] ; note it
-.not_360:
-
 ; print our hello message
 print_hello:
 		push	cs
@@ -65,15 +47,6 @@ print_hello:
 		mov	ah,9
 		mov	dx,hello_str
 		int	21h
-
-; if 360KB detected, then say sp
-		test	byte [pause_360],1
-		jz	.not_360
-		mov	ah,9
-		mov	dx,notice_360
-		int	21h
-.not_360:
-
 ; prompt
 		mov	ah,9
 		mov	dx,anykey_str
@@ -90,7 +63,10 @@ print_hello:
 		shr	al,cl
 		add	al,'A' - 10
 		mov	[fname+3],al
-		
+
+		call	prompt_if_no_room
+		jc	.finished
+
 		mov	ah,9
 		mov	dx,copying_str
 		int	21h
@@ -108,14 +84,7 @@ print_hello:
 
 		add	word [rd_seg],0x1000
 		jz	.finished
-		
-		test	byte [pause_360],1
-		jz	.next_loop
-		mov	ah,9
-		mov	dx,anykey_str
-		int	21h
-		call	pause
-.next_loop:	jmp	short .again
+		jmp	short .again
 
 .finished:	ret
 
@@ -185,22 +154,47 @@ pause:		mov	ah,1
 		jnz	pause
 pausee:		ret
 
+; if the current disk has insufficient room, then prompt the user
+; to remove the floppy and move off the data, then re-insert the
+; floppy and hit ENTER when ready.
+prompt_if_no_room:
+		mov	ah,0x36		; GET FREE DISK SPACE
+		xor	dl,dl		; default drive
+		int	21h
+		cmp	ax,0xFFFF
+		jnz	.ok
+		stc
+		ret
+; AX = sectors/cluster
+; BX = free clusters
+; CX = bytes/sector
+; DX = total clusters
+.ok:		mul	bx		; DX:AX = AX * BX
+		or	dx,dx		; assume DX != 0 means enough room
+		jnz	.enough_room
+		cmp	ax,128+2	; 128 sectors x 512 bytes = 64KB
+		jge	.enough_room
+; so there's not enough room. print a message saying so and wait for user to hit ENTER
+		mov	ah,9
+		mov	dx,full_str
+		int	21h
+		call	pause
+		jmp	short prompt_if_no_room ; try again
+.enough_room:	clc
+		ret
+
 error_str:	db	'An error occured',13,10,'$'
 
 hello_str:	db	'This program will write the 1MB adapter ROM region to disk in',13,10
 		db	'64KB fragments. Disk space required: 256KB',13,10
 		db	13,10,'$'
 
-notice_360:	db	'The copy operation will pause every 64KB because the target',13,10
-		db	'disk is 360KB or smaller.',13,10
-		db	13,10,'$'
-
-anykey_str:	db	'Press ENTER to start the copy operation',13,10,'$'
+full_str:	db	'Remove disk and move files off on another computer, re-insert and hit ENTER',13,10,'$'
+anykey_str:	db	'Press ENTER to start',13,10,'$'
 copying_str:	db	'Writing... ','$'
 crlf_str:	db	13,10,'$'
 
 rd_seg:		dw	0xC000
-pause_360:	db	0
 fname:		db	'PC_C0000.ROM',0,'$'
 		;	    ^
 		;        012345678901

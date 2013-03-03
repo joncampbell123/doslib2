@@ -1,0 +1,46 @@
+GET16M.COM
+
+  Captures to disk the contents of whatever is visible at the top 16MB of
+  addressable RAM or ROM. Uses flat real mode to do so, which requires a
+  386 or higher. On a 386SX, 16MB is the total amount of external RAM or
+  ROM accessible, and therefore, the ROM BIOS is visible just under the
+  16MB limit.
+
+  To capture the top 16MB of a 286-based system, use GET16286.COM which will
+  avoid the use of 386 instructions and utilize 286 protected mode to grab
+  that memory.
+
+Target hardware:
+
+  Old 386SX systems with less than 16MB of RAM. Some 386DX or even old 486
+  systems may also tie off address lines and have a 16MB limit.
+
+Not recommended for:
+
+  - Windows or OS/2 "DOS boxes". Windows mucks with the adapter ROM area and
+    maps things in there like system structures, etc. A snapshot from within
+    a DOS box would produce an incorrect capture.
+
+  - 386/486 systems with 16MB or more of RAM. In this case the system can
+    obviously address 16MB or more of RAM and therefore the ROM BIOS is not
+    likely sitting below the 16MB mark. This program would only end up
+    capturing whatever system RAM happened to be there which is not useful.
+
+  - Pentium or newer systems. Most likely system memory exists just below 16MB.
+    If something from the ISA bus IS there, it's probably some ISA device
+    visible through the ISA hole that PCI chipsets typically offer at 15-16MB.
+
+Recommendations:
+
+  - Use only for 386SX or 486 systems that have less than 15MB of RAM and
+    tend to alias every 16MB.
+
+  - This program allows snapshotting 15-16MB for completeness. Every on 386SX
+    systems the same thing can be read from just under 4GB, in which case
+    use GET4G.COM.
+
+Notes:
+
+  - CompuAdd 320nx laptop: I'm pretty sure the CPU is a 386SX, and yet an
+    alias of the BIOS is not visible at just under 16MB?
+

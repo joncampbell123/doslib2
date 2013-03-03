@@ -4,10 +4,18 @@ ifdef target_subdir
 all-targets-abs-dirs: $(abs_exe_dir) $(abs_lib_dir) $(abs_obj_dir)
 
 all_programs  = $(abs_exe_dir)/get1m.com
+all_programs += $(abs_exe_dir)/get16m.com
+all_programs += $(abs_exe_dir)/get4g.com
 
 all-programs: $(all_programs)
 
 $(abs_exe_dir)/get1m.com: get1m.asm
+	$(NASM) -o $@ -f bin $(NASMFLAGS) $^
+
+$(abs_exe_dir)/get16m.com: get16m.asm
+	$(NASM) -o $@ -f bin $(NASMFLAGS) $^
+
+$(abs_exe_dir)/get4g.com: get4g.asm
 	$(NASM) -o $@ -f bin $(NASMFLAGS) $^
 
 all-txt:

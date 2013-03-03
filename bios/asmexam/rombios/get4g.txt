@@ -1,0 +1,48 @@
+GET4G.COM
+
+  Captures to disk the contents of whatever is visible at the top 4GB of
+  addressable RAM or ROM. Uses flat real mode to do so, which requires a
+  386 or higher.
+
+  This version is recommended for any 486/Pentium or higher system because
+  these processors are capable of addressing up to 4GB, and therefore, on
+  CPU reset, the BIOS is located at the top of the 4GB region. A 386SX
+  with 24-bit addressing will also work with this programming, since the
+  top 4GB in that case will be one of many aliases of the BIOS at just under
+  16MB.
+
+  Please note that if you are running this on a system made on or after
+  1998 it is recommended you check the size of the ROM chip. If the ROM
+  chip is 1MB or larger, you will need to use an alternate version of this
+  program designed to capture more data:
+
+     GET4G_2M.COM      4GB - 2MB capture
+     GET4G_4M.COM      4GB - 4MB capture
+     GET4G_8M.COM      4GB - 8MB capture
+
+  Also note that most systems with a Pentium chip or higher, or made after
+  1995, have compressed data in ROM which is extracted to shadow RAM on
+  boot up. This means that the contents in the C0000-FFFFF range will
+  differ from the actual ROM contents at the top of the 4GB range, and
+  should not be relied on except for reference if studying decompression.
+  On these systems, use of the GET4G.COM program is required to get a
+  correct snapshot of your ROM BIOS.
+
+Target hardware:
+
+  386/486/Pentium or newer hardware, up to modern day systems.
+
+Not recommended for:
+
+  - Windows or OS/2 "DOS boxes". Windows mucks with the adapter ROM area and
+    maps things in there like system structures, etc. A snapshot from within
+    a DOS box would produce an incorrect capture.
+
+Recommendations:
+
+  - This program only captures the top 1MB, which is enough to capture most
+    BIOSes on motherboards sold in the 1990's. However, if the system was
+    made 1998 or sooner, check to make sure the BIOS chip is 1MB or smaller.
+    If it is not, this program will not capture the entire image, and you
+    will need to use alternate versions that read more data.
+
