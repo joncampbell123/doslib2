@@ -41,6 +41,8 @@ Recommendations:
 
 Notes:
 
-  - CompuAdd 320nx laptop: I'm pretty sure the CPU is a 386SX, and yet an
-    alias of the BIOS is not visible at just under 16MB?
+  - CompuAdd 320nx laptop: Initial test runs gave no BIOS image. Turns out
+    the system neither supports the INT 15h nor the "Fast A20" method of
+    turning on A20, thus the initial 16M snapshot really only captured
+    0xEF0000-0xEFFFFF not 0xFF0000-0xFFFFFF.
 
