@@ -46,3 +46,11 @@ Notes:
     turning on A20, thus the initial 16M snapshot really only captured
     0xEF0000-0xEFFFFF not 0xFF0000-0xFFFFFF.
 
+  - CompuAdd 320nx laptop: I/O ports 0x90-0x9F in fact are undefined, but
+    for some reason, occasionally return 0xFD instead of 0xFF. I seem to
+    be able to reliably reproduce it at DEBUG.COM by typing "i FF" followed
+    by "i 92" (read port 0xFF then 0x92). I don't know if it's a quirk in
+    the motherboard or simply the effects of aging on old computers. In
+    any case it's noteworthy because it falsely causes A20GATE.COM to think
+    that port 0x92 is really there, and is the main reason why the code
+    reads the port TWICE.

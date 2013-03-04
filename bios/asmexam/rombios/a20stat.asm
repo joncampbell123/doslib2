@@ -2,6 +2,13 @@
 ; A20STAT.COM
 ;
 ; Display whether or not the A20 gate is enabled using various methods.
+;
+; FIXME: CompuAdd laptop: Even when A20 is enabled, this code is not able to detect that
+;        it is enabled through the keyboard controller.
+; 
+; FIXME: DOSBox and Virtualbox both return the result of the command at the wrong time,
+;        much later. This is visible on your console as the DOS/BIOS acting as if you
+;        had pressed '1' or '2'.
 ;--------------------------------------------------------------------------------------
 		bits 16			; 16-bit real mode
 		org 0x100		; DOS .COM executable starts at 0x100 in memory
@@ -38,7 +45,12 @@ fast_test:	mov	ah,9
 		mov	dx,fast_a20
 		int	21h
 		mov	dx,n_a_str	; assume N/A
+		in	al,0x92		; NTS: Hack for CompuAdd laptop which doesn't support port 0x92,
+		mov	ah,al		;      but the undefined I/O region sometimes returns 0xFD. See GET16M.TXT
+		in	al,0x92		;      for details.
+		or	ah,al
 		in	al,0x92
+		or	al,ah		; AL = inp(0x92) | inp(0x92) | inp(0x92)
 		cmp	al,0xFF		; if it reads back 0xFF it's not there
 		jz	.done
 		mov	dx,no_str	; assume NO
