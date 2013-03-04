@@ -287,8 +287,6 @@ ensure_flatreal:cli
 		mov	es,ax
 		mov	ax,0x18		; 0x18 = the segment to copy from
 		mov	ds,ax
-		mov	fs,ax
-		mov	gs,ax
 
 		; copy
 		cld
@@ -311,8 +309,6 @@ ensure_flatreal:cli
 		mov	ax,cs
 		mov	ds,ax
 		mov	es,ax
-		mov	fs,ax
-		mov	gs,ax
 		mov	ss,ax
 
 		mov	ax,[recovery_sp]
