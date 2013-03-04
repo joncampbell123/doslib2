@@ -57,7 +57,6 @@ init_detect:
 		mov	[idt],eax
 		mov	[idt+4],eax
 
-		xor	eax,eax
 		mov	ax,cs
 		shl	eax,4
 
