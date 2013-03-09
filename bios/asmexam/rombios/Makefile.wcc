@@ -3,6 +3,7 @@ ifdef target_subdir
 
 all-targets-abs-dirs: $(abs_exe_dir) $(abs_lib_dir) $(abs_obj_dir)
 
+ifneq ($(BUILD_dos16r),)
 all_programs  = $(abs_exe_dir)/get1m.com
 all_programs += $(abs_exe_dir)/get16m.com
 all_programs += $(abs_exe_dir)/get64m.com
@@ -12,8 +13,41 @@ all_programs += $(abs_exe_dir)/get16286.com
 all_programs += $(abs_exe_dir)/get4g_2m.com
 all_programs += $(abs_exe_dir)/get4g_4m.com
 all_programs += $(abs_exe_dir)/get4g_8m.com
+endif
+ifeq ($(target_subdir),linux/host)
+all_programs  = $(abs_exe_dir)/linux_get1m
+all_programs += $(abs_exe_dir)/linux_get4g
+all_programs += $(abs_exe_dir)/linux_get4g_2m
+all_programs += $(abs_exe_dir)/linux_get4g_4m
+all_programs += $(abs_exe_dir)/linux_get4g_8m
+endif
 
 all-programs: $(all_programs)
+
+$(abs_exe_dir)/linux_get1m: linux_get1m.c
+ifeq ($(target_subdir),linux/host)
+	$(CC) $(CFLAGS) -I.. -I../.. -D_FILE_OFFSET_BITS=64 -o $@ $^
+endif
+
+$(abs_exe_dir)/linux_get4g: linux_get4g.c
+ifeq ($(target_subdir),linux/host)
+	$(CC) $(CFLAGS) -I.. -I../.. -D_FILE_OFFSET_BITS=64 -o $@ $^
+endif
+
+$(abs_exe_dir)/linux_get4g_2m: linux_get4g_2m.c
+ifeq ($(target_subdir),linux/host)
+	$(CC) $(CFLAGS) -I.. -I../.. -D_FILE_OFFSET_BITS=64 -o $@ $^
+endif
+
+$(abs_exe_dir)/linux_get4g_4m: linux_get4g_4m.c
+ifeq ($(target_subdir),linux/host)
+	$(CC) $(CFLAGS) -I.. -I../.. -D_FILE_OFFSET_BITS=64 -o $@ $^
+endif
+
+$(abs_exe_dir)/linux_get4g_8m: linux_get4g_8m.c
+ifeq ($(target_subdir),linux/host)
+	$(CC) $(CFLAGS) -I.. -I../.. -D_FILE_OFFSET_BITS=64 -o $@ $^
+endif
 
 $(abs_exe_dir)/get1m.com: get1m.asm
 	$(NASM) -o $@ -f bin $(NASMFLAGS) $^
