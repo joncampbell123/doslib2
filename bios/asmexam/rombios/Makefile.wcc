@@ -22,7 +22,36 @@ all_programs += $(abs_exe_dir)/linux_get4g_4m
 all_programs += $(abs_exe_dir)/linux_get4g_8m
 endif
 
+ifeq ($(TARGET_WINDOWS_WIN32),1)
+ifeq ($(TARGET_GUI_CONSOLE),1)
+all_programs += $(abs_exe_dir)/winnt_get1m$(exe_suffix)
+all_programs += $(abs_exe_dir)/winnt_get4g$(exe_suffix)
+endif
+endif
+
 all-programs: $(all_programs)
+
+ifeq ($(TARGET_WINDOWS_WIN32),1)
+ifeq ($(TARGET_GUI_CONSOLE),1)
+$(abs_obj_dir)/winnt_get1m$(obj_suffix): winnt_get1m.c
+	$(WCC) $(WCCFLAGS_CONSOLE) -fo=$(abs_obj_dir)/.obj -i=.. -i=../.. $^
+
+$(abs_exe_dir)/winnt_get1m$(exe_suffix): $(obj_win32s_compat) $(abs_obj_dir)/winnt_get1m$(obj_suffix)
+	@echo option quiet system $(WLINK_SYSTEM_CONSOLE) $(WLINKFLAGS_CONSOLE) $(WLINK_SEGMENTS_CONSOLE) library ntdll.lib $(foreach x,$(filter %$(obj_suffix),$^),file "$(x)") $(foreach x,$(filter %$(lib_suffix),$^),library "$(x)") $(lib_hw_cpu_libcpu_wlink) $(lib_hw_cpu_libcpusse_wlink) option map=$(abs_obj_dir)/test1c.map name $@ >$(abs_obj_dir)/test1c.cmd
+	$(WLINK) @$(abs_obj_dir)/test1c.cmd
+endif
+endif
+
+ifeq ($(TARGET_WINDOWS_WIN32),1)
+ifeq ($(TARGET_GUI_CONSOLE),1)
+$(abs_obj_dir)/winnt_get4g$(obj_suffix): winnt_get4g.c
+	$(WCC) $(WCCFLAGS_CONSOLE) -fo=$(abs_obj_dir)/.obj -i=.. -i=../.. $^
+
+$(abs_exe_dir)/winnt_get4g$(exe_suffix): $(obj_win32s_compat) $(abs_obj_dir)/winnt_get4g$(obj_suffix)
+	@echo option quiet system $(WLINK_SYSTEM_CONSOLE) $(WLINKFLAGS_CONSOLE) $(WLINK_SEGMENTS_CONSOLE) library ntdll.lib $(foreach x,$(filter %$(obj_suffix),$^),file "$(x)") $(foreach x,$(filter %$(lib_suffix),$^),library "$(x)") $(lib_hw_cpu_libcpu_wlink) $(lib_hw_cpu_libcpusse_wlink) option map=$(abs_obj_dir)/test1c.map name $@ >$(abs_obj_dir)/test1c.cmd
+	$(WLINK) @$(abs_obj_dir)/test1c.cmd
+endif
+endif
 
 $(abs_exe_dir)/linux_get1m: linux_get1m.c
 ifeq ($(target_subdir),linux/host)
