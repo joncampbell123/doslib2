@@ -9,6 +9,8 @@ all_programs += $(abs_exe_dir)/get64m.com
 all_programs += $(abs_exe_dir)/get4g.com
 all_programs += $(abs_exe_dir)/a20stat.com
 all_programs += $(abs_exe_dir)/get16286.com
+all_programs += $(abs_exe_dir)/get4g_2m.com
+all_programs += $(abs_exe_dir)/get4g_4m.com
 
 all-programs: $(all_programs)
 
@@ -28,6 +30,12 @@ $(abs_exe_dir)/a20stat.com: a20stat.asm
 	$(NASM) -o $@ -f bin $(NASMFLAGS) $^
 
 $(abs_exe_dir)/get16286.com: get16286.asm
+	$(NASM) -o $@ -f bin $(NASMFLAGS) $^
+
+$(abs_exe_dir)/get4g_2m.com: get4g_2m.asm
+	$(NASM) -o $@ -f bin $(NASMFLAGS) $^
+
+$(abs_exe_dir)/get4g_4m.com: get4g_4m.asm
 	$(NASM) -o $@ -f bin $(NASMFLAGS) $^
 
 all-txt:
