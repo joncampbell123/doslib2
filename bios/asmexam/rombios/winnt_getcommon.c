@@ -2,11 +2,6 @@
 
 #include <windows.h>
 #include <unistd.h>
-//#include <stdlib.h>
-//#include <string.h>
-//#include <stddef.h>
-//#include <limits.h>
-//#include <errno.h>
 #include <stdio.h>
 #include <fcntl.h>
 
@@ -146,14 +141,6 @@ int main() {
 	}
 	ROM = (unsigned char*)((size_t)vaddress);
 
-#if 1/*DEBUG*/
-	fprintf(stderr,"Mapped 0x%08llx + 0x%08llX => VMA 0x%08llX + 0x%08llX\n",
-		(unsigned long long)ROM_offset,
-		(unsigned long long)ROM_size,
-		(unsigned long long)vaddress,
-		(unsigned long long)maplen);
-#endif
-
 	printf(HELLO);
 	printf("Press ENTER to start\n");
 	waitforenter();
@@ -166,9 +153,8 @@ int main() {
 				return 1;
 			}
 
-			/* Linux counts the mountpoint as being in use if a file is open there or
-			 * a program has it as it's current working directory. so to allow the user
-			 * to remove the floppy (or whatever) we have to change our working directory */
+			/* chdir() off the drive so that it is safe for the user to remove the
+			 * pen drive, floppy, etc. */
 			if (SetCurrentDirectoryW(L"C:\\"/*FIXME*/) == 0) {
 				fprintf(stderr,"Unable to bail out to root\n");
 				return 1;
