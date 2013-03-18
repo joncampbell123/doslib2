@@ -157,30 +157,50 @@ enable_a20:	mov	ax,0x2401	; enable A20 via INT 15h
 		int	15h
 		cmp	ah,0x86		; AH=0x86 if not supported
 		jnz	.finish
-; plan B: fast A20
+; plan B: fast A20.
+; BUT we check to make sure the port exists.
+; if 3 consecutive reads ORd together get 0xFF, then it's not there.
+; the ORing is needed for a really old 386SX laptop that can randomly return
+; 0xFD when reading non-existent ports.
 		in	al,92h
+		mov	ah,al
+		in	al,92h
+		or	ah,al
+		in	al,92h
+		or	al,ah
+		cmp	al,0xFF
+		jz	.no_a20_set	; if it reads 0xFF consistently, then use keyboard method
+
 		and	al,0xFE		; make sure we don't hit RESET
 		test	al,2		; do we need to set A20?
-		jnz	.no_a20_set
+		jnz	.finish		; if not, jump to finish
 		or	al,2
 		out	92h,al
+		jmp	short .finish
 .no_a20_set:
-; plan C: traditional keyboard A20
+; plan C: traditional keyboard A20.
+; thanks to an old 1988-ish Am386Sx-25 motherboard, this code was modified NOT to use the
+; keyboard method if the fast A20 method worked. else, the code would leave the keyboard
+; in a "hung" state.
 		cli
+
 		mov	al,0xAD		; disable keyb
 		call	keyb_write_command
 		call	keyb_drain
-		mov	al,0xD0		; read output port
+
+		mov	al,0xD0		; command: read output port
 		call	keyb_write_command
 		call	keyb_read_data
-		or	al,2		; enable A20
+		or	al,2		; set A20 line
 		push	ax
-		mov	al,0xD1		; write output port
+		mov	al,0xD1		; command: write output port
 		call	keyb_write_command
 		pop	ax
 		call	keyb_write_data
+
 		mov	al,0xAE		; enable keyb
 		call	keyb_write_command
+
 		sti
 ; end
 .finish:	clc
