@@ -25,4 +25,6 @@ find -name test.dsk -delete
 rm -f testiso.iso
 rm -fv dos/asmexam/test*.dsk
 rm -fv config_public.h
+rm -v .web.dl.nfo
+rm -Rfv web.cache
 
