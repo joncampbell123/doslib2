@@ -2,6 +2,11 @@
 -include ../../config.mak
 -include Makefile.wcc
 
+noinst_PROGRAMS = expand
+
+expand_SOURCES = expand.c
+expand_LDFLAGS = -lmspack
+
 debugme:
 	@echo Enabled CPU: $(BUILD_enabled_cpus)
 	@echo Enabled MM: $(BUILD_enabled_mm)

@@ -106,6 +106,7 @@ if ( -f "$web_cache/$as" ) {
 
 my $cmd;
 
+print "Downloading: $web_root/$url\n";
 $cmd = 'curl --insecure --progress-bar -o '.shellesc("$web_cache/$as").'.part ';
 if ($user ne '') {
 	$cmd .= '--user '.shellesc($user);
