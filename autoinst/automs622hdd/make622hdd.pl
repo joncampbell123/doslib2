@@ -344,7 +344,7 @@ elsif ($ver eq "6.20") {
 unlink("tmp.sys");
 system("mcopy -i tmp.dsk ::COMMAND.COM tmp.sys") == 0 || die;
 system("mcopy -i $diskbase\@\@$part_offset tmp.sys ::COMMAND.COM") == 0 || die;
-system("mattrib -a +r +s -i $diskbase\@\@$part_offset ::COMMAND.COM") == 0 || die;
+system("mattrib -a -r -s -i $diskbase\@\@$part_offset ::COMMAND.COM") == 0 || die;
 unlink("tmp.sys");
 
 # create DOS subdirectory
@@ -418,6 +418,8 @@ if ($ver eq "4.01") {
 	system("cp -vn dosshell.bat.v4.01 dos.tmp/DOSSHELL.BAT") == 0 || die;
 
 	# TODO: GWBASIC.EXE (under DOSBox) prints "You cannot SHELL to BASIC". WTF?
+	#  - It's not GWBASIC.EXE itself: unmodified between install disk and hard disk copy
+	#  - It's not the presence of C:\COMMAND.COM
 }
 
 # remove SETUP.EXE
