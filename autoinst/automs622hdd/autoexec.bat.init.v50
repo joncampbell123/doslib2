@@ -1,5 +1,4 @@
 @echo off
 SET PATH=C:\DOS
 MSCDEX /D:CD001
-PROMPT $p$g
-
+PROMPT $P$G
