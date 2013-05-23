@@ -17,6 +17,7 @@
 # params
 #     --size <n> in MB
 #     --supp                        install Supplementary Disk 4, if available
+#     --dosshell-vid <n>            pre-configure DOSSHELL.EXE video. Valid values: none, vga [default], vgamono, ega, egamono, herc, cga, mono, 8514, 8514mono
 #     --ver <n>
 #      
 #         where <n> is:
@@ -24,9 +25,11 @@
 #             6.21       MS-DOS 6.21
 #             6.20       MS-DOS 6.20
 #             6.0        MS-DOS 6.0
+#             5.0        MS-DOS 5.0
 #
 #     Installed image is English language (US) version.
 
+my $dosshell_vid = "vga";
 my $target_size = 0;
 my $ver = "6.22";
 my $do_supp = 0;
@@ -48,6 +51,9 @@ for ($i=0;$i < @ARGV;) {
 		elsif ($a eq "supp") {
 			$do_supp = 1;
 		}
+		elsif ($a eq "dosshell-vid") {
+			$dosshell_vid = lc($ARGV[$i++]);
+		}
 		else {
 			die "Unknown switch $a\n";
 		}
@@ -59,6 +65,7 @@ for ($i=0;$i < @ARGV;) {
 
 my $rel = "../..";
 my $diskbase = "";
+$dosshell_vid = "none" if $dosshell_vid eq '';
 
 die unless $ver ne '';
 
@@ -143,6 +150,21 @@ elsif ($ver eq "6.0") {
 
 	# Did MS-DOS 6.00 ever have a supplementary disk?
 }
+elsif ($ver eq "5.0") {
+	$diskbase = "$rel/build/msdos500hdd";
+
+	$config_sys_file = "config.sys.init.v50";
+	$autoexec_bat_file = "autoexec.bat.init.v50";
+
+	$disk1 = "msdos.500.install.1.disk.xz";
+	$disk1_url = "Software/DOS/Microsoft MS-DOS/5.0/720K install/disk1.img.xz";
+
+	$disk2 = "msdos.500.install.2.disk.xz";
+	$disk2_url = "Software/DOS/Microsoft MS-DOS/5.0/720K install/disk2.img.xz";
+
+	$disk3 = "msdos.500.install.3.disk.xz";
+	$disk3_url = "Software/DOS/Microsoft MS-DOS/5.0/720K install/disk3.img.xz";
+}
 else {
 	die "Unknown MS-DOS version";
 }
@@ -200,26 +222,32 @@ print "Chosen disk geometry C/H/S: $cyls/$heads/$sects (disk $act_cyls)\n";
 sub unpack_dos_tmp() {
 # unpack the compressed files
 	my @l = (
-		"SY_","SYS",
-		"EX_","EXE",
-		"TX_","TXT",
-		"CP_","CPI",
-		"HL_","HLP",
-		"OV_","OVL",
-		"DL_","DLL",
-		"CO_","COM",
-		"GR_","GRP",
-		"LS_","LST",
-		"38_","386",
-		"IN_","INI",
-		"PR_","PRG",
-		"BA_","BAS",
-		"VI_","VID",
-		"DO_","DOS",
-		"1X_","1XE",
-		"2X_","2XE",
-		"IC_","ICE",
-		"BI_","BIN"
+		".SY_",".SYS",
+		".EX_",".EXE",
+		".TX_",".TXT",
+		".CP_",".CPI",
+		".HL_",".HLP",
+		".OV_",".OVL",
+		".DL_",".DLL",
+		".CO_",".COM",
+		".LS_",".LST",
+		".38_",".386",
+		".IN_",".INI",
+		".PR_",".PRG",
+		".BA_",".BAS",
+		".VI_",".VID",
+		".DO_",".DOS",
+		".1X_",".1XE",
+		".2X_",".2XE",
+		".IC_",".ICE",
+		".BI_",".BIN",
+		"CGA.GR_","CGA.GRB",
+		"EGA.GR_","EGA.GRB",
+		"EGAMONO.GR_","EGAMONO.GRB",
+		"HERC.GR_","HERC.GRB",
+		"MONO.GR_","MONO.GRB",
+		"VGA.GR_","VGA.GRB",
+		".GR_",".GRP",
 	);
 	for ($i=0;($i+2) <= @l;$i += 2) {
 		my $old = $l[$i],$new = $l[$i+1],$nname;
@@ -229,9 +257,9 @@ sub unpack_dos_tmp() {
 			chomp $n;
 			next unless $n =~ s/^\.\/dos.tmp\///;
 			next unless -f "dos.tmp/$n";
-			next unless $n =~ m/\.$old$/;
+			next unless $n =~ m/$old$/;
 			$nname = $n;
-			$nname =~ s/\.$old$/.$new/;
+			$nname =~ s/$old$/$new/;
 
 			print "$n -> $nname\n";
 			system("./expand dos.tmp/$n dos.tmp/$nname") == 0 || die;
@@ -341,6 +369,83 @@ if ($disk4 ne '') {
 # unpack the compressed files
 unpack_dos_tmp();
 
+# if DOSSHELL was provided by the supplementary disk, then move it into the main shell
+if ( -d "dos.tmp/supplmnt" ) {
+	if ($ver eq "6.20") { # the supplementary disk has DOSSHELL and it's swapper and other goodies
+		# DOSSHELL, the swapper, and it's video "drivers"
+		system("mv -vn dos.tmp/supplmnt/DOSSHELL.* dos.tmp/");
+		system("mv -vn dos.tmp/supplmnt/DOSSWAP.EXE dos.tmp/");
+		system("mv -vn dos.tmp/supplmnt/*.GRB dos.tmp/");
+		system("mv -vn dos.tmp/supplmnt/*.VID dos.tmp/");
+		system("mv -vn dos.tmp/supplmnt/*.INI dos.tmp/");
+
+		system("mv -vn dos.tmp/supplmnt/EXE2BIN.EXE dos.tmp/");
+	}
+}
+
+# remove SETUP.EXE
+unlink("dos.tmp/SETUP.EXE");
+unlink("dos.tmp/DOSSETUP.INI");
+
+# http://support.microsoft.com/kb/95631
+# MS-DOS 5.0-6.22: "Configure" DOSSHELL.EXE's video driver by copying VID GRB and INI files
+if ($dosshell_vid ne '' && $dosshell_vid ne 'none') {
+	if ($ver =~ m/^[56]\./) {
+		my $vid = '',$grb = '',$ini = '';
+
+		if ($dosshell_vid eq "vga") {
+			$vid = "VGA.VID";	$grb = "VGA.GRB";	$ini = "EGA.INI";
+		}
+		elsif ($dosshell_vid eq "vgamono") {
+			$vid = "VGA.VID";	$grb = "VGAMONO.GRB";	$ini = "MONO.INI";
+		}
+		elsif ($dosshell_vid eq "ega") {
+			$vid = "EGA.VID";	$grb = "EGA.GRB";	$ini = "EGA.INI";
+		}
+		elsif ($dosshell_vid eq "egamono") {
+			$vid = "EGA.VID";	$grb = "EGAMONO.GRB";	$ini = "MONO.INI";
+		}
+		elsif ($dosshell_vid eq "8514") {
+			$vid = "8514.VID";	$grb = "VGA.GRB";	$ini = "EGA.INI";
+		}
+		elsif ($dosshell_vid eq "8514mono") {
+			$vid = "8514.VID";	$grb = "VGAMONO.GRB";	$ini = "MONO.INI";
+		}
+		elsif ($dosshell_vid eq "herc") {
+			$vid = "HERC.VID";	$grb = "HERC.GRB";	$ini = "MONO.INI";
+		}
+		elsif ($dosshell_vid eq "cga") {
+			$vid = "CGA.VID";	$grb = "CGA.GRB";	$ini = "CGA.INI";
+		}
+		elsif ($dosshell_vid eq "mono") {
+			$vid = undef;		$grb = "MONO.GRB";	$ini = "MONO.INI";
+		}
+		elsif ($dosshell_vid eq "none") {
+			$vid = undef;		$grb = undef;		$ini = undef;
+		}
+		else {
+			print "ERROR: Unknown DOSSHELL driver $dosshell_vid\n";
+			exit 1;
+		}
+
+		# configure the VID
+		if (defined($vid) && -f "dos.tmp/$vid")
+			{ system("cp -v dos.tmp/$vid dos.tmp/DOSSHELL.VID") == 0 || die; }
+		else
+			{ unlink("dos.tmp/DOSSHELL.VID"); }
+
+		# configure the GRB
+		if (defined($grb) && -f "dos.tmp/$grb")
+			{ system("cp -v dos.tmp/$grb dos.tmp/DOSSHELL.GRB") == 0 || die; }
+		else
+			{ unlink("dos.tmp/DOSSHELL.GRB"); }
+
+		# configure the INI
+		if (defined($ini) && -f "dos.tmp/$ini")
+			{ system("cp -v dos.tmp/$ini dos.tmp/DOSSHELL.INI") == 0 || die; }
+	}
+}
+
 # copy them back into the hard disk image
 system("mcopy -b -Q -n -m -v -s -i $diskbase\@\@$part_offset dos.tmp/. ::DOS/") == 0 || die;
 
@@ -349,6 +454,11 @@ system("rm -Rfv dos.tmp; mkdir -p dos.tmp") == 0 || die;
 
 # next, add the OAK IDE CD-ROM driver
 system("mcopy -i $diskbase\@\@$part_offset oakcdrom.sys ::DOS/OAKCDROM.SYS") == 0 || die;
+
+# Pre-6.0: add MSCDEX.EXE
+if ($ver eq "5.0") {
+	system("mcopy -i $diskbase\@\@$part_offset mscdex.exe.v2.10 ::DOS/MSCDEX.EXE") == 0 || die;
+}
 
 # and the default CONFIG.SYS and AUTOEXEC.BAT files
 system("mcopy -i $diskbase\@\@$part_offset $config_sys_file ::CONFIG.SYS") == 0 || die;
