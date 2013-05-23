@@ -1,6 +1,8 @@
 #!/usr/bin/perl
 #
-# Use MS-DOS 6.22 installation disks to construct a bootable hard drive image
+# Use MS-DOS 6.22 installation disks to construct a bootable hard drive image.
+# It is also designed to allow using similar versions of MS-DOS (prior to 6.22)
+# that install the same way.
 #
 # requires:
 #     mtools
@@ -14,8 +16,18 @@
 #
 # params
 #     --size <n> in MB
+#     --ver <n>
+#      
+#         where <n> is:
+#             6.22       MS-DOS 6.22 (default)
+#             6.21       MS-DOS 6.21
+#             6.20       MS-DOS 6.20
+#             6.0        MS-DOS 6.0
+#
+#     Installed image is English language (US) version.
 
 my $target_size = 0;
+my $ver = "6.22";
 
 for ($i=0;$i < @ARGV;) {
 	my $a = $ARGV[$i++];
@@ -25,6 +37,9 @@ for ($i=0;$i < @ARGV;) {
 			$target_size = $ARGV[$i++] + 0;
 			$target_size *= 1024 * 1024;
 			$target_size = 0 if $target_size < 1;
+		}
+		elsif ($a eq "ver") {
+			$ver = $ARGV[$i++];
 		}
 		else {
 			die "Unknown switch $a\n";
@@ -36,7 +51,9 @@ for ($i=0;$i < @ARGV;) {
 }
 
 my $rel = "../..";
-my $diskbase = "$rel/build/msdos622hdd";
+my $diskbase = "";
+
+die unless $ver ne '';
 
 system("make") == 0 || die;
 
@@ -46,10 +63,44 @@ sub shellesc($) {
 	return $a;
 }
 
+my $disk1,$disk2,$disk3;
+my $disk1_url,$disk2_url,$disk3_url;
+
+if ($ver eq "6.22") {
+	$diskbase = "$rel/build/msdos622hdd";
+
+	$disk1 = "msdos.622.install.1.disk.xz";
+	$disk1_url = "Software/DOS/Microsoft MS-DOS/6.22/1.44MB/Disk 1.img.xz";
+
+	$disk2 = "msdos.622.install.2.disk.xz";
+	$disk2_url = "Software/DOS/Microsoft MS-DOS/6.22/1.44MB/Disk 2.img.xz";
+
+	$disk3 = "msdos.622.install.3.disk.xz";
+	$disk3_url = "Software/DOS/Microsoft MS-DOS/6.22/1.44MB/Disk 3.img.xz";
+}
+elsif ($ver eq "6.21") {
+	$diskbase = "$rel/build/msdos621hdd";
+
+	$disk1 = "msdos.621.install.1.disk.xz";
+	$disk1_url = "Software/DOS/Microsoft MS-DOS/6.21/1.44MB/DISK1.IMA.xz";
+
+	$disk2 = "msdos.621.install.2.disk.xz";
+	$disk2_url = "Software/DOS/Microsoft MS-DOS/6.21/1.44MB/DISK2.IMA.xz";
+
+	$disk3 = "msdos.621.install.3.disk.xz";
+	$disk3_url = "Software/DOS/Microsoft MS-DOS/6.21/1.44MB/DISK3.IMA.xz";
+}
+else {
+	die "Unknown MS-DOS version";
+}
+
+# sanity
+die unless $diskbase ne '';
+
 # download images, Disk 1, Disk 2, Disk 3
-system("../../download-item.pl --rel $rel --as msdos.622.install.1.disk.xz --url ".shellesc("Software/DOS/Microsoft MS-DOS/6.22/1.44MB/Disk 1.img.xz")) == 0 || die;
-system("../../download-item.pl --rel $rel --as msdos.622.install.2.disk.xz --url ".shellesc("Software/DOS/Microsoft MS-DOS/6.22/1.44MB/Disk 2.img.xz")) == 0 || die;
-system("../../download-item.pl --rel $rel --as msdos.622.install.3.disk.xz --url ".shellesc("Software/DOS/Microsoft MS-DOS/6.22/1.44MB/Disk 3.img.xz")) == 0 || die;
+system("../../download-item.pl --rel $rel --as $disk1 --url ".shellesc($disk1_url)) == 0 || die;
+system("../../download-item.pl --rel $rel --as $disk2 --url ".shellesc($disk2_url)) == 0 || die;
+system("../../download-item.pl --rel $rel --as $disk3 --url ".shellesc($disk3_url)) == 0 || die;
 
 # construct the disk image
 system("mkdir -p $rel/build") == 0 || die;
@@ -146,7 +197,7 @@ seek(BIN,$part_offset+0x24,0); print BIN pack("c",0x80); # this is a hard disk
 close(BIN);
 
 print "Unpacking disk 1:\n";
-system("xz -c -d $rel/web.cache/msdos.622.install.1.disk.xz >tmp.dsk") == 0 || die;
+system("xz -c -d $rel/web.cache/$disk1 >tmp.dsk") == 0 || die;
 
 # copy the boot sector of the install disk, being careful not to overwrite the BPB written by mkdosfs
 print "Sys'ing the disk:\n";
@@ -167,11 +218,13 @@ system("mcopy -i $diskbase\@\@$part_offset tmp.sys ::MSDOS.SYS") == 0 || die;
 system("mattrib -a +r +s +h -i $diskbase\@\@$part_offset ::MSDOS.SYS") == 0 || die;
 unlink("tmp.sys");
 
-unlink("tmp.sys");
-system("mcopy -i tmp.dsk ::DRVSPACE.BIN tmp.sys") == 0 || die;
-system("mcopy -i $diskbase\@\@$part_offset tmp.sys ::DRVSPACE.BIN") == 0 || die;
-system("mattrib -a +r +s +h -i $diskbase\@\@$part_offset ::DRVSPACE.BIN") == 0 || die;
-unlink("tmp.sys");
+if ($ver eq "6.22") {
+	unlink("tmp.sys");
+	system("mcopy -i tmp.dsk ::DRVSPACE.BIN tmp.sys") == 0 || die;
+	system("mcopy -i $diskbase\@\@$part_offset tmp.sys ::DRVSPACE.BIN") == 0 || die;
+	system("mattrib -a +r +s +h -i $diskbase\@\@$part_offset ::DRVSPACE.BIN") == 0 || die;
+	unlink("tmp.sys");
+}
 
 unlink("tmp.sys");
 system("mcopy -i tmp.dsk ::COMMAND.COM tmp.sys") == 0 || die;
@@ -189,13 +242,13 @@ unlink("tmp.dsk");
 
 # copy the other contents of the floppy (disk 2) to the DOS subdirectory
 print "Unpacking disk 2:\n";
-system("xz -c -d $rel/web.cache/msdos.622.install.2.disk.xz >tmp.dsk") == 0 || die;
+system("xz -c -d $rel/web.cache/$disk2 >tmp.dsk") == 0 || die;
 system("mcopy -b -Q -n -m -v -s -i tmp.dsk ::. dos.tmp/") == 0 || die;
 unlink("tmp.dsk");
 
 # copy the other contents of the floppy (disk 3) to the DOS subdirectory
 print "Unpacking disk 3:\n";
-system("xz -c -d $rel/web.cache/msdos.622.install.3.disk.xz >tmp.dsk") == 0 || die;
+system("xz -c -d $rel/web.cache/$disk3 >tmp.dsk") == 0 || die;
 system("mcopy -b -Q -n -m -v -s -i tmp.dsk ::. dos.tmp/") == 0 || die;
 unlink("tmp.dsk");
 
