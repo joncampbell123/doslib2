@@ -30,6 +30,8 @@
 my $target_size = 0;
 my $ver = "6.22";
 my $do_supp = 0;
+my $config_sys_file;
+my $autoexec_bat_file;
 
 for ($i=0;$i < @ARGV;) {
 	my $a = $ARGV[$i++];
@@ -74,6 +76,9 @@ my $disk1_url,$disk2_url,$disk3_url,$disk4_url;
 if ($ver eq "6.22") {
 	$diskbase = "$rel/build/msdos622hdd";
 
+	$config_sys_file = "config.sys.init";
+	$autoexec_bat_file = "autoexec.bat.init";
+
 	$disk1 = "msdos.622.install.1.disk.xz";
 	$disk1_url = "Software/DOS/Microsoft MS-DOS/6.22/1.44MB/Disk 1.img.xz";
 
@@ -89,6 +94,9 @@ if ($ver eq "6.22") {
 elsif ($ver eq "6.21") {
 	$diskbase = "$rel/build/msdos621hdd";
 
+	$config_sys_file = "config.sys.init";
+	$autoexec_bat_file = "autoexec.bat.init";
+
 	$disk1 = "msdos.621.install.1.disk.xz";
 	$disk1_url = "Software/DOS/Microsoft MS-DOS/6.21/1.44MB/DISK1.IMA.xz";
 
@@ -100,6 +108,9 @@ elsif ($ver eq "6.21") {
 }
 elsif ($ver eq "6.20") {
 	$diskbase = "$rel/build/msdos620hdd";
+
+	$config_sys_file = "config.sys.init";
+	$autoexec_bat_file = "autoexec.bat.init";
 
 	$disk1 = "msdos.620.install.1.disk.xz";
 	$disk1_url = "Software/DOS/Microsoft MS-DOS/6.20/1.44MB/Install disk 1.ima.xz";
@@ -114,6 +125,23 @@ elsif ($ver eq "6.20") {
 		$disk4 = "msdos.620.supplementary.4.disk.xz";
 		$disk4_url = "Software/DOS/Microsoft MS-DOS/6.20/1.44MB/Supplemental Disk.ima.xz";
 	}
+}
+elsif ($ver eq "6.0") {
+	$diskbase = "$rel/build/msdos600hdd";
+
+	$config_sys_file = "config.sys.init.v60";
+	$autoexec_bat_file = "autoexec.bat.init";
+
+	$disk1 = "msdos.600.install.1.disk.xz";
+	$disk1_url = "Software/DOS/Microsoft MS-DOS/6.0/1.44MB/disk1.ima.xz";
+
+	$disk2 = "msdos.600.install.2.disk.xz";
+	$disk2_url = "Software/DOS/Microsoft MS-DOS/6.0/1.44MB/disk2.ima.xz";
+
+	$disk3 = "msdos.600.install.3.disk.xz";
+	$disk3_url = "Software/DOS/Microsoft MS-DOS/6.0/1.44MB/disk3.ima.xz";
+
+	# Did MS-DOS 6.00 ever have a supplementary disk?
 }
 else {
 	die "Unknown MS-DOS version";
@@ -189,7 +217,9 @@ sub unpack_dos_tmp() {
 		"VI_","VID",
 		"DO_","DOS",
 		"1X_","1XE",
-		"2X_","2XE"
+		"2X_","2XE",
+		"IC_","ICE",
+		"BI_","BIN"
 	);
 	for ($i=0;($i+2) <= @l;$i += 2) {
 		my $old = $l[$i],$new = $l[$i+1],$nname;
@@ -321,8 +351,8 @@ system("rm -Rfv dos.tmp; mkdir -p dos.tmp") == 0 || die;
 system("mcopy -i $diskbase\@\@$part_offset oakcdrom.sys ::DOS/OAKCDROM.SYS") == 0 || die;
 
 # and the default CONFIG.SYS and AUTOEXEC.BAT files
-system("mcopy -i $diskbase\@\@$part_offset config.sys.init ::CONFIG.SYS") == 0 || die;
-system("mcopy -i $diskbase\@\@$part_offset autoexec.bat.init ::AUTOEXEC.BAT") == 0 || die;
+system("mcopy -i $diskbase\@\@$part_offset $config_sys_file ::CONFIG.SYS") == 0 || die;
+system("mcopy -i $diskbase\@\@$part_offset $autoexec_bat_file ::AUTOEXEC.BAT") == 0 || die;
 
 # make a zero track and cat them together to make a full disk image
 system("dd conv=notrunc,nocreat if=mbr.bin of=$diskbase bs=512 count=1") == 0 || die;
