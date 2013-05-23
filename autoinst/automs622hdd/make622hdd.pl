@@ -165,6 +165,22 @@ elsif ($ver eq "5.0") {
 	$disk3 = "msdos.500.install.3.disk.xz";
 	$disk3_url = "Software/DOS/Microsoft MS-DOS/5.0/720K install/disk3.img.xz";
 }
+elsif ($ver eq "4.01") {
+	# NTS: MS-DOS 4.01 doesn't boot (it hangs) when run in QEMU or Bochs
+	$diskbase = "$rel/build/msdos401hdd";
+
+	$config_sys_file = "config.sys.init.v401";
+	$autoexec_bat_file = "autoexec.bat.init.v401";
+
+	$disk1 = "msdos.401.install.1.disk.xz";
+	$disk1_url = "Software/DOS/Microsoft MS-DOS/4.01/1.44MB/Disco 1(Instal).IMA.xz";
+
+	$disk2 = "msdos.401.install.2.disk.xz";
+	$disk2_url = "Software/DOS/Microsoft MS-DOS/4.01/1.44MB/Disco 2(Operating Disquette).IMA.xz";
+
+	$disk3 = "msdos.401.install.3.disk.xz";
+	$disk3_url = "Software/DOS/Microsoft MS-DOS/4.01/1.44MB/Disco 3 (Shell).IMA.xz";
+}
 else {
 	die "Unknown MS-DOS version";
 }
@@ -383,6 +399,27 @@ if ( -d "dos.tmp/supplmnt" ) {
 	}
 }
 
+if ($ver eq "4.01") {
+	# the MS-DOS 4.01 disks in my collection have an extra INFO.WAR file that needs to be deleted
+	unlink("dos.tmp/info.war");
+	unlink("dos.tmp/INFO.WAR");
+
+	# we don't use the CONFIG.SYS and AUTOEXEC.BAT files either
+	unlink("dos.tmp/AUTOEXEC.BAT");
+	unlink("dos.tmp/CONFIG.SYS");
+
+	# SELECT appears to be the install program, which is a) useless because we installed and
+	# b) very crashy in DOSBox, meaning that "SELECT MENU" results in a blue screen with a
+	# message followed quickly by garbled text and junk on the screen
+	unlink("dos.tmp/SELECT.EXE");
+	unlink("dos.tmp/SELECT.PRT");
+
+	# "DOSSHELL" in v4.01 is a batch file to run SHELLC with magic incantations
+	system("cp -vn dosshell.bat.v4.01 dos.tmp/DOSSHELL.BAT") == 0 || die;
+
+	# TODO: GWBASIC.EXE (under DOSBox) prints "You cannot SHELL to BASIC". WTF?
+}
+
 # remove SETUP.EXE
 unlink("dos.tmp/SETUP.EXE");
 unlink("dos.tmp/DOSSETUP.INI");
@@ -456,7 +493,7 @@ system("rm -Rfv dos.tmp; mkdir -p dos.tmp") == 0 || die;
 system("mcopy -i $diskbase\@\@$part_offset oakcdrom.sys ::DOS/OAKCDROM.SYS") == 0 || die;
 
 # Pre-6.0: add MSCDEX.EXE
-if ($ver eq "5.0") {
+if ($ver =~ m/^[45]\./) { # v4.x and v5.x
 	system("mcopy -i $diskbase\@\@$part_offset mscdex.exe.v2.10 ::DOS/MSCDEX.EXE") == 0 || die;
 }
 
