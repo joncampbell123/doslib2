@@ -16,6 +16,7 @@
 #
 # params
 #     --size <n> in MB
+#     --supp                        install Supplementary Disk 4, if available
 #     --ver <n>
 #      
 #         where <n> is:
@@ -28,6 +29,7 @@
 
 my $target_size = 0;
 my $ver = "6.22";
+my $do_supp = 0;
 
 for ($i=0;$i < @ARGV;) {
 	my $a = $ARGV[$i++];
@@ -40,6 +42,9 @@ for ($i=0;$i < @ARGV;) {
 		}
 		elsif ($a eq "ver") {
 			$ver = $ARGV[$i++];
+		}
+		elsif ($a eq "supp") {
+			$do_supp = 1;
 		}
 		else {
 			die "Unknown switch $a\n";
@@ -63,8 +68,8 @@ sub shellesc($) {
 	return $a;
 }
 
-my $disk1,$disk2,$disk3;
-my $disk1_url,$disk2_url,$disk3_url;
+my $disk1,$disk2,$disk3,$disk4;
+my $disk1_url,$disk2_url,$disk3_url,$disk4_url;
 
 if ($ver eq "6.22") {
 	$diskbase = "$rel/build/msdos622hdd";
@@ -77,6 +82,9 @@ if ($ver eq "6.22") {
 
 	$disk3 = "msdos.622.install.3.disk.xz";
 	$disk3_url = "Software/DOS/Microsoft MS-DOS/6.22/1.44MB/Disk 3.img.xz";
+
+	# TODO: I have another disk set of MS-DOS 6.22 with the 4th Supplementary diskette,
+	# I just have to unpack and organize the self-extracting EXEs they're contained in and verify them.
 }
 elsif ($ver eq "6.21") {
 	$diskbase = "$rel/build/msdos621hdd";
@@ -90,6 +98,23 @@ elsif ($ver eq "6.21") {
 	$disk3 = "msdos.621.install.3.disk.xz";
 	$disk3_url = "Software/DOS/Microsoft MS-DOS/6.21/1.44MB/DISK3.IMA.xz";
 }
+elsif ($ver eq "6.20") {
+	$diskbase = "$rel/build/msdos620hdd";
+
+	$disk1 = "msdos.620.install.1.disk.xz";
+	$disk1_url = "Software/DOS/Microsoft MS-DOS/6.20/1.44MB/Install disk 1.ima.xz";
+
+	$disk2 = "msdos.620.install.2.disk.xz";
+	$disk2_url = "Software/DOS/Microsoft MS-DOS/6.20/1.44MB/Install disk 2.ima.xz";
+
+	$disk3 = "msdos.620.install.3.disk.xz";
+	$disk3_url = "Software/DOS/Microsoft MS-DOS/6.20/1.44MB/Install disk 3.ima.xz";
+
+	if ($do_supp) {
+		$disk4 = "msdos.620.supplementary.4.disk.xz";
+		$disk4_url = "Software/DOS/Microsoft MS-DOS/6.20/1.44MB/Supplemental Disk.ima.xz";
+	}
+}
 else {
 	die "Unknown MS-DOS version";
 }
@@ -101,6 +126,9 @@ die unless $diskbase ne '';
 system("../../download-item.pl --rel $rel --as $disk1 --url ".shellesc($disk1_url)) == 0 || die;
 system("../../download-item.pl --rel $rel --as $disk2 --url ".shellesc($disk2_url)) == 0 || die;
 system("../../download-item.pl --rel $rel --as $disk3 --url ".shellesc($disk3_url)) == 0 || die;
+if ($disk4 ne '') {
+	system("../../download-item.pl --rel $rel --as $disk4 --url ".shellesc($disk4_url)) == 0 || die;
+}
 
 # construct the disk image
 system("mkdir -p $rel/build") == 0 || die;
@@ -156,14 +184,20 @@ sub unpack_dos_tmp() {
 		"LS_","LST",
 		"38_","386",
 		"IN_","INI",
-		"PR_","PRG"
+		"PR_","PRG",
+		"BA_","BAS",
+		"VI_","VID",
+		"DO_","DOS",
+		"1X_","1XE",
+		"2X_","2XE"
 	);
 	for ($i=0;($i+2) <= @l;$i += 2) {
 		my $old = $l[$i],$new = $l[$i+1],$nname;
 
-		opendir(DIR,"dos.tmp") || die;
-		while (my $n = readdir(DIR)) {
-			next if $n =~ m/^\./;
+		open(DIR,"find |") || die;
+		while (my $n = <DIR>) {
+			chomp $n;
+			next unless $n =~ s/^\.\/dos.tmp\///;
 			next unless -f "dos.tmp/$n";
 			next unless $n =~ m/\.$old$/;
 			$nname = $n;
@@ -173,7 +207,7 @@ sub unpack_dos_tmp() {
 			system("./expand dos.tmp/$n dos.tmp/$nname") == 0 || die;
 			unlink("dos.tmp/$n") || die;
 		}
-		closedir(DIR);
+		close(DIR);
 	}
 }
 
@@ -225,6 +259,13 @@ if ($ver eq "6.22") {
 	system("mattrib -a +r +s +h -i $diskbase\@\@$part_offset ::DRVSPACE.BIN") == 0 || die;
 	unlink("tmp.sys");
 }
+elsif ($ver eq "6.20") {
+	unlink("tmp.sys");
+	system("mcopy -i tmp.dsk ::DBLSPACE.BIN tmp.sys") == 0 || die;
+	system("mcopy -i $diskbase\@\@$part_offset tmp.sys ::DBLSPACE.BIN") == 0 || die;
+	system("mattrib -a +r +s +h -i $diskbase\@\@$part_offset ::DBLSPACE.BIN") == 0 || die;
+	unlink("tmp.sys");
+}
 
 unlink("tmp.sys");
 system("mcopy -i tmp.dsk ::COMMAND.COM tmp.sys") == 0 || die;
@@ -251,6 +292,21 @@ print "Unpacking disk 3:\n";
 system("xz -c -d $rel/web.cache/$disk3 >tmp.dsk") == 0 || die;
 system("mcopy -b -Q -n -m -v -s -i tmp.dsk ::. dos.tmp/") == 0 || die;
 unlink("tmp.dsk");
+
+# and disk 4
+if ($disk4 ne '') {
+	my $ex = '';
+
+	if ($ver eq "6.20") { # the supplementary disk
+		$ex = "supplmnt/";
+		mkdir "dos.tmp/$ex";
+	}
+
+	print "Unpacking disk 4:\n";
+	system("xz -c -d $rel/web.cache/$disk4 >tmp.dsk") == 0 || die;
+	system("mcopy -b -Q -n -m -v -s -i tmp.dsk ::. dos.tmp/$ex") == 0 || die;
+	unlink("tmp.dsk");
+}
 
 # unpack the compressed files
 unpack_dos_tmp();
