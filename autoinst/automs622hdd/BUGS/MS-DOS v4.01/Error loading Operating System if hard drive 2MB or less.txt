@@ -1,0 +1,1 @@
+Creating the disk image at 2MB or less causes DOS to not boot.

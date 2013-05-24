@@ -1,0 +1,8 @@
+MS-DOS v4.01 issue:
+
+When installed using this script, GWBASIC.EXE will always print
+"You can not SHELL to BASIC" no matter what you do.
+
+A valid install using the (utterly annoying pain-in-the-ass)
+3-disk installation program does not have this issue, apparently.
+

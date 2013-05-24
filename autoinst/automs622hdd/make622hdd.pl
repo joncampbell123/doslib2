@@ -26,6 +26,8 @@
 #             6.20       MS-DOS 6.20
 #             6.0        MS-DOS 6.0
 #             5.0        MS-DOS 5.0
+#             4.01       MS-DOS 4.01
+#             3.3nec     MS-DOS 3.3 [NEC version]
 #
 #     Installed image is English language (US) version.
 #
@@ -38,10 +40,12 @@ my $do_supp = 0;
 my $config_sys_file;
 my $autoexec_bat_file;
 
+my $part_type = 0x06;
 my $cyls = 1020,$act_cyls;
 my $heads = 16;
 my $sects = 63;
 my $clustersize = -1;
+my $fat_len = -1;
 
 for ($i=0;$i < @ARGV;) {
 	my $a = $ARGV[$i++];
@@ -200,6 +204,17 @@ elsif ($ver eq "4.01") {
 	$disk3 = "msdos.401.install.3.disk.xz";
 	$disk3_url = "Software/DOS/Microsoft MS-DOS/4.01/1.44MB/Disco 3 (Shell).IMA.xz";
 }
+elsif ($ver eq "3.3nec") {
+	$part_type = 0x04; # FAT16 <= 32MB
+
+	$diskbase = "$rel/build/msdos330nechdd";
+
+	$config_sys_file = "config.sys.init.v330nec";
+	$autoexec_bat_file = "autoexec.bat.init.v330nec";
+
+	$disk1 = "msdos.330nec.boot.disk.xz";
+	$disk1_url = "Software/DOS/Microsoft MS-DOS/3.3 NEC Corporation/1.44MB/bootdisk.img.xz";
+}
 else {
 	die "Unknown MS-DOS version";
 }
@@ -209,8 +224,12 @@ die unless $diskbase ne '';
 
 # download images, Disk 1, Disk 2, Disk 3
 system("../../download-item.pl --rel $rel --as $disk1 --url ".shellesc($disk1_url)) == 0 || die;
-system("../../download-item.pl --rel $rel --as $disk2 --url ".shellesc($disk2_url)) == 0 || die;
-system("../../download-item.pl --rel $rel --as $disk3 --url ".shellesc($disk3_url)) == 0 || die;
+if ($disk2 ne '') {
+	system("../../download-item.pl --rel $rel --as $disk2 --url ".shellesc($disk2_url)) == 0 || die;
+}
+if ($disk3 ne '') {
+	system("../../download-item.pl --rel $rel --as $disk3 --url ".shellesc($disk3_url)) == 0 || die;
+}
 if ($disk4 ne '') {
 	system("../../download-item.pl --rel $rel --as $disk4 --url ".shellesc($disk4_url)) == 0 || die;
 }
@@ -237,11 +256,46 @@ if ($cyls >= 1024) {
 
 $act_cyls = int($cyls);
 $x = 512 * $cyls * $heads * $sects;
-if ($x >= (2049*1024*1024)) {
+if ($x >= (2048*1024*1024)) {
 	# limit the partition to keep within MS-DOS 6.22's capabilities.
 	# A partition larger than 2GB is not supported.
-	$x = (2048*1024*1024);
+	$x = (2047*1024*1024);
 	$cyls = $x / 512 / $heads / $sects;
+}
+
+if ($ver eq "3.3nec") {
+	# MS-DOS v3.3 and earlier cannot support >= 32MB partitions.
+	if ($x >= (32*1024*1024)) {
+		$x = (31*1024*1024);
+		$cyls = $x / 512 / $heads / $sects;
+	}
+}
+
+my $part_offset_sects = $sects;
+my $part_offset = 0x200 * $part_offset_sects;
+
+if ($ver eq "3.3nec") {
+	# MS-DOS 3.3 NEC edition's hard disk support is apparently very picky.
+	# If it's FAT16 formatted, then the cluster size must be 4 sectors/cluster.
+	# If it's FAT12 formatted, then the cluster size must be 8 sectors/cluster.
+	$clustersize = 4;
+
+	# At 15MB or less, force mformat to do FAT12. It'd be nice if like mkdosfs they
+	# offered something like --fat=12 to explicitly say so, but they don't. Our only
+	# hope then is to force the size of the FAT table.
+	$x = 512 * $cyls * $heads * $sects;
+	if ($x < (16*1024*1024)) {
+		$part_type = 0x01; # FAT12 <= 32MB
+		$clustersize = 8; # Apparently it's FAT12 support demands 8 sectors/cluster
+
+		# how long does the FAT table need to be?
+		# doing this calculation is REQUIRED to force mtools to format the partition
+		# as FAT12 rather than trying to shoehorn in FAT16, which MS-DOS 3.3 NEC edition
+		# won't accept.
+		$fat_len = (($x-$part_offset_sects)/512/$clustersize);
+		$fat_len = ($fat_len / 2) * 3;
+		$fat_len = int(($fat_len+511)/512);
+	}
 }
 
 $cyls = int($cyls + 0.5);
@@ -299,32 +353,72 @@ sub unpack_dos_tmp() {
 	}
 }
 
-my $part_offset = 0x200 * $sects;
-
 print "Constructing HDD image: C/H/S $act_cyls/$heads/$sects\n";
 system("rm -v $diskbase; dd if=/dev/zero of=$diskbase bs=512 count=1 seek=".(($act_cyls*$heads*$sects)-1));
 
 print "Formatting disk image: \n";
-system("mformat -m 0xF8 ".($clustersize > 0 ? ("-c ".$clustersize) : "")." -t $cyls -h $heads -s $sects -d 2 -i $diskbase\@\@$part_offset") == 0 || die;
-
-# ugh... and it turns out mkdosfs leaves byte 0x24 set to zero among other stupid things
-open(BIN,"+<","$diskbase") || die
-binmode(BIN);
-
-seek(BIN,$part_offset+0x18,0); print BIN pack("v",$sects); # let me tell you the TRUE sectors/track
-seek(BIN,$part_offset+0x1A,0); print BIN pack("v",$heads); # and heads
-seek(BIN,$part_offset+0x1C,0); print BIN pack("V",$sects); # and number of "hidden sectors" preceeding the partition
-seek(BIN,$part_offset+0x24,0); print BIN pack("c",0x80); # this is a hard disk
-
-close(BIN);
+system("mformat -m 0xF8 ".
+	($clustersize > 0 ? ("-c ".$clustersize)." " : "").
+	($fat_len > 0 ? ("-L ".$fat_len)." " : "").
+	"-t $cyls -h $heads -s $sects -d 2 -i $diskbase\@\@$part_offset") == 0 || die;
 
 print "Unpacking disk 1:\n";
 system("xz -c -d $rel/web.cache/$disk1 >tmp.dsk") == 0 || die;
 
 # copy the boot sector of the install disk, being careful not to overwrite the BPB written by mkdosfs
 print "Sys'ing the disk:\n";
-system("dd conv=notrunc,nocreat if=tmp.dsk of=$diskbase bs=1 seek=".($part_offset   )." skip=0 count=11") == 0 || die;
-system("dd conv=notrunc,nocreat if=tmp.dsk of=$diskbase bs=1 seek=".($part_offset+62)." skip=62 count=".(512-62)) == 0 || die;
+if ($ver eq "3.3nec") {
+	# copy the boot sector of the install disk, being careful not to overwrite the BPB written by mkdosfs
+	system("dd conv=notrunc,nocreat if=tmp.dsk of=$diskbase bs=1 seek=".($part_offset   )." skip=0 count=11") == 0 || die;
+	system("dd conv=notrunc,nocreat if=tmp.dsk of=$diskbase bs=1 seek=".($part_offset+54)." skip=54 count=".(512-54)) == 0 || die;
+
+	# the disk table will need some fixup
+	open(BIN,"+<","$diskbase") || die
+	binmode(BIN);
+
+	# total sector count fixup
+	my $x = ($cyls * $heads * $sects) - $part_offset_sects;
+	die "$x is too many sectors" if $x > 65535;
+	seek(BIN,$part_offset+0x13,0); print BIN pack("v",$x);
+
+	seek(BIN,$part_offset+0x18,0); print BIN pack("v",$sects); # let me tell you the TRUE sectors/track
+	seek(BIN,$part_offset+0x1A,0); print BIN pack("v",$heads); # and heads
+	seek(BIN,$part_offset+0x1C,0); print BIN pack("V",$sects); # and number of "hidden sectors" preceeding the partition
+	seek(BIN,$part_offset+0x1FD,0); print BIN pack("c",0x80); # this is a hard disk
+
+	# non-MSDOS 4.0+ compatible data
+	seek(BIN,$part_offset+0x20,0);
+	print BIN pack("cccc"."cccc"."cccc"."cccc"."cccc"."cc",
+		0x00,0x00,0x00,0x00,
+		0x00,0x00,0x00,0x00,
+		0x00,0x00,0x00,0x00,
+		0x00,0x00,0x00,0x12,
+	
+		0x00,0x00,0x00,0x00,
+		0x01,0x00);
+
+	close(BIN);
+}
+else {
+	system("dd conv=notrunc,nocreat if=tmp.dsk of=$diskbase bs=1 seek=".($part_offset   )." skip=0 count=11") == 0 || die;
+	system("dd conv=notrunc,nocreat if=tmp.dsk of=$diskbase bs=1 seek=".($part_offset+62)." skip=62 count=".(512-62)) == 0 || die;
+
+	# the disk table will need some fixup
+	open(BIN,"+<","$diskbase") || die
+	binmode(BIN);
+
+	# total sector count fixup
+	my $x = ($act_cyls * $heads * $sects) - $part_offset_sects;
+	seek(BIN,$part_offset+0x13,0); print BIN pack("v",$x > 65535 ? 0 : $x);
+	seek(BIN,$part_offset+0x20,0); print BIN pack("V",$x);
+
+	seek(BIN,$part_offset+0x18,0); print BIN pack("v",$sects); # let me tell you the TRUE sectors/track
+	seek(BIN,$part_offset+0x1A,0); print BIN pack("v",$heads); # and heads
+	seek(BIN,$part_offset+0x1C,0); print BIN pack("V",$sects); # and number of "hidden sectors" preceeding the partition
+	seek(BIN,$part_offset+0x24,0); print BIN pack("c",0x80); # this is a hard disk
+
+	close(BIN);
+}
 
 # and copy IO.SYS and MSDOS.SYS over, assuming that mkdosfs has left the root directory completely empty
 # so that our copy operation puts them FIRST in the root directory.
@@ -370,16 +464,20 @@ system("mcopy -b -Q -n -m -v -s -i tmp.dsk ::. dos.tmp/") == 0 || die;
 unlink("tmp.dsk");
 
 # copy the other contents of the floppy (disk 2) to the DOS subdirectory
-print "Unpacking disk 2:\n";
-system("xz -c -d $rel/web.cache/$disk2 >tmp.dsk") == 0 || die;
-system("mcopy -b -Q -n -m -v -s -i tmp.dsk ::. dos.tmp/") == 0 || die;
-unlink("tmp.dsk");
+if ($disk2 ne '') {
+	print "Unpacking disk 2:\n";
+	system("xz -c -d $rel/web.cache/$disk2 >tmp.dsk") == 0 || die;
+	system("mcopy -b -Q -n -m -v -s -i tmp.dsk ::. dos.tmp/") == 0 || die;
+	unlink("tmp.dsk");
+}
 
 # copy the other contents of the floppy (disk 3) to the DOS subdirectory
-print "Unpacking disk 3:\n";
-system("xz -c -d $rel/web.cache/$disk3 >tmp.dsk") == 0 || die;
-system("mcopy -b -Q -n -m -v -s -i tmp.dsk ::. dos.tmp/") == 0 || die;
-unlink("tmp.dsk");
+if ($disk3 ne '') {
+	print "Unpacking disk 3:\n";
+	system("xz -c -d $rel/web.cache/$disk3 >tmp.dsk") == 0 || die;
+	system("mcopy -b -Q -n -m -v -s -i tmp.dsk ::. dos.tmp/") == 0 || die;
+	unlink("tmp.dsk");
+}
 
 # and disk 4
 if ($disk4 ne '') {
@@ -396,8 +494,45 @@ if ($disk4 ne '') {
 	unlink("tmp.dsk");
 }
 
+# MS-DOS 3.3 NEC: the files on disk are not the complete set. we need to download another
+# disk image with a more complete set to make a complete system. we do this NOW so that
+# if the file already exists from the NEC disks it's not overwritten.
+if ($ver eq "3.3nec") {
+	system("rm -Rfv dos.tmp/x; mkdir dos.tmp/x") == 0 || die;
+
+	system("../../download-item.pl --rel $rel --as msdos.330nec.ref1.disk.xz --url ".shellesc("Software/DOS/Microsoft MS-DOS/3.3/1.44MB/disk1.ima.xz")) == 0 || die;
+	system("xz -c -d $rel/web.cache/msdos.330nec.ref1.disk.xz >tmp.dsk") == 0 || die;
+	system("mcopy -b -Q -m -v -s -i tmp.dsk ::. dos.tmp/x/") == 0 || die;
+	unlink("tmp.dsk");
+
+	system("../../download-item.pl --rel $rel --as msdos.330nec.ref2.disk.xz --url ".shellesc("Software/DOS/Microsoft MS-DOS/3.3/1.44MB/disk2.ima.xz")) == 0 || die;
+	system("xz -c -d $rel/web.cache/msdos.330nec.ref2.disk.xz >tmp.dsk") == 0 || die;
+	system("mcopy -b -Q -m -v -s -i tmp.dsk ::. dos.tmp/x/") == 0 || die;
+	unlink("tmp.dsk");
+
+	system("mv -vn dos.tmp/x/* dos.tmp/") == 0 || die;
+	system("rm -Rfv dos.tmp/x") == 0 || die;
+}
+
 # unpack the compressed files
 unpack_dos_tmp();
+
+# HACK: The copy of MS-DOS 3.3 (and the variants) that I have appear to have corrupted files.
+#       That's the only explanation I can think of for some files like LABEL.COM having nothing
+#       but 'rrrrrrrrrrrrrrrrrrrrrrrrrru7as7w6r7qwr' ASCII gibberish in them, and crashing/hanging
+#       when you run them.
+if ($ver eq "3.3nec") {
+	unlink("dos.tmp/LABEL.COM");		# LABEL.COM is corrupt
+	unlink("dos.tmp/LINK.EXE");		# LINK.EXE is corrupt
+	unlink("dos.tmp/GRAFTABL.COM");		# GRAFTABL.COM is corrupt
+	unlink("dos.tmp/KEYB.COM");		# KEYB.COM is corrupt
+	unlink("dos.tmp/LCD.CPI");		# LCD.CPI is corrupt, I *think*
+	unlink("dos.tmp/JOIN.EXE");		# JOIN.EXE is corrupt
+	unlink("dos.tmp/FIND.EXE");		# FIND.EXE is corrupt
+	unlink("dos.tmp/GRAPHICS.COM");		# GRAPHICS.COM is corrupt
+	unlink("dos.tmp/PRINTER.SYS");		# PRINTER.SYS is corrupt
+	unlink("dos.tmp/RAMDRIVE.SYS");		# RAMDRIVE.SYS is corrupt
+}
 
 # if DOSSHELL was provided by the supplementary disk, then move it into the main shell
 if ( -d "dos.tmp/supplmnt" ) {
@@ -509,7 +644,7 @@ system("rm -Rfv dos.tmp; mkdir -p dos.tmp") == 0 || die;
 system("mcopy -i $diskbase\@\@$part_offset oakcdrom.sys ::DOS/OAKCDROM.SYS") == 0 || die;
 
 # Pre-6.0: add MSCDEX.EXE
-if ($ver =~ m/^[45]\./) { # v4.x and v5.x
+if ($ver =~ m/^[45]\./ || $ver eq "3.3nec") { # v4.x and v5.x
 	system("mcopy -i $diskbase\@\@$part_offset mscdex.exe.v2.10 ::DOS/MSCDEX.EXE") == 0 || die;
 }
 
@@ -531,7 +666,7 @@ print BIN pack("cccccccc",
 	0x01, # head 1
 	0x01 | (0 << 6), # sector 1 cylinder 0 (high 2 bits)
 	0x00, # cylinder 0 (low 8 bits)
-	0x06, # partition type (0x06 = MS-DOS FAT16 >= 32MB)
+	$part_type, # partition type (0x06 = MS-DOS FAT16 >= 32MB)
 	$heads-1, # end head
 	$sects | ((($cyls - 1) >> 8) << 6), # end sector/cylinder
 	($cyls - 1) & 0xFF); # end cylinder
