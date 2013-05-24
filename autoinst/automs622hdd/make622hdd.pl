@@ -28,6 +28,8 @@
 #             5.0        MS-DOS 5.0
 #
 #     Installed image is English language (US) version.
+#
+#     --geomemtry C/H/S             allows you to specify a custom disk geometry
 
 my $dosshell_vid = "vga";
 my $target_size = 0;
@@ -35,6 +37,11 @@ my $ver = "6.22";
 my $do_supp = 0;
 my $config_sys_file;
 my $autoexec_bat_file;
+
+my $cyls = 1020,$act_cyls;
+my $heads = 16;
+my $sects = 63;
+my $clustersize = -1;
 
 for ($i=0;$i < @ARGV;) {
 	my $a = $ARGV[$i++];
@@ -53,6 +60,18 @@ for ($i=0;$i < @ARGV;) {
 		}
 		elsif ($a eq "dosshell-vid") {
 			$dosshell_vid = lc($ARGV[$i++]);
+		}
+		elsif ($a eq "geometry") {
+			($cyls,$heads,$sects) = split(/[-\\\/]+/,$ARGV[$i++]);
+			$cyls = $cyls + 0;
+			$heads = $heads + 0;
+			$sects = $sects + 0;
+
+			die "Invalid geometry C/H/S $cyls/$heads/$sects" if $cyls < 1 || $cyls > 8192 ||
+				$heads < 1 || $heads > 255 ||
+				$sects < 1 || $sects > 63;
+
+			$target_size = $cyls * $heads * $sects * 512;
 		}
 		else {
 			die "Unknown switch $a\n";
@@ -198,11 +217,6 @@ if ($disk4 ne '') {
 
 # construct the disk image
 system("mkdir -p $rel/build") == 0 || die;
-
-my $cyls = 1020,$act_cyls;
-my $heads = 16;
-my $sects = 63;
-my $clustersize = -1;
 
 if ($target_size > 0) {
 	$cyls = int(($target_size / 512 / $heads / $sects) + 0.5);
