@@ -28,6 +28,7 @@
 #             5.0        MS-DOS 5.0
 #             4.01       MS-DOS 4.01
 #             3.3nec     MS-DOS 3.3 [NEC version]
+#             3.3        MS-DOS 3.3
 #
 #     Installed image is English language (US) version.
 #
@@ -215,6 +216,20 @@ elsif ($ver eq "3.3nec") {
 	$disk1 = "msdos.330nec.boot.disk.xz";
 	$disk1_url = "Software/DOS/Microsoft MS-DOS/3.3 NEC Corporation/1.44MB/bootdisk.img.xz";
 }
+elsif ($ver eq "3.3") {
+	$part_type = 0x04; # FAT16 <= 32MB
+
+	$diskbase = "$rel/build/msdos330hdd";
+
+	$config_sys_file = "config.sys.init.v330";
+	$autoexec_bat_file = "autoexec.bat.init.v330";
+
+	$disk1 = "msdos.330.install.1.disk.xz";
+	$disk1_url = "Software/DOS/Microsoft MS-DOS/3.3/1.44MB/disk1.ima.xz";
+
+	$disk2 = "msdos.330.install.2.disk.xz";
+	$disk2_url = "Software/DOS/Microsoft MS-DOS/3.3/1.44MB/disk2.ima.xz";
+}
 else {
 	die "Unknown MS-DOS version";
 }
@@ -263,7 +278,7 @@ if ($x >= (2048*1024*1024)) {
 	$cyls = $x / 512 / $heads / $sects;
 }
 
-if ($ver eq "3.3nec") {
+if ($ver eq "3.3nec" || $ver eq "3.3") {
 	# MS-DOS v3.3 and earlier cannot support >= 32MB partitions.
 	if ($x >= (32*1024*1024)) {
 		$x = (31*1024*1024);
@@ -274,8 +289,8 @@ if ($ver eq "3.3nec") {
 my $part_offset_sects = $sects;
 my $part_offset = 0x200 * $part_offset_sects;
 
-if ($ver eq "3.3nec") {
-	# MS-DOS 3.3 NEC edition's hard disk support is apparently very picky.
+if ($ver eq "3.3nec" || $ver eq "3.3") {
+	# MS-DOS 3.3 hard disk support is apparently very picky.
 	# If it's FAT16 formatted, then the cluster size must be 4 sectors/cluster.
 	# If it's FAT12 formatted, then the cluster size must be 8 sectors/cluster.
 	$clustersize = 4;
@@ -367,7 +382,7 @@ system("xz -c -d $rel/web.cache/$disk1 >tmp.dsk") == 0 || die;
 
 # copy the boot sector of the install disk, being careful not to overwrite the BPB written by mkdosfs
 print "Sys'ing the disk:\n";
-if ($ver eq "3.3nec") {
+if ($ver eq "3.3nec" || $ver eq "3.3") {
 	# copy the boot sector of the install disk, being careful not to overwrite the BPB written by mkdosfs
 	system("dd conv=notrunc,nocreat if=tmp.dsk of=$diskbase bs=1 seek=".($part_offset   )." skip=0 count=11") == 0 || die;
 	system("dd conv=notrunc,nocreat if=tmp.dsk of=$diskbase bs=1 seek=".($part_offset+54)." skip=54 count=".(512-54)) == 0 || die;
@@ -513,6 +528,27 @@ if ($ver eq "3.3nec") {
 	system("mv -vn dos.tmp/x/* dos.tmp/") == 0 || die;
 	system("rm -Rfv dos.tmp/x") == 0 || die;
 }
+# MS-DOS 3.3: we need FORMAT.COM and FDISK.COM to cover for the corrupt versions
+# on the copy I have of MS-DOS 3.3
+elsif ($ver eq "3.3") {
+	# same problem a 3.3 NEC: FORMAT.COM and FDISK.COM are corrupt
+	system("rm -Rfv dos.tmp/x; mkdir dos.tmp/x") == 0 || die;
+
+	system("../../download-item.pl --rel $rel --as msdos.330nec.boot.disk.xz --url ".shellesc("Software/DOS/Microsoft MS-DOS/3.3 NEC Corporation/1.44MB/bootdisk.img.xz")) == 0 || die;
+	system("xz -c -d $rel/web.cache/msdos.330nec.boot.disk.xz >tmp.dsk") == 0 || die;
+	system("mcopy -b -Q -m -v -s -i tmp.dsk ::. dos.tmp/x/") == 0 || die;
+	unlink("tmp.dsk");
+
+	unlink("dos.tmp/x/IO.SYS");
+	unlink("dos.tmp/x/MSDOS.SYS");
+	unlink("dos.tmp/x/COMMAND.COM");
+	unlink("dos.tmp/x/SYS.COM");
+	# what remains is FORMAT.COM and FDISK.COM
+
+	system("mv -v dos.tmp/x/* dos.tmp/") == 0 || die;
+	system("rm -Rfv dos.tmp/x") == 0 || die;
+
+}
 
 # unpack the compressed files
 unpack_dos_tmp();
@@ -521,7 +557,7 @@ unpack_dos_tmp();
 #       That's the only explanation I can think of for some files like LABEL.COM having nothing
 #       but 'rrrrrrrrrrrrrrrrrrrrrrrrrru7as7w6r7qwr' ASCII gibberish in them, and crashing/hanging
 #       when you run them.
-if ($ver eq "3.3nec") {
+if ($ver eq "3.3nec" || $ver eq "3.3") {
 	unlink("dos.tmp/LABEL.COM");		# LABEL.COM is corrupt
 	unlink("dos.tmp/LINK.EXE");		# LINK.EXE is corrupt
 	unlink("dos.tmp/GRAFTABL.COM");		# GRAFTABL.COM is corrupt
@@ -644,7 +680,7 @@ system("rm -Rfv dos.tmp; mkdir -p dos.tmp") == 0 || die;
 system("mcopy -i $diskbase\@\@$part_offset oakcdrom.sys ::DOS/OAKCDROM.SYS") == 0 || die;
 
 # Pre-6.0: add MSCDEX.EXE
-if ($ver =~ m/^[45]\./ || $ver eq "3.3nec") { # v4.x and v5.x
+if ($ver =~ m/^[45]\./ || $ver eq "3.3nec" || $ver eq "3.3") { # v4.x and v5.x
 	system("mcopy -i $diskbase\@\@$part_offset mscdex.exe.v2.10 ::DOS/MSCDEX.EXE") == 0 || die;
 }
 
