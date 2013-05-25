@@ -29,7 +29,7 @@
 #             4.01       MS-DOS 4.01
 #             3.3nec     MS-DOS 3.3 [NEC version]
 #             3.3        MS-DOS 3.3
-#             3.2        MS-DOS 3.2
+#             3.2epson   MS-DOS 3.2 [SEIKO EPSON version]
 #
 #     Installed image is English language (US) version.
 #
@@ -231,22 +231,22 @@ elsif ($ver eq "3.3") {
 	$disk2 = "msdos.330.install.2.disk.xz";
 	$disk2_url = "Software/DOS/Microsoft MS-DOS/3.3/1.44MB/disk2.ima.xz";
 }
-elsif ($ver eq "3.2") {
+elsif ($ver eq "3.2epson") {
 	$part_type = 0x04; # FAT16 <= 32MB
 
-	$diskbase = "$rel/build/msdos320hdd";
+	$diskbase = "$rel/build/msdos320epsonhdd";
 
 	$config_sys_file = "config.sys.init.v320";
 	$autoexec_bat_file = "autoexec.bat.init.v320";
 
-	$disk1 = "msdos.320.install.1.disk.xz";
-	$disk1_url = "Software/DOS/Microsoft MS-DOS/3.2/360KB/DISK1.IMA.xz";
+	$disk1 = "msdos.320epson.install.1.disk.xz";
+	$disk1_url = "Software/DOS/Microsoft MS-DOS/3.2 Seiko Epson/360KB/DISK1.IMA.xz";
 
-	$disk2 = "msdos.320.install.2.disk.xz";
-	$disk2_url = "Software/DOS/Microsoft MS-DOS/3.2/360KB/DISK2.IMA.xz";
+	$disk2 = "msdos.320epson.install.2.disk.xz";
+	$disk2_url = "Software/DOS/Microsoft MS-DOS/3.2 Seiko Epson/360KB/DISK2.IMA.xz";
 
-	$disk3 = "msdos.320.install.3.disk.xz";
-	$disk3_url = "Software/DOS/Microsoft MS-DOS/3.2/360KB/DISK3.IMA.xz";
+	$disk3 = "msdos.320epson.install.3.disk.xz";
+	$disk3_url = "Software/DOS/Microsoft MS-DOS/3.2 Seiko Epson/360KB/DISK3.IMA.xz";
 }
 else {
 	die "Unknown MS-DOS version";
@@ -296,7 +296,7 @@ if ($x >= (2048*1024*1024)) {
 	$cyls = $x / 512 / $heads / $sects;
 }
 
-if ($ver eq "3.3nec" || $ver eq "3.3" || $ver eq "3.2") {
+if ($ver eq "3.3nec" || $ver eq "3.3" || $ver eq "3.2epson") {
 	# MS-DOS v3.3 and earlier cannot support >= 32MB partitions.
 	if ($x >= (32*1024*1024)) {
 		$x = (31*1024*1024);
@@ -307,7 +307,7 @@ if ($ver eq "3.3nec" || $ver eq "3.3" || $ver eq "3.2") {
 my $part_offset_sects = $sects;
 my $part_offset = 0x200 * $part_offset_sects;
 
-if ($ver eq "3.3nec" || $ver eq "3.3" || $ver eq "3.2") {
+if ($ver eq "3.3nec" || $ver eq "3.3" || $ver eq "3.2epson") {
 	# MS-DOS 3.3 hard disk support is apparently very picky.
 	# If it's FAT16 formatted, then the cluster size must be 4 sectors/cluster.
 	# If it's FAT12 formatted, then the cluster size must be 8 sectors/cluster.
@@ -400,7 +400,7 @@ system("xz -c -d $rel/web.cache/$disk1 >tmp.dsk") == 0 || die;
 
 # copy the boot sector of the install disk, being careful not to overwrite the BPB written by mkdosfs
 print "Sys'ing the disk:\n";
-if ($ver eq "3.3nec" || $ver eq "3.3" || $ver eq "3.2") {
+if ($ver eq "3.3nec" || $ver eq "3.3" || $ver eq "3.2epson") {
 	# copy the boot sector of the install disk, being careful not to overwrite the BPB written by mkdosfs
 	system("dd conv=notrunc,nocreat if=tmp.dsk of=$diskbase bs=1 seek=".($part_offset   )." skip=0 count=11") == 0 || die;
 	system("dd conv=notrunc,nocreat if=tmp.dsk of=$diskbase bs=1 seek=".($part_offset+54)." skip=54 count=".(512-54)) == 0 || die;
@@ -455,7 +455,7 @@ else {
 
 # and copy IO.SYS and MSDOS.SYS over, assuming that mkdosfs has left the root directory completely empty
 # so that our copy operation puts them FIRST in the root directory.
-if ($ver eq "3.2") {
+if ($ver eq "3.2epson") {
 	# IBMBIO.COM
 	unlink("tmp.sys");
 	system("mcopy -i tmp.dsk ::IBMBIO.COM tmp.sys") == 0 || die;
@@ -714,7 +714,7 @@ system("rm -Rfv dos.tmp; mkdir -p dos.tmp") == 0 || die;
 system("mcopy -i $diskbase\@\@$part_offset oakcdrom.sys ::DOS/OAKCDROM.SYS") == 0 || die;
 
 # Pre-6.0: add MSCDEX.EXE
-if ($ver =~ m/^[45]\./ || $ver eq "3.3nec" || $ver eq "3.3" || $ver eq "3.2") { # v4.x and v5.x
+if ($ver =~ m/^[45]\./ || $ver eq "3.3nec" || $ver eq "3.3" || $ver eq "3.2epson") { # v4.x and v5.x
 	system("mcopy -i $diskbase\@\@$part_offset mscdex.exe.v2.10 ::DOS/MSCDEX.EXE") == 0 || die;
 }
 
