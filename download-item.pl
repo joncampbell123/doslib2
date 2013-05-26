@@ -107,7 +107,7 @@ if ( -f "$web_cache/$as" ) {
 my $cmd;
 
 print "Downloading: $web_root/$url\n";
-$cmd = 'curl --insecure --progress-bar -o '.shellesc("$web_cache/$as").'.part ';
+$cmd = 'curl --show-error -f --globoff --insecure --progress-bar -o '.shellesc("$web_cache/$as").'.part ';
 if ($user ne '') {
 	$cmd .= '--user '.shellesc($user);
 	$cmd .= ':'.shellesc($pass) if $pass ne '';
@@ -127,5 +127,5 @@ if ($res != 0) {
 	exit 1;
 }
 
-system("mv -vn ".shellesc("$web_cache/$as.part")." ".shellesc("$web_cache/$as")) == 0 || die;
+system("mv -vn ".shellesc("$web_cache/$as.part")." ".shellesc("$web_cache/$as")) == 0 || exit 1;
 

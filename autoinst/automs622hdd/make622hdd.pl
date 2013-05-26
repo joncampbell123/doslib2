@@ -155,8 +155,10 @@ if ($ver eq "6.22") {
 	$disk3 = "msdos.622.install.3.disk.xz";
 	$disk3_url = "Software/DOS/Microsoft MS-DOS/6.22/1.44MB/Disk 3.img.xz";
 
-	# TODO: I have another disk set of MS-DOS 6.22 with the 4th Supplementary diskette,
-	# I just have to unpack and organize the self-extracting EXEs they're contained in and verify them.
+	if ($do_supp) {
+		$disk4 = "msdos.622.install.4.disk.xz";
+		$disk4_url = "Software/DOS/Microsoft MS-DOS/6.22/1.44MB[2]/disc4.ima.xz";
+	}
 }
 elsif ($ver eq "6.21") {
 	$diskbase = "$rel/build/msdos621hdd";
@@ -310,16 +312,49 @@ if ($target_size > 0) {
 	$cyls = 1 if $cyls == 0;
 }
 
-# MS-DOS cannot handle >= 1024 cylinders
-while ($cyls >= 1024 && $heads < 128) {
-	$heads *= 2;
-	$cyls /= 2;
+if ($ver eq "3.2epson") {
+	if ($user_chs_override == 0) {
+		$sects = 16;
+		$cyls = $target_size / 512 / $heads / $sects;
+		# MS-DOS 3.2 cannot handle >= 1024 cylinders OR > 16 heads. Period.
+		# Geometry hacks familiar to later versions don't work.
+		while ($sects <= (52-4) && $cyls >= 1024) {
+			$sects += 4;
+			$cyls = $target_size / 512 / $heads / $sects;
+		}
+	}
+	$cyls = 1023 if $cyls > 1023;
+	$target_size = $cyls * $heads * $sects * 512 if $tc >= 1;
+
+	# See http://www.os2museum.com/wp/?p=685 for more information.
+	# MS-DOS v3.2 and 2.xx have bugs in the bootloader related to
+	# hard drives having more than about 26KB (52 sectors) per track.
+	# It likes to load a track at a time, which was fine back when
+	# hard drives had 17 sectors/track, but can end up overwriting
+	# itself or trashing it's own stack on modern 63 sector/track disks.
+	#
+	# Our fix: Unless the user has specifically given us a geometry,
+	# set the sectors/track to a smaller value.
+	if ($user_chs_override == 0) {
+	}
+	elsif ($sects > 52) { # FIXME: What's the upper limit?
+		print "WARNING: 52 or more sectors/track with MS-DOS 3.2 is not reliable\n";
+		print "For more information visit: http://www.os2museum.com/wp/?p=685\n";
+		sleep 1;
+	}
 }
+else {
+# MS-DOS cannot handle >= 1024 cylinders
+	while ($cyls >= 1024 && $heads < 128) {
+		$heads *= 2;
+		$cyls /= 2;
+	}
 # if we still need to reduce, try the 255 head trick
-if ($cyls >= 1024) {
-	$cyls *= $heads;
-	$heads = 255;
-	$cyls /= $heads;
+	if ($cyls >= 1024) {
+		$cyls *= $heads;
+		$heads = 255;
+		$cyls /= $heads;
+	}
 }
 
 $act_cyls = int($cyls);
@@ -339,27 +374,6 @@ if ($ver eq "3.3nec" || $ver eq "3.3") {
 	}
 }
 elsif ($ver eq "3.2epson") {
-	# See http://www.os2museum.com/wp/?p=685 for more information.
-	# MS-DOS v3.2 and 2.xx have bugs in the bootloader related to
-	# hard drives having more than about 26KB (52 sectors) per track.
-	# It likes to load a track at a time, which was fine back when
-	# hard drives had 17 sectors/track, but can end up overwriting
-	# itself or trashing it's own stack on modern 63 sector/track disks.
-	#
-	# Our fix: Unless the user has specifically given us a geometry,
-	# set the sectors/track to a smaller value.
-	if ($user_chs_override == 0) {
-		$sects = 24;
-		$cyls = $target_size / 512 / $heads / $sects;
-		$cyls = 1023 if $cyls > 1023;
-		$x = 512 * $cyls * $heads * $sects;
-	}
-	elsif ($sects > 52) { # FIXME: What's the upper limit?
-		print "WARNING: 52 or more sectors/track with MS-DOS 3.2 is not reliable\n";
-		print "For more information visit: http://www.os2museum.com/wp/?p=685\n";
-		sleep 1;
-	}
-
 	# MS-DOS v3.2 and earlier cannot support >= 32MB partitions.
 	if ($x >= (32*1024*1024)) {
 		$x = (31*1024*1024);
@@ -618,7 +632,7 @@ if ($disk3 ne '') {
 if ($disk4 ne '') {
 	my $ex = '';
 
-	if ($ver eq "6.20") { # the supplementary disk
+	if ($ver eq "6.20" || $ver eq "6.21" || $ver eq "6.22") { # the supplementary disk
 		$ex = "supplmnt/";
 		mkdir "dos.tmp/$ex";
 	}
@@ -692,7 +706,7 @@ if ($ver eq "3.3nec" || $ver eq "3.3") {
 
 # if DOSSHELL was provided by the supplementary disk, then move it into the main shell
 if ( -d "dos.tmp/supplmnt" ) {
-	if ($ver eq "6.20") { # the supplementary disk has DOSSHELL and it's swapper and other goodies
+	if ($ver eq "6.20" || $ver eq "6.21" || $ver eq "6.22") { # the supplementary disk has DOSSHELL and it's swapper and other goodies
 		# DOSSHELL, the swapper, and it's video "drivers"
 		system("mv -vn dos.tmp/supplmnt/DOSSHELL.* dos.tmp/");
 		system("mv -vn dos.tmp/supplmnt/DOSSWAP.EXE dos.tmp/");
