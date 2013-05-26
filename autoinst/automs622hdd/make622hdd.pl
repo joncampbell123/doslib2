@@ -870,6 +870,12 @@ system("mcopy -b -Q -n -m -v -s -i $diskbase\@\@$part_offset dos.tmp/. ::DOS/") 
 # remove dos.tmp
 system("rm -Rfv dos.tmp; mkdir -p dos.tmp") == 0 || die;
 
+# make sure certain "copies" of files in the DOS directory are hidden
+system("mattrib -a +r +s +h -i $diskbase\@\@$part_offset ::DOS/IO.SYS >/dev/null 2>&1");
+system("mattrib -a +r +s +h -i $diskbase\@\@$part_offset ::DOS/MSDOS.SYS >/dev/null 2>&1");
+system("mattrib -a +r +s +h -i $diskbase\@\@$part_offset ::DOS/IBMBIO.COM >/dev/null 2>&1");
+system("mattrib -a +r +s +h -i $diskbase\@\@$part_offset ::DOS/IBMDOS.COM >/dev/null 2>&1");
+
 if ($ver ne "2.1") {
 	# next, add the OAK IDE CD-ROM driver
 	system("mcopy -i $diskbase\@\@$part_offset oakcdrom.sys ::DOS/OAKCDROM.SYS") == 0 || die;
