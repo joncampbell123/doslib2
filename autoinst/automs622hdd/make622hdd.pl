@@ -296,11 +296,29 @@ if ($x >= (2048*1024*1024)) {
 	$cyls = $x / 512 / $heads / $sects;
 }
 
-if ($ver eq "3.3nec" || $ver eq "3.3" || $ver eq "3.2epson") {
+if ($ver eq "3.3nec" || $ver eq "3.3") {
 	# MS-DOS v3.3 and earlier cannot support >= 32MB partitions.
 	if ($x >= (32*1024*1024)) {
 		$x = (31*1024*1024);
 		$cyls = $x / 512 / $heads / $sects;
+	}
+}
+elsif ($ver eq "3.2epson") {
+	# MS-DOS v3.2 "epson" copy I have seems to have problems booting
+	# if the drive is less than 24MB or larger than 29MB. Weird.
+	# Reformatting with their own tools does not resolve the issue.
+	if ($x >= (30*1024*1024)) {
+		$x = (29*1024*1024);
+		$cyls = $x / 512 / $heads / $sects;
+	}
+	elsif ($x < (24*1024*1024)) {
+		print "NOTICE: Hard drives smaller than 24MB trigger a crash condition\n";
+		print "        in MS-DOS 3.2 epson. It is not yet known why. Forcing\n";
+		print "        drive size to minimum 24MB\n";
+		sleep 1;
+		$x = (24*1024*1024);
+		$cyls = $x / 512 / $heads / $sects;
+		$act_cyls = $cyls;
 	}
 }
 

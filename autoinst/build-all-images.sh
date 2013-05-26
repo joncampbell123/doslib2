@@ -1,3 +1,3 @@
 #!/bin/bash
-(cd automs622hdd && ./make622hdd.pl) || exit 1
+(cd automs622hdd && ./make622hdd.everything.sh) || exit 1
 

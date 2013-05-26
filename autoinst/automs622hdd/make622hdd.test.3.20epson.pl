@@ -1,7 +1,7 @@
 #!/usr/bin/perl
-# MS-DOS 4.01 does not run in QEMU or Bochs, though it does in VirtualBox.
-# But I don't like to monkey around with VirtualBox's storage manager,
-# so instead, we'll use DOSBox-X.
+# MS-DOS 3.2 runs in QEMU, but does not support the 1.44MB floppy format.
+# Unfortunately QEMU does not support the 720KB floppy format it does
+# support. So we use DOSBox.
 
 # The build script produces a VDI regardless for convenience and
 # for the time when eventually QEMU fixes whatever is wrong.
