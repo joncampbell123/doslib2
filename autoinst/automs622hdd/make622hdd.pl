@@ -46,6 +46,7 @@ my $part_type = 0x06;
 my $cyls = 1020,$act_cyls;
 my $heads = 16;
 my $sects = 63;
+my $user_chs_override = 0;
 my $clustersize = -1;
 my $fat_len = -1;
 
@@ -72,6 +73,7 @@ for ($i=0;$i < @ARGV;) {
 			($tc,$heads,$sects) = split(/[-\\\/]+/,$ARGV[$i++]);
 			$heads = $heads + 0;
 			$sects = $sects + 0;
+			$user_chs_override = 1;
 			$tc = $tc + 0;
 			$cyls = $tc if $tc >= 1;
 
@@ -337,21 +339,31 @@ if ($ver eq "3.3nec" || $ver eq "3.3") {
 	}
 }
 elsif ($ver eq "3.2epson") {
-	# MS-DOS v3.2 "epson" copy I have seems to have problems booting
-	# if the drive is less than 24MB or larger than 29MB. Weird.
-	# Reformatting with their own tools does not resolve the issue.
-	if ($x >= (30*1024*1024)) {
-		$x = (29*1024*1024);
-		$cyls = $x / 512 / $heads / $sects;
+	# See http://www.os2museum.com/wp/?p=685 for more information.
+	# MS-DOS v3.2 and 2.xx have bugs in the bootloader related to
+	# hard drives having more than about 26KB (52 sectors) per track.
+	# It likes to load a track at a time, which was fine back when
+	# hard drives had 17 sectors/track, but can end up overwriting
+	# itself or trashing it's own stack on modern 63 sector/track disks.
+	#
+	# Our fix: Unless the user has specifically given us a geometry,
+	# set the sectors/track to a smaller value.
+	if ($user_chs_override == 0) {
+		$sects = 24;
+		$cyls = $target_size / 512 / $heads / $sects;
+		$cyls = 1023 if $cyls > 1023;
+		$x = 512 * $cyls * $heads * $sects;
 	}
-	elsif ($x < (24*1024*1024)) {
-		print "NOTICE: Hard drives smaller than 24MB trigger a crash condition\n";
-		print "        in MS-DOS 3.2 epson. It is not yet known why. Forcing\n";
-		print "        drive size to minimum 24MB\n";
+	elsif ($sects > 52) { # FIXME: What's the upper limit?
+		print "WARNING: 52 or more sectors/track with MS-DOS 3.2 is not reliable\n";
+		print "For more information visit: http://www.os2museum.com/wp/?p=685\n";
 		sleep 1;
-		$x = (24*1024*1024);
+	}
+
+	# MS-DOS v3.2 and earlier cannot support >= 32MB partitions.
+	if ($x >= (32*1024*1024)) {
+		$x = (31*1024*1024);
 		$cyls = $x / 512 / $heads / $sects;
-		$act_cyls = $cyls;
 	}
 }
 
