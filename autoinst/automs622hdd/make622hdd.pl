@@ -307,7 +307,7 @@ if ($ver eq "3.3nec" || $ver eq "3.3" || $ver eq "3.2epson") {
 my $part_offset_sects = $sects;
 my $part_offset = 0x200 * $part_offset_sects;
 
-if ($ver eq "3.3nec" || $ver eq "3.3" || $ver eq "3.2epson") {
+if ($ver eq "3.3nec" || $ver eq "3.3") {
 	# MS-DOS 3.3 hard disk support is apparently very picky.
 	# If it's FAT16 formatted, then the cluster size must be 4 sectors/cluster.
 	# If it's FAT12 formatted, then the cluster size must be 8 sectors/cluster.
@@ -320,6 +320,25 @@ if ($ver eq "3.3nec" || $ver eq "3.3" || $ver eq "3.2epson") {
 	if ($x < (16*1024*1024)) {
 		$part_type = 0x01; # FAT12 <= 32MB
 		$clustersize = 8; # Apparently it's FAT12 support demands 8 sectors/cluster
+
+		# how long does the FAT table need to be?
+		# doing this calculation is REQUIRED to force mtools to format the partition
+		# as FAT12 rather than trying to shoehorn in FAT16, which MS-DOS 3.3 NEC edition
+		# won't accept.
+		$fat_len = (($x-$part_offset_sects)/512/$clustersize);
+		$fat_len = ($fat_len / 2) * 3;
+		$fat_len = int(($fat_len+511)/512);
+	}
+}
+elsif ($ver eq "3.2epson") {
+	$clustersize = 4;
+
+	# At 15MB or less, force mformat to do FAT12. It'd be nice if like mkdosfs they
+	# offered something like --fat=12 to explicitly say so, but they don't. Our only
+	# hope then is to force the size of the FAT table.
+	$x = 512 * $cyls * $heads * $sects;
+	if ($x < (16*1024*1024)) {
+		$part_type = 0x01; # FAT12 <= 32MB
 
 		# how long does the FAT table need to be?
 		# doing this calculation is REQUIRED to force mtools to format the partition
@@ -409,6 +428,10 @@ if ($ver eq "3.3nec" || $ver eq "3.3" || $ver eq "3.2epson") {
 	open(BIN,"+<","$diskbase") || die
 	binmode(BIN);
 
+	# mystery value
+	my $myval = 0x12;
+	$myval = 0x0F if $ver eq "3.2epson";
+
 	# total sector count fixup
 	my $x = ($cyls * $heads * $sects) - $part_offset_sects;
 	die "$x is too many sectors" if $x > 65535;
@@ -425,7 +448,7 @@ if ($ver eq "3.3nec" || $ver eq "3.3" || $ver eq "3.2epson") {
 		0x00,0x00,0x00,0x00,
 		0x00,0x00,0x00,0x00,
 		0x00,0x00,0x00,0x00,
-		0x00,0x00,0x00,0x12,
+		0x00,0x00,0x00,$myval,
 	
 		0x00,0x00,0x00,0x00,
 		0x01,0x00);
