@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="en-US"><head>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+<meta charset="UTF-8">
+<title>Hang with early DOS boot sector | OS/2 Museum</title>
+<link rel="profile" href="http://gmpg.org/xfn/11">
+<link rel="stylesheet" type="text/css" media="all" href="Hang%20with%20early%20DOS%20boot%20sector,%20OS2%20Museum_files/style.css">
+<link rel="pingback" href="http://www.os2museum.com/wp/xmlrpc.php">
+<link rel="alternate" type="application/rss+xml" title="OS/2 Museum » Feed" href="http://www.os2museum.com/wp/?feed=rss2">
+<link rel="alternate" type="application/rss+xml" title="OS/2 Museum » Comments Feed" href="http://www.os2museum.com/wp/?feed=comments-rss2">
+<link rel="alternate" type="application/rss+xml" title="OS/2 Museum » Hang with early DOS boot sector Comments Feed" href="http://www.os2museum.com/wp/?feed=rss2&amp;p=685">
+<link rel="EditURI" type="application/rsd+xml" title="RSD" href="http://www.os2museum.com/wp/xmlrpc.php?rsd">
+<link rel="wlwmanifest" type="application/wlwmanifest+xml" href="http://www.os2museum.com/wp/wp-includes/wlwmanifest.xml"> 
+<link rel="prev" title="Happy 30th Birthday!" href="http://www.os2museum.com/wp/?p=627">
+<link rel="next" title="IBM DOS 5.0 QBASIC hangs on non-IBM systems" href="http://www.os2museum.com/wp/?p=726">
+<meta name="generator" content="WordPress 3.5.1">
+<link rel="canonical" href="http://www.os2museum.com/wp/?p=685">
+<!-- All in one Favicon 4.3 --><link rel="shortcut icon" href="http://www.os2museum.com/favicon.ico">
+</head>
+
+<body class="single single-post postid-685 single-format-standard">
+<div id="wrapper" class="hfeed">
+	<div id="header">
+		<div id="masthead">
+			<div id="branding" role="banner">
+								<div id="site-title">
+					<span>
+						<a href="http://www.os2museum.com/wp/" title="OS/2 Museum" rel="home">OS/2 Museum</a>
+					</span>
+				</div>
+				<div id="site-description">OS/2, vintage PC computing, and random musings</div>
+
+										<img src="Hang%20with%20early%20DOS%20boot%20sector,%20OS2%20Museum_files/os2floppy.jpg" alt="" height="198" width="940">
+								</div><!-- #branding -->
+
+			<div id="access" role="navigation">
+			  				<div class="skip-link screen-reader-text"><a href="#content" title="Skip to content">Skip to content</a></div>
+								<div class="menu"><ul><li><a href="http://www.os2museum.com/wp/" title="Home">Home</a></li><li class="page_item page-item-2"><a href="http://www.os2museum.com/wp/?page_id=2">About</a></li><li class="page_item page-item-68"><a href="http://www.os2museum.com/wp/?page_id=68">OS/2 History</a><ul class="children"><li class="page_item page-item-341"><a href="http://www.os2museum.com/wp/?page_id=341">OS/2 Beginnings</a></li><li class="page_item page-item-313"><a href="http://www.os2museum.com/wp/?page_id=313">OS/2 1.0</a></li><li class="page_item page-item-278"><a href="http://www.os2museum.com/wp/?page_id=278">OS/2 1.1</a></li><li class="page_item page-item-219"><a href="http://www.os2museum.com/wp/?page_id=219">OS/2 1.2 and 1.3</a></li><li class="page_item page-item-182"><a href="http://www.os2museum.com/wp/?page_id=182">OS/2 16-bit Server</a></li><li class="page_item page-item-112"><a href="http://www.os2museum.com/wp/?page_id=112">OS/2 2.0</a></li><li class="page_item page-item-89"><a href="http://www.os2museum.com/wp/?page_id=89">OS/2 2.1 and 2.11</a></li><li class="page_item page-item-76"><a href="http://www.os2museum.com/wp/?page_id=76">OS/2 Warp</a></li><li class="page_item page-item-30"><a href="http://www.os2museum.com/wp/?page_id=30">OS/2 Warp, PowerPC Edition</a></li><li class="page_item page-item-132"><a href="http://www.os2museum.com/wp/?page_id=132">OS/2 Warp 4</a></li><li class="page_item page-item-173"><a href="http://www.os2museum.com/wp/?page_id=173">OS/2 Timeline</a></li><li class="page_item page-item-1351"><a href="http://www.os2museum.com/wp/?page_id=1351">OS/2 Videos, 1987</a></li></ul></li><li class="page_item page-item-610"><a href="http://www.os2museum.com/wp/?page_id=610">DOS History</a><ul class="children"><li class="page_item page-item-555"><a href="http://www.os2museum.com/wp/?page_id=555">DOS Beginnings</a></li><li class="page_item page-item-563"><a href="http://www.os2museum.com/wp/?page_id=563">DOS 1.0 and 1.1</a></li><li class="page_item page-item-630"><a href="http://www.os2museum.com/wp/?page_id=630">DOS 2.0 and 2.1</a></li><li class="page_item page-item-639"><a href="http://www.os2museum.com/wp/?page_id=639">DOS 3.0, 3.1, and 3.2</a></li><li class="page_item page-item-689"><a href="http://www.os2museum.com/wp/?page_id=689">DOS 3.3</a></li><li class="page_item page-item-759"><a href="http://www.os2museum.com/wp/?page_id=759">DOS 4.0</a></li></ul></li><li class="page_item page-item-1255"><a href="http://www.os2museum.com/wp/?page_id=1255">PC UNIX History</a><ul class="children"><li class="page_item page-item-1098"><a href="http://www.os2museum.com/wp/?page_id=1098">Solaris 2.1 for x86</a></li></ul></li></ul></div>
+			</div><!-- #access -->
+		</div><!-- #masthead -->
+	</div><!-- #header -->
+
+	<div id="main">
+
+		<div id="container">
+			<div id="content" role="main">
+
+			
+
+				<div id="nav-above" class="navigation">
+					<div class="nav-previous"><a href="http://www.os2museum.com/wp/?p=627" rel="prev"><span class="meta-nav">←</span> Happy 30th Birthday!</a></div>
+					<div class="nav-next"><a href="http://www.os2museum.com/wp/?p=726" rel="next">IBM DOS 5.0 QBASIC hangs on non-IBM systems <span class="meta-nav">→</span></a></div>
+				</div><!-- #nav-above -->
+
+				<div id="post-685" class="post-685 post type-post status-publish format-standard hentry category-dos">
+					<h1 class="entry-title">Hang with early DOS boot sector</h1>
+
+					<div class="entry-meta">
+						<span class="meta-prep meta-prep-author">Posted on</span> <a href="http://www.os2museum.com/wp/?p=685" title="9:19 pm" rel="bookmark"><span class="entry-date">September 3, 2011</span></a> <span class="meta-sep">by</span> <span class="author vcard"><a class="url fn n" href="http://www.os2museum.com/wp/?author=4" title="View all posts by Michal Necasek">Michal Necasek</a></span>					</div><!-- .entry-meta -->
+
+					<div class="entry-content">
+						<p>While installing various versions of DOS for the DOS history 
+series of articles, I was faced with a mysterious problem: Some versions
+ of DOS would hang right away when booting from fixed disk, but not from
+ floppy. I already knew that DOS 4.x is very sensitive to BIOS stack 
+usage; if a BIOS needs more than 100 bytes or so of stack to process a 
+disk read request, it will fail to boot DOS 4.x from fixed disk, even 
+though the same DOS 4.x can access the same disk just fine when booted 
+from floppy.</p>
+<p>However, the hangs I was observing were happening with DOS 2.x and 
+3.x, and those do not have such tight stack usage requirements. I 
+quickly realized that the problem is caused by a bug in the DOS boot 
+sector: the boot sector code tries to optimize the loading of IBMBIO.COM
+ and attempts to read a whole disk track at a time. That sounds like a 
+good idea, but it’s not.<span id="more-685"></span></p>
+<p>The boot sector is loaded at address 0:7c00h, or just under 32KB. The
+ BIOS component of DOS (IBMBIO.COM) is loaded at address 70h:0 (in other
+ words, 0:700h). The boot sector also sets up the top of stack at 
+0:7c00h, just below the boot sector code. There is therefore slightly 
+under 30KB of room for IBMBIO.COM, which in the 2.x and 3.x versions of 
+DOS is well under 20KB size (just 4.5KB in DOS 2.0 in fact). In theory 
+there should be no problem.</p>
+<p>Unfortunately, the author of the DOS 2.0 boot sector was too eager to
+ optimize the loading and not thinking far enough ahead. Loading a track
+ at a time sounds clever, except when it’s not… On a modern disk, there 
+are usually 63 sectors per track, or 31.5KB of data. If the boot sector 
+reads that whole track, it <em>will</em> destroy the stack and overwrite
+ itself. But back when the boot sector code was written, almost all 
+fixed disks had 17 sectors per track, which meant that no amount of 
+testing would have caught the bug. Floppy booting is no problem either, 
+since even 1.44MB diskettes only have 18 sectors per track.</p>
+<p>Now, the above explains why an old version of DOS might hang when 
+booted from a modern fixed disk. But it does not explain why some of my 
+DOS 2.x and 3.x installs worked just fine, including a case with one 
+install of DOS 2.0 booting fine and another persistently hanging.</p>
+<p>After some head scratching, it turned out that the DOS partition size
+ is key. Depending on how big the partition is, the FATs will have 
+varying size, and IBMBIO.COM will start on a different sector relative 
+to the start of the track. If IBMBIO.COM starts on, say, sector 30, the 
+boot sector will load 33 sectors and DOS will boot fine. If IBMBIO.COM 
+starts on sector 1, DOS will hang. Similarly if IBMBIO.COM starts on 
+sector 60, the first read of four sectors will be fine, but the next 
+read of 63 sectors will crash the system.</p>
+<p>For reference, a 30-cylinder partition on a typical disk with 63 
+sectors per track and 16 heads tends to cause problems. A 60-cylinder 
+partition (close to the 32MB partition size limit) tends to work, but 
+the exact behavior depends on the DOS version.</p>
+<p>The bug most likely affects all 2.x and 3.x versions of DOS prior to 
+3.3. Version 3.3 relaxed the restriction that IBMBIO.COM/IO.SYS must be 
+contiguous (which enabled the track-at-once loading); this is documented
+ by Microsoft in <a title="Microsoft KB 66530" href="http://support.microsoft.com/kb/66530" target="_blank">KB 66530</a>. The removed restriction required changes to the boot sector and IBMBIO.COM/IO.SYS had to be loaded cluster by cluster.</p>
+<p>In DOS 4.0, IBMBIO.COM/IO.SYS grew beyond 30KB and could no longer be
+ loaded in one go at all, even if it were contiguous (that would in 
+essence always cause the hang problem described above). There just 
+wasn’t enough space between 70h:0 and 0:7c00h anymore. The BIOS 
+component was therefore loaded in two stages, which avoided the problem.
+ However, the staged loading caused the previously mentioned issue with 
+tight stack space—but that’s a different story.</p>
+<p>This bug does not appear to be well known. The most likely reason is 
+that extremely few people attempt installing DOS 3.2 or older on a 
+computer with a multi-gigabyte disk. DOS 2.x is simply not useful for 
+running any “modern” DOS software, and DOS 3.0/3.1/3.2 has a serious 
+drawback in that it does not support 1.44MB floppy drives.</p>
+											</div><!-- .entry-content -->
+
+
+					<div class="entry-utility">
+						This entry was posted in <a href="http://www.os2museum.com/wp/?cat=5" title="View all posts in DOS" rel="category">DOS</a>. Bookmark the <a href="http://www.os2museum.com/wp/?p=685" title="Permalink to Hang with early DOS boot sector" rel="bookmark">permalink</a>.											</div><!-- .entry-utility -->
+				</div><!-- #post-## -->
+
+				<div id="nav-below" class="navigation">
+					<div class="nav-previous"><a href="http://www.os2museum.com/wp/?p=627" rel="prev"><span class="meta-nav">←</span> Happy 30th Birthday!</a></div>
+					<div class="nav-next"><a href="http://www.os2museum.com/wp/?p=726" rel="next">IBM DOS 5.0 QBASIC hangs on non-IBM systems <span class="meta-nav">→</span></a></div>
+				</div><!-- #nav-below -->
+
+				
+			<div id="comments">
+
+
+			<h3 id="comments-title">15 Responses to <em>Hang with early DOS boot sector</em></h3>
+
+
+			<ol class="commentlist">
+					<li class="comment even thread-even depth-1" id="li-comment-2617">
+		<div id="comment-2617">
+			<div class="comment-author vcard">
+				<img alt="" src="Hang%20with%20early%20DOS%20boot%20sector,%20OS2%20Museum_files/704a1e4bb9b4982564141ff4c15b7eda" class="avatar avatar-40 photo" height="40" width="40">				<cite class="fn"><a href="http://yuhongbao.blogspot.com/" rel="external nofollow" class="url">Yuhong Bao</a></cite> <span class="says">says:</span>			</div><!-- .comment-author .vcard -->
+			
+			<div class="comment-meta commentmetadata"><a href="http://www.os2museum.com/wp/?p=685&amp;cpage=1#comment-2617">
+				November 6, 2011 at 9:12 am</a>			</div><!-- .comment-meta .commentmetadata -->
+
+			<div class="comment-body"><p>Not to mention the 32MB partition limit turns the 58 sectors per track limit into a non-issue anyway.</p>
+</div>
+
+			<div class="reply">
+							</div><!-- .reply -->
+		</div><!-- #comment-##  -->
+
+	</li>
+	<li class="comment odd alt thread-odd thread-alt depth-1" id="li-comment-2619">
+		<div id="comment-2619">
+			<div class="comment-author vcard">
+				<img alt="" src="Hang%20with%20early%20DOS%20boot%20sector,%20OS2%20Museum_files/ad516503a11cd5ca435acc9bb6523536" class="avatar avatar-40 photo avatar-default" height="40" width="40">				<cite class="fn"><a href="http://www.os2museum.com/" rel="external nofollow" class="url">michaln</a></cite> <span class="says">says:</span>			</div><!-- .comment-author .vcard -->
+			
+			<div class="comment-meta commentmetadata"><a href="http://www.os2museum.com/wp/?p=685&amp;cpage=1#comment-2619">
+				November 6, 2011 at 12:19 pm</a>			</div><!-- .comment-meta .commentmetadata -->
+
+			<div class="comment-body"><p>Sorry, that makes no sense. Can you please elaborate? What 58 SPT limit are you talking about?</p>
+</div>
+
+			<div class="reply">
+							</div><!-- .reply -->
+		</div><!-- #comment-##  -->
+
+	</li>
+	<li class="comment even thread-even depth-1" id="li-comment-2631">
+		<div id="comment-2631">
+			<div class="comment-author vcard">
+				<img alt="" src="Hang%20with%20early%20DOS%20boot%20sector,%20OS2%20Museum_files/704a1e4bb9b4982564141ff4c15b7eda" class="avatar avatar-40 photo" height="40" width="40">				<cite class="fn"><a href="http://yuhongbao.blogspot.com/" rel="external nofollow" class="url">Yuhong Bao</a></cite> <span class="says">says:</span>			</div><!-- .comment-author .vcard -->
+			
+			<div class="comment-meta commentmetadata"><a href="http://www.os2museum.com/wp/?p=685&amp;cpage=1#comment-2631">
+				November 6, 2011 at 10:08 pm</a>			</div><!-- .comment-meta .commentmetadata -->
+
+			<div class="comment-body"><p>7c00h – 700h / 512 bytes = 58</p>
+</div>
+
+			<div class="reply">
+							</div><!-- .reply -->
+		</div><!-- #comment-##  -->
+
+	</li>
+	<li class="comment odd alt thread-odd thread-alt depth-1" id="li-comment-2632">
+		<div id="comment-2632">
+			<div class="comment-author vcard">
+				<img alt="" src="Hang%20with%20early%20DOS%20boot%20sector,%20OS2%20Museum_files/704a1e4bb9b4982564141ff4c15b7eda" class="avatar avatar-40 photo" height="40" width="40">				<cite class="fn"><a href="http://yuhongbao.blogspot.com/" rel="external nofollow" class="url">Yuhong Bao</a></cite> <span class="says">says:</span>			</div><!-- .comment-author .vcard -->
+			
+			<div class="comment-meta commentmetadata"><a href="http://www.os2museum.com/wp/?p=685&amp;cpage=1#comment-2632">
+				November 6, 2011 at 10:14 pm</a>			</div><!-- .comment-meta .commentmetadata -->
+
+			<div class="comment-body"><p>Actually, it would be 57 sectors per track to allow for the stack itself.</p>
+</div>
+
+			<div class="reply">
+							</div><!-- .reply -->
+		</div><!-- #comment-##  -->
+
+	</li>
+	<li class="comment even thread-even depth-1" id="li-comment-2665">
+		<div id="comment-2665">
+			<div class="comment-author vcard">
+				<img alt="" src="Hang%20with%20early%20DOS%20boot%20sector,%20OS2%20Museum_files/ad516503a11cd5ca435acc9bb6523536" class="avatar avatar-40 photo avatar-default" height="40" width="40">				<cite class="fn"><a href="http://www.os2museum.com/" rel="external nofollow" class="url">michaln</a></cite> <span class="says">says:</span>			</div><!-- .comment-author .vcard -->
+			
+			<div class="comment-meta commentmetadata"><a href="http://www.os2museum.com/wp/?p=685&amp;cpage=1#comment-2665">
+				November 7, 2011 at 6:23 pm</a>			</div><!-- .comment-meta .commentmetadata -->
+
+			<div class="comment-body"><p>There’s room for 58.5 sectors between 
+700h and 7C00h. The stack is extremely unlikely to need more than 256 
+bytes, so 58 sectors should be fine.</p>
+<p>But what does that have to do with the 32MB partition size limit?</p>
+</div>
+
+			<div class="reply">
+							</div><!-- .reply -->
+		</div><!-- #comment-##  -->
+
+	</li>
+	<li class="comment odd alt thread-odd thread-alt depth-1" id="li-comment-3472">
+		<div id="comment-3472">
+			<div class="comment-author vcard">
+				<img alt="" src="Hang%20with%20early%20DOS%20boot%20sector,%20OS2%20Museum_files/704a1e4bb9b4982564141ff4c15b7eda" class="avatar avatar-40 photo" height="40" width="40">				<cite class="fn"><a href="http://yuhongbao.blogspot.com/" rel="external nofollow" class="url">Yuhong Bao</a></cite> <span class="says">says:</span>			</div><!-- .comment-author .vcard -->
+			
+			<div class="comment-meta commentmetadata"><a href="http://www.os2museum.com/wp/?p=685&amp;cpage=1#comment-3472">
+				December 7, 2011 at 8:50 am</a>			</div><!-- .comment-meta .commentmetadata -->
+
+			<div class="comment-body"><p>Well, DOS 3.2 and earlier did not support partitioning at all without third-party drivers.</p>
+</div>
+
+			<div class="reply">
+							</div><!-- .reply -->
+		</div><!-- #comment-##  -->
+
+	</li>
+	<li class="comment even thread-even depth-1" id="li-comment-3476">
+		<div id="comment-3476">
+			<div class="comment-author vcard">
+				<img alt="" src="Hang%20with%20early%20DOS%20boot%20sector,%20OS2%20Museum_files/ad516503a11cd5ca435acc9bb6523536" class="avatar avatar-40 photo avatar-default" height="40" width="40">				<cite class="fn"><a href="http://www.os2museum.com/" rel="external nofollow" class="url">michaln</a></cite> <span class="says">says:</span>			</div><!-- .comment-author .vcard -->
+			
+			<div class="comment-meta commentmetadata"><a href="http://www.os2museum.com/wp/?p=685&amp;cpage=1#comment-3476">
+				December 7, 2011 at 11:00 am</a>			</div><!-- .comment-meta .commentmetadata -->
+
+			<div class="comment-body"><p>That’s a rather misleading statement. 
+DOS always supported partitioning (ever since hard disk support was 
+added in DOS 2.0), but prior to 3.3 DOS could not access multiple DOS 
+partitions at the same time. It was always possible to have multiple 
+partitions present on a fixed disk, even multiple DOS partitions (but 
+only one active/accessible).</p>
+</div>
+
+			<div class="reply">
+							</div><!-- .reply -->
+		</div><!-- #comment-##  -->
+
+	</li>
+	<li class="comment odd alt thread-odd thread-alt depth-1" id="li-comment-4012">
+		<div id="comment-4012">
+			<div class="comment-author vcard">
+				<img alt="" src="Hang%20with%20early%20DOS%20boot%20sector,%20OS2%20Museum_files/704a1e4bb9b4982564141ff4c15b7eda" class="avatar avatar-40 photo" height="40" width="40">				<cite class="fn"><a href="http://yuhongbao.blogspot.com/" rel="external nofollow" class="url">Yuhong Bao</a></cite> <span class="says">says:</span>			</div><!-- .comment-author .vcard -->
+			
+			<div class="comment-meta commentmetadata"><a href="http://www.os2museum.com/wp/?p=685&amp;cpage=1#comment-4012">
+				January 2, 2012 at 4:08 am</a>			</div><!-- .comment-meta .commentmetadata -->
+
+			<div class="comment-body"><p>Yea, I think it was primarily for booting other OSes like Xenix.</p>
+</div>
+
+			<div class="reply">
+							</div><!-- .reply -->
+		</div><!-- #comment-##  -->
+
+	</li>
+	<li class="comment even thread-even depth-1" id="li-comment-5484">
+		<div id="comment-5484">
+			<div class="comment-author vcard">
+				<img alt="" src="Hang%20with%20early%20DOS%20boot%20sector,%20OS2%20Museum_files/1951012db8638980296d4a790aaf4610" class="avatar avatar-40 photo" height="40" width="40">				<cite class="fn">rauli</cite> <span class="says">says:</span>			</div><!-- .comment-author .vcard -->
+			
+			<div class="comment-meta commentmetadata"><a href="http://www.os2museum.com/wp/?p=685&amp;cpage=1#comment-5484">
+				March 22, 2012 at 1:03 pm</a>			</div><!-- .comment-meta .commentmetadata -->
+
+			<div class="comment-body"><p>Let’s suppose:<br>
+1 – We have a hard disk partition [A] with MS DOS 3.0/3.1/3.2 installed 
+on it, and crashing at boot (because of the issue described in this 
+article).<br>
+2 – We have MS DOS 3.30 installed on another disk [B] (another hard disk partition or a diskette).</p>
+<p>Replacing [A] boot sector with [B] boot sector… would make [A] boot?<br>
+(replacing the boot sector, but maintaining the BPB part, of course)</p>
+</div>
+
+			<div class="reply">
+							</div><!-- .reply -->
+		</div><!-- #comment-##  -->
+
+	</li>
+	<li class="comment odd alt thread-odd thread-alt depth-1" id="li-comment-5487">
+		<div id="comment-5487">
+			<div class="comment-author vcard">
+				<img alt="" src="Hang%20with%20early%20DOS%20boot%20sector,%20OS2%20Museum_files/ad516503a11cd5ca435acc9bb6523536" class="avatar avatar-40 photo avatar-default" height="40" width="40">				<cite class="fn"><a href="http://www.os2museum.com/" rel="external nofollow" class="url">michaln</a></cite> <span class="says">says:</span>			</div><!-- .comment-author .vcard -->
+			
+			<div class="comment-meta commentmetadata"><a href="http://www.os2museum.com/wp/?p=685&amp;cpage=1#comment-5487">
+				March 22, 2012 at 1:35 pm</a>			</div><!-- .comment-meta .commentmetadata -->
+
+			<div class="comment-body"><p>It might help, but I can’t guarantee that it will work. I’d give it about 80% chance of success. If you do try, be very careful.</p>
+</div>
+
+			<div class="reply">
+							</div><!-- .reply -->
+		</div><!-- #comment-##  -->
+
+	</li>
+	<li class="comment even thread-even depth-1" id="li-comment-5500">
+		<div id="comment-5500">
+			<div class="comment-author vcard">
+				<img alt="" src="Hang%20with%20early%20DOS%20boot%20sector,%20OS2%20Museum_files/4fb67488b5ddd81a1206953bab2ff0aa" class="avatar avatar-40 photo" height="40" width="40">				<cite class="fn">rauli</cite> <span class="says">says:</span>			</div><!-- .comment-author .vcard -->
+			
+			<div class="comment-meta commentmetadata"><a href="http://www.os2museum.com/wp/?p=685&amp;cpage=1#comment-5500">
+				March 22, 2012 at 7:25 pm</a>			</div><!-- .comment-meta .commentmetadata -->
+
+			<div class="comment-body"><p>It works!<br>
+But, if you take DOS 3.3 boot sector from a diskette, you have to 
+maintain also byte at 01FD from the [A] boot sector (3rd from the end) 
+which is 80h for a hard disk boot sector, and 00h for a diskette boot 
+sector.<br>
+I didn’t notice that byte, and it almost makes me quit…<br>
+As I’ve said before, you also have to maintain the original BPB from [A] (for DOS 3.x it’s at bytes 0Bh to 1Dh, I think).<br>
+After some rest I will try to boot DOS 2.x and 4 with this same method 
+(using 3.3 boot sector). Just to try, but I think they will not boot.</p>
+</div>
+
+			<div class="reply">
+							</div><!-- .reply -->
+		</div><!-- #comment-##  -->
+
+	</li>
+	<li class="comment odd alt thread-odd thread-alt depth-1" id="li-comment-5785">
+		<div id="comment-5785">
+			<div class="comment-author vcard">
+				<img alt="" src="Hang%20with%20early%20DOS%20boot%20sector,%20OS2%20Museum_files/fb60a38329dabcf2e8af6f2ae9ca19db" class="avatar avatar-40 photo" height="40" width="40">				<cite class="fn">alex peter</cite> <span class="says">says:</span>			</div><!-- .comment-author .vcard -->
+			
+			<div class="comment-meta commentmetadata"><a href="http://www.os2museum.com/wp/?p=685&amp;cpage=1#comment-5785">
+				April 7, 2012 at 5:23 am</a>			</div><!-- .comment-meta .commentmetadata -->
+
+			<div class="comment-body"><p>anyone know how to get more than 4 
+partitions from dos 3.2? assuming the drive can handle more than 4 32 
+meg partitions.  I heard ast and nec came up with 8 32 meg partitions I 
+think, but im looking for software |i can use with dos 3.2 that will 
+give me more partitions.  any takers?</p>
+</div>
+
+			<div class="reply">
+							</div><!-- .reply -->
+		</div><!-- #comment-##  -->
+
+	</li>
+	<li class="comment even thread-even depth-1" id="li-comment-5786">
+		<div id="comment-5786">
+			<div class="comment-author vcard">
+				<img alt="" src="Hang%20with%20early%20DOS%20boot%20sector,%20OS2%20Museum_files/fb60a38329dabcf2e8af6f2ae9ca19db" class="avatar avatar-40 photo" height="40" width="40">				<cite class="fn">alex peter</cite> <span class="says">says:</span>			</div><!-- .comment-author .vcard -->
+			
+			<div class="comment-meta commentmetadata"><a href="http://www.os2museum.com/wp/?p=685&amp;cpage=1#comment-5786">
+				April 7, 2012 at 5:28 am</a>			</div><!-- .comment-meta .commentmetadata -->
+
+			<div class="comment-body"><p>I want to run my old games on my Tandy 
+1k.  3.3 wont run them due to too much conventional mem ue but 3.2 does.
+  Drawback is that I have an 8 bit ide card that can take 2 gig 
+partitions but the dos it uses (6.22) definitely wont run my games.  
+tandy had a very weird video set up that used conventional mem to run 
+its video ram.  (sucks) but If I can circumvent the problem by using 3.2
+ then I got it licked.  Assuming that I can get some sort of 
+partitioning sorftware or a version of fdisk that will give me more than
+ the said 4 partition limitations in 3.2.</p>
+</div>
+
+			<div class="reply">
+							</div><!-- .reply -->
+		</div><!-- #comment-##  -->
+
+	</li>
+	<li class="comment odd alt thread-odd thread-alt depth-1" id="li-comment-5791">
+		<div id="comment-5791">
+			<div class="comment-author vcard">
+				<img alt="" src="Hang%20with%20early%20DOS%20boot%20sector,%20OS2%20Museum_files/ad516503a11cd5ca435acc9bb6523536" class="avatar avatar-40 photo avatar-default" height="40" width="40">				<cite class="fn"><a href="http://www.os2museum.com/" rel="external nofollow" class="url">michaln</a></cite> <span class="says">says:</span>			</div><!-- .comment-author .vcard -->
+			
+			<div class="comment-meta commentmetadata"><a href="http://www.os2museum.com/wp/?p=685&amp;cpage=1#comment-5791">
+				April 7, 2012 at 10:15 am</a>			</div><!-- .comment-meta .commentmetadata -->
+
+			<div class="comment-body"><p>If they really supported more than 4 partitions, they probably had OEM DOS versions with adapted IO.SYS.</p>
+</div>
+
+			<div class="reply">
+							</div><!-- .reply -->
+		</div><!-- #comment-##  -->
+
+	</li>
+	<li class="post pingback">
+		<p>Pingback: <a href="http://www.os2museum.com/wp/?p=1132" rel="external nofollow" class="url">DOS boot hang update | OS/2 Museum</a></p>
+	</li>
+			</ol>
+
+
+	
+
+								<div id="respond">
+				<h3 id="reply-title">Leave a Reply <small><a rel="nofollow" id="cancel-comment-reply-link" href="http://www.os2museum.com/wp/?p=685#respond" style="display:none;">Cancel reply</a></small></h3>
+									<form action="http://www.os2museum.com/wp/wp-comments-post.php" method="post" id="commentform">
+																			<p class="comment-notes">Your email address will not be published. Required fields are marked <span class="required">*</span></p>							<p class="comment-form-author"><label for="author">Name <span class="required">*</span></label> <input id="author" name="author" size="30" aria-required="true" type="text"></p>
+<p class="comment-form-email"><label for="email">Email <span class="required">*</span></label> <input id="email" name="email" size="30" aria-required="true" type="text"></p>
+<p class="comment-form-url"><label for="url">Website</label><input id="url" name="url" size="30" type="text"></p>
+												<p class="comment-form-comment"><label for="comment">Comment</label><textarea id="comment" name="comment" cols="45" rows="8" aria-required="true"></textarea></p>						<p class="form-allowed-tags">You may use these <abbr title="HyperText Markup Language">HTML</abbr> tags and attributes:  <code>&lt;a
+ href="" title=""&gt; &lt;abbr title=""&gt; &lt;acronym title=""&gt; 
+&lt;b&gt; &lt;blockquote cite=""&gt; &lt;cite&gt; &lt;code&gt; &lt;del 
+datetime=""&gt; &lt;em&gt; &lt;i&gt; &lt;q cite=""&gt; &lt;strike&gt; 
+&lt;strong&gt; </code></p>						<p class="form-submit">
+							<input name="submit" id="submit" value="Post Comment" type="submit">
+							<input name="comment_post_ID" value="685" id="comment_post_ID" type="hidden">
+<input name="comment_parent" id="comment_parent" value="0" type="hidden">
+						</p>
+						<p style="display: none;"><input id="akismet_comment_nonce" name="akismet_comment_nonce" value="41c4851033" type="hidden"></p>					</form>
+							</div><!-- #respond -->
+						
+</div><!-- #comments -->
+
+
+			</div><!-- #content -->
+		</div><!-- #container -->
+
+
+		<div id="primary" class="widget-area" role="complementary">
+			<ul class="xoxo">
+
+
+			<li id="search" class="widget-container widget_search">
+				<form role="search" method="get" id="searchform" action="http://www.os2museum.com/wp/">
+	<div><label class="screen-reader-text" for="s">Search for:</label>
+	<input name="s" id="s" type="text">
+	<input id="searchsubmit" value="Search" type="submit">
+	</div>
+	</form>			</li>
+
+			<li id="archives" class="widget-container">
+				<h3 class="widget-title">Archives</h3>
+				<ul>
+						<li><a href="http://www.os2museum.com/wp/?m=201305" title="May 2013">May 2013</a></li>
+	<li><a href="http://www.os2museum.com/wp/?m=201304" title="April 2013">April 2013</a></li>
+	<li><a href="http://www.os2museum.com/wp/?m=201303" title="March 2013">March 2013</a></li>
+	<li><a href="http://www.os2museum.com/wp/?m=201302" title="February 2013">February 2013</a></li>
+	<li><a href="http://www.os2museum.com/wp/?m=201301" title="January 2013">January 2013</a></li>
+	<li><a href="http://www.os2museum.com/wp/?m=201212" title="December 2012">December 2012</a></li>
+	<li><a href="http://www.os2museum.com/wp/?m=201211" title="November 2012">November 2012</a></li>
+	<li><a href="http://www.os2museum.com/wp/?m=201210" title="October 2012">October 2012</a></li>
+	<li><a href="http://www.os2museum.com/wp/?m=201209" title="September 2012">September 2012</a></li>
+	<li><a href="http://www.os2museum.com/wp/?m=201208" title="August 2012">August 2012</a></li>
+	<li><a href="http://www.os2museum.com/wp/?m=201207" title="July 2012">July 2012</a></li>
+	<li><a href="http://www.os2museum.com/wp/?m=201206" title="June 2012">June 2012</a></li>
+	<li><a href="http://www.os2museum.com/wp/?m=201205" title="May 2012">May 2012</a></li>
+	<li><a href="http://www.os2museum.com/wp/?m=201204" title="April 2012">April 2012</a></li>
+	<li><a href="http://www.os2museum.com/wp/?m=201203" title="March 2012">March 2012</a></li>
+	<li><a href="http://www.os2museum.com/wp/?m=201202" title="February 2012">February 2012</a></li>
+	<li><a href="http://www.os2museum.com/wp/?m=201201" title="January 2012">January 2012</a></li>
+	<li><a href="http://www.os2museum.com/wp/?m=201112" title="December 2011">December 2011</a></li>
+	<li><a href="http://www.os2museum.com/wp/?m=201111" title="November 2011">November 2011</a></li>
+	<li><a href="http://www.os2museum.com/wp/?m=201110" title="October 2011">October 2011</a></li>
+	<li><a href="http://www.os2museum.com/wp/?m=201109" title="September 2011">September 2011</a></li>
+	<li><a href="http://www.os2museum.com/wp/?m=201108" title="August 2011">August 2011</a></li>
+	<li><a href="http://www.os2museum.com/wp/?m=201107" title="July 2011">July 2011</a></li>
+	<li><a href="http://www.os2museum.com/wp/?m=201106" title="June 2011">June 2011</a></li>
+	<li><a href="http://www.os2museum.com/wp/?m=201105" title="May 2011">May 2011</a></li>
+	<li><a href="http://www.os2museum.com/wp/?m=201104" title="April 2011">April 2011</a></li>
+	<li><a href="http://www.os2museum.com/wp/?m=201103" title="March 2011">March 2011</a></li>
+	<li><a href="http://www.os2museum.com/wp/?m=201101" title="January 2011">January 2011</a></li>
+	<li><a href="http://www.os2museum.com/wp/?m=201011" title="November 2010">November 2010</a></li>
+	<li><a href="http://www.os2museum.com/wp/?m=201010" title="October 2010">October 2010</a></li>
+	<li><a href="http://www.os2museum.com/wp/?m=201008" title="August 2010">August 2010</a></li>
+	<li><a href="http://www.os2museum.com/wp/?m=201007" title="July 2010">July 2010</a></li>
+				</ul>
+			</li>
+
+			<li id="meta" class="widget-container">
+				<h3 class="widget-title">Meta</h3>
+				<ul>
+										<li><a href="http://www.os2museum.com/wp/wp-login.php">Log in</a></li>
+									</ul>
+			</li>
+
+					</ul>
+		</div><!-- #primary .widget-area -->
+
+	</div><!-- #main -->
+
+	<div id="footer" role="contentinfo">
+		<div id="colophon">
+
+
+
+			<div id="site-info">
+				<a href="http://www.os2museum.com/wp/" title="OS/2 Museum" rel="home">
+					OS/2 Museum				</a>
+			</div><!-- #site-info -->
+
+			<div id="site-generator">
+								<a href="http://wordpress.org/" title="Semantic Personal Publishing Platform">Proudly powered by WordPress.</a>
+			</div><!-- #site-generator -->
+
+		</div><!-- #colophon -->
+	</div><!-- #footer -->
+
+</div><!-- #wrapper -->
+
+
+
+</body></html>
