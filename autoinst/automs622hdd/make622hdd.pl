@@ -30,6 +30,7 @@
 #             3.3nec     MS-DOS 3.3 [NEC version]
 #             3.3        MS-DOS 3.3
 #             3.2epson   MS-DOS 3.2 [SEIKO EPSON version]
+#             2.1        MS-DOS 2.1 (actually PC-DOS)
 #
 #     Installed image is English language (US) version.
 #
@@ -48,6 +49,7 @@ my $heads = 16;
 my $sects = 63;
 my $user_chs_override = 0;
 my $clustersize = -1;
+my $root_len = -1;
 my $fat_len = -1;
 
 for ($i=0;$i < @ARGV;) {
@@ -285,6 +287,20 @@ elsif ($ver eq "3.2epson") {
 	$disk3 = "msdos.320epson.install.3.disk.xz";
 	$disk3_url = "Software/DOS/Microsoft MS-DOS/3.2 Seiko Epson/360KB/DISK3.IMA.xz";
 }
+elsif ($ver eq "2.1") {
+	$part_type = 0x01; # FAT12 <= 32MB
+
+	$diskbase = "$rel/build/msdos210hdd";
+
+	$config_sys_file = "config.sys.init.v210";
+	$autoexec_bat_file = "autoexec.bat.init.v210";
+
+	$disk1 = "msdos.210.install.1.disk.xz";
+	$disk1_url = "Software/DOS/Microsoft MS-DOS/2.1/180KB/DISK1.IMA.xz";
+
+	$disk2 = "msdos.210.install.2.disk.xz";
+	$disk2_url = "Software/DOS/Microsoft MS-DOS/2.1/180KB/DISK2.IMA.xz";
+}
 else {
 	die "Unknown MS-DOS version";
 }
@@ -312,7 +328,7 @@ if ($target_size > 0) {
 	$cyls = 1 if $cyls == 0;
 }
 
-if ($ver eq "3.2epson") {
+if ($ver eq "3.2epson" || $ver eq "2.1") {
 	if ($user_chs_override == 0) {
 		$sects = 16;
 		$cyls = $target_size / 512 / $heads / $sects;
@@ -380,6 +396,16 @@ elsif ($ver eq "3.2epson") {
 		$cyls = $x / 512 / $heads / $sects;
 	}
 }
+elsif ($ver eq "2.1") {
+	# MS-DOS v2.1 and earlier cannot support >= 32MB partitions.
+	# It also cannot support FAT16. Unfortunately, mtools has this
+	# fetish for FAT16 whenever the partition is 16MB or larger.
+	# There's no way to force FAT12 formatting.
+	if ($x >= (16*1024*1024)) {
+		$x = (15*1024*1024);
+		$cyls = $x / 512 / $heads / $sects;
+	}
+}
 
 my $part_offset_sects = $sects;
 my $part_offset = 0x200 * $part_offset_sects;
@@ -424,6 +450,20 @@ elsif ($ver eq "3.2epson") {
 		$fat_len = (($x-$part_offset_sects)/512/$clustersize);
 		$fat_len = ($fat_len / 2) * 3;
 		$fat_len = int(($fat_len+511)/512);
+	}
+}
+elsif ($ver eq "2.1") {
+	$clustersize = 4;
+
+	# Always do FAT12. FAT16 is not supported by v2.1
+	$x = 512 * $cyls * $heads * $sects;
+	$part_type = 0x01; # FAT12 <= 32MB
+
+	# MS-DOS v2.1 is VERY VERY picky.
+	$root_len = 16;		# root directory MUST be 256 entries
+	if ($x >= (5*1024*1024)) {
+		$root_len = 32;
+		$clustersize = 8;
 	}
 }
 
@@ -489,6 +529,7 @@ print "Formatting disk image: \n";
 system("mformat -m 0xF8 ".
 	($clustersize > 0 ? ("-c ".$clustersize)." " : "").
 	($fat_len > 0 ? ("-L ".$fat_len)." " : "").
+	($root_len > 0 ? ("-r ".$root_len)." " : "").
 	"-t $cyls -h $heads -s $sects -d 2 -i $diskbase\@\@$part_offset") == 0 || die;
 
 print "Unpacking disk 1:\n";
@@ -532,6 +573,25 @@ if ($ver eq "3.3nec" || $ver eq "3.3" || $ver eq "3.2epson") {
 
 	close(BIN);
 }
+elsif ($ver eq "2.1") {
+	# copy the boot sector of the install disk, being careful not to overwrite the BPB written by mkdosfs
+	system("dd conv=notrunc,nocreat if=tmp.dsk of=$diskbase bs=1 seek=".($part_offset   )." skip=0 count=11") == 0 || die;
+	system("dd conv=notrunc,nocreat if=tmp.dsk of=$diskbase bs=1 seek=".($part_offset+32)." skip=32 count=".(512-32)) == 0 || die;
+
+	# the disk table will need some fixup
+	open(BIN,"+<","$diskbase") || die
+	binmode(BIN);
+
+	# total sector count fixup
+	my $x = ($cyls * $heads * $sects) - $part_offset_sects;
+	die "$x is too many sectors" if $x > 65535;
+	seek(BIN,$part_offset+0x13,0); print BIN pack("v",$x);
+
+	seek(BIN,$part_offset+0x18,0); print BIN pack("v",$sects); # let me tell you the TRUE sectors/track
+	seek(BIN,$part_offset+0x1A,0); print BIN pack("v",$heads); # and heads
+	seek(BIN,$part_offset+0x1C,0); print BIN pack("v",$sects); # and number of "hidden sectors" preceeding the partition
+	seek(BIN,$part_offset+0x1E,0); print BIN pack("cc",0x80,0); # this is a hard disk
+}
 else {
 	system("dd conv=notrunc,nocreat if=tmp.dsk of=$diskbase bs=1 seek=".($part_offset   )." skip=0 count=11") == 0 || die;
 	system("dd conv=notrunc,nocreat if=tmp.dsk of=$diskbase bs=1 seek=".($part_offset+62)." skip=62 count=".(512-62)) == 0 || die;
@@ -555,7 +615,7 @@ else {
 
 # and copy IO.SYS and MSDOS.SYS over, assuming that mkdosfs has left the root directory completely empty
 # so that our copy operation puts them FIRST in the root directory.
-if ($ver eq "3.2epson") {
+if ($ver eq "3.2epson" || $ver eq "2.1") {
 	# IBMBIO.COM
 	unlink("tmp.sys");
 	system("mcopy -i tmp.dsk ::IBMBIO.COM tmp.sys") == 0 || die;
@@ -810,8 +870,10 @@ system("mcopy -b -Q -n -m -v -s -i $diskbase\@\@$part_offset dos.tmp/. ::DOS/") 
 # remove dos.tmp
 system("rm -Rfv dos.tmp; mkdir -p dos.tmp") == 0 || die;
 
-# next, add the OAK IDE CD-ROM driver
-system("mcopy -i $diskbase\@\@$part_offset oakcdrom.sys ::DOS/OAKCDROM.SYS") == 0 || die;
+if ($ver ne "2.1") {
+	# next, add the OAK IDE CD-ROM driver
+	system("mcopy -i $diskbase\@\@$part_offset oakcdrom.sys ::DOS/OAKCDROM.SYS") == 0 || die;
+}
 
 # Pre-6.0: add MSCDEX.EXE
 if ($ver =~ m/^[45]\./ || $ver eq "3.3nec" || $ver eq "3.3" || $ver eq "3.2epson") { # v4.x and v5.x
