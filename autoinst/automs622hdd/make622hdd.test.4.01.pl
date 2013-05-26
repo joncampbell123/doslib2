@@ -6,6 +6,9 @@
 # The build script produces a VDI regardless for convenience and
 # for the time when eventually QEMU fixes whatever is wrong.
 
+# FIXME: MS-DOS 3.2 relies on the C/H/S values of the drive! It's not
+#        like later versions where it doesn't seem to matter.
+
 # first we need to read back the geometry.
 # being MS-DOS 4.01 it's likely it only supports 63 sectors/track 16 heads
 # because it pre-dates the geometry translation later BIOSes needed to do
