@@ -1,0 +1,33 @@
+Problem: MS-DOS 2.2 copy is non-bootable (DAMN IT)
+
+How to force it:
+ - Boot from MS-DOS 3.3
+ - Switch to the 2.2 disk
+ - Use fdisk on 2.2 to partition the hard drive
+ - Use format on 3.3 to format the hard drive (the TeleVideo 2.2
+   FORMAT seems to do nothing).
+ - SYS.COM on 2.2 bails out with "incorrect DOS version" (DAMN IT)
+   however a full copy of the boot sector is visible in SYS.COM
+   from 0x8E7-0xAE6.
+
+   Method 2: Patch SYS.COM to ignore DOS version.
+   Write 14 bytes of 0x90 (NOP) to offset (0x64) in the file aka 
+   offset (0x164) in memory segment. This replaces:
+
+   CMP AX,0x020B
+   JBE 0x172
+   MOV DX,0x05C1
+   MOV AH,0x09
+   INT 0x21
+   INT 0x20
+
+   Unfortunately patching does not resolve the issue that SYS.COM
+   does not recognize your MS-DOS 3.3 bootdisk as a system disk.
+
+Basically, the idiot who uploaded the disk image failed to account
+for the fact that, yes, it's MS-DOS 2.2, but it's not bootable,
+and the tools are too picky to even begin allowing the user to
+format and partition the hard disk to boot from. The only hope I
+have is in manually extracting the boot sector from SYS.COM and
+then writing it myself to the boot sector.
+

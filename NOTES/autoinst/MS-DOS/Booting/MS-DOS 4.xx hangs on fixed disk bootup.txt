@@ -1,0 +1,12 @@
+From: http://www.os2museum.com/wp/?p=685
+
+Hang with early DOS boot sector
+
+While installing various versions of DOS for the DOS history series of
+articles, I was faced with a mysterious problem: Some versions of DOS would
+hang right away when booting from fixed disk, but not from floppy. I already
+knew that DOS 4.x is very sensitive to BIOS stack usage; if a BIOS needs more
+than 100 bytes or so of stack to process a disk read request, it will fail to
+boot DOS 4.x from fixed disk, even though the same DOS 4.x can access the
+same disk just fine when booted from floppy.
+

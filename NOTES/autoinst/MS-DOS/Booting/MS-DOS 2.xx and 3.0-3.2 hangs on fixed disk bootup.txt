@@ -1,0 +1,73 @@
+From: http://www.os2museum.com/wp/?p=685
+
+Hang with early DOS boot sector
+
+Posted on September 3, 2011 by Michal Necasek
+
+While installing various versions of DOS for the DOS history series of
+articles, I was faced with a mysterious problem: Some versions of DOS would
+hang right away when booting from fixed disk, but not from floppy. I already
+knew that DOS 4.x is very sensitive to BIOS stack usage; if a BIOS needs more
+than 100 bytes or so of stack to process a disk read request, it will fail to
+boot DOS 4.x from fixed disk, even though the same DOS 4.x can access the same
+disk just fine when booted from floppy.
+
+However, the hangs I was observing were happening with DOS 2.x and 3.x, and
+those do not have such tight stack usage requirements. I quickly realized that
+the problem is caused by a bug in the DOS boot sector: the boot sector code
+tries to optimize the loading of IBMBIO.COM and attempts to read a whole disk
+track at a time. That sounds like a good idea, but it’s not.
+
+The boot sector is loaded at address 0:7c00h, or just under 32KB. The BIOS
+component of DOS (IBMBIO.COM) is loaded at address 70h:0 (in other words,
+0:700h). The boot sector also sets up the top of stack at 0:7c00h, just below
+the boot sector code. There is therefore slightly under 30KB of room for
+IBMBIO.COM, which in the 2.x and 3.x versions of DOS is well under 20KB size
+(just 4.5KB in DOS 2.0 in fact). In theory there should be no problem.
+
+Unfortunately, the author of the DOS 2.0 boot sector was too eager to optimize
+the loading and not thinking far enough ahead. Loading a track at a time sounds
+clever, except when it’s not… On a modern disk, there are usually 63 sectors
+per track, or 31.5KB of data. If the boot sector reads that whole track, it
+will destroy the stack and overwrite itself. But back when the boot sector code
+was written, almost all fixed disks had 17 sectors per track, which meant that
+no amount of testing would have caught the bug. Floppy booting is no problem
+either, since even 1.44MB diskettes only have 18 sectors per track.
+
+Now, the above explains why an old version of DOS might hang when booted from a
+modern fixed disk. But it does not explain why some of my DOS 2.x and 3.x 
+installs worked just fine, including a case with one install of DOS 2.0 booting 
+fine and another persistently hanging.
+
+After some head scratching, it turned out that the DOS partition size is key. 
+Depending on how big the partition is, the FATs will have varying size, and 
+IBMBIO.COM will start on a different sector relative to the start of the track.
+If IBMBIO.COM starts on, say, sector 30, the boot sector will load 33 sectors
+and DOS will boot fine. If IBMBIO.COM starts on sector 1, DOS will hang.
+Similarly if IBMBIO.COM starts on sector 60, the first read of four sectors
+will be fine, but the next read of 63 sectors will crash the system.
+
+For reference, a 30-cylinder partition on a typical disk with 63 sectors per
+track and 16 heads tends to cause problems. A 60-cylinder partition (close to
+the 32MB partition size limit) tends to work, but the exact behavior depends
+on the DOS version.
+
+The bug most likely affects all 2.x and 3.x versions of DOS prior to 3.3.
+Version 3.3 relaxed the restriction that IBMBIO.COM/IO.SYS must be contiguous
+(which enabled the track-at-once loading); this is documented by Microsoft in
+KB 66530. The removed restriction required changes to the boot sector and
+IBMBIO.COM/IO.SYS had to be loaded cluster by cluster.
+
+In DOS 4.0, IBMBIO.COM/IO.SYS grew beyond 30KB and could no longer be loaded
+in one go at all, even if it were contiguous (that would in essence always
+cause the hang problem described above). There just wasn’t enough space between
+70h:0 and 0:7c00h anymore. The BIOS component was therefore loaded in two
+stages, which avoided the problem. However, the staged loading caused the
+previously mentioned issue with tight stack space—but that’s a different story.
+
+This bug does not appear to be well known. The most likely reason is that
+extremely few people attempt installing DOS 3.2 or older on a computer with a
+multi-gigabyte disk. DOS 2.x is simply not useful for running any “modern” DOS
+software, and DOS 3.0/3.1/3.2 has a serious drawback in that it does not
+support 1.44MB floppy drives.
+
