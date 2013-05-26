@@ -68,16 +68,18 @@ for ($i=0;$i < @ARGV;) {
 			$dosshell_vid = lc($ARGV[$i++]);
 		}
 		elsif ($a eq "geometry") {
-			($cyls,$heads,$sects) = split(/[-\\\/]+/,$ARGV[$i++]);
-			$cyls = $cyls + 0;
+			my $tc;
+			($tc,$heads,$sects) = split(/[-\\\/]+/,$ARGV[$i++]);
 			$heads = $heads + 0;
 			$sects = $sects + 0;
+			$tc = $tc + 0;
+			$cyls = $tc if $tc >= 1;
 
 			die "Invalid geometry C/H/S $cyls/$heads/$sects" if $cyls < 1 || $cyls > 8192 ||
 				$heads < 1 || $heads > 255 ||
 				$sects < 1 || $sects > 63;
 
-			$target_size = $cyls * $heads * $sects * 512;
+			$target_size = $cyls * $heads * $sects * 512 if $tc >= 1;
 		}
 		else {
 			die "Unknown switch $a\n";
@@ -104,6 +106,37 @@ sub shellesc($) {
 
 my $disk1,$disk2,$disk3,$disk4;
 my $disk1_url,$disk2_url,$disk3_url,$disk4_url;
+
+if ($ver eq "6.22" || $ver eq "6.21" || $ver eq "6.20" || $ver eq "6.0") {
+	# minimum required disk size for this install: 8MB
+	# silent change the size if the user specified anything less.
+	# if they really want to force it, they can specify a custom geometry.
+	if ($target_size < (8*1024*1024)) {
+		print "WARNING: MS-DOS 6.xx install requires a minimum 8MB hard disk image\n";
+		$target_size = (8*1024*1024);
+		sleep 1;
+	}
+}
+elsif ($ver eq "5.0") {
+	# minimum required disk size for this install: 3MB
+	# silent change the size if the user specified anything less.
+	# if they really want to force it, they can specify a custom geometry.
+	if ($target_size < (3*1024*1024)) {
+		print "WARNING: MS-DOS 5.xx install requires a minimum 3MB hard disk image\n";
+		$target_size = (3*1024*1024);
+		sleep 1;
+	}
+}
+elsif ($ver eq "4.01") {
+	# minimum required disk size for this install: 2MB
+	# silent change the size if the user specified anything less.
+	# if they really want to force it, they can specify a custom geometry.
+	if ($target_size < (2*1024*1024)) {
+		print "WARNING: MS-DOS 4.xx install requires a minimum 2MB hard disk image\n";
+		$target_size = (2*1024*1024);
+		sleep 1;
+	}
+}
 
 if ($ver eq "6.22") {
 	$diskbase = "$rel/build/msdos622hdd";
