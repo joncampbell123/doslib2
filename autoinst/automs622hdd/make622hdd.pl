@@ -43,6 +43,7 @@ my $dosshell_vid = "vga";
 my $target_size = 0;
 my $ver = "6.22";
 my $do_supp = 0;
+my $fat = -1;
 my $config_sys_file;
 my $autoexec_bat_file;
 
@@ -414,11 +415,25 @@ else {
 
 $act_cyls = int($cyls);
 $x = 512 * $cyls * $heads * $sects;
-if ($x >= (2048*1024*1024)) {
-	# limit the partition to keep within MS-DOS 6.22's capabilities.
-	# A partition larger than 2GB is not supported.
-	$x = (2047*1024*1024);
-	$cyls = $x / 512 / $heads / $sects;
+if ($ver eq "7.1osr2") {
+	# Windows 95 OSR2 and higher DO support partitions larger than 2GB
+	# IF formatted as FAT32.
+	if ($x >= (7000*1024*1024)) {
+		$part_type = 0x0C; # FAT32 (LBA)
+		$fat = 32;
+	}
+	elsif ($x >= (2048*1024*1024)) {
+		$part_type = 0x0B; # FAT32 (CHS)
+		$fat = 32;
+	}
+}
+else {
+	if ($x >= (2048*1024*1024)) {
+		# limit the partition to keep within MS-DOS 6.22's capabilities.
+		# A partition larger than 2GB is not supported.
+		$x = (2047*1024*1024);
+		$cyls = $x / 512 / $heads / $sects;
+	}
 }
 
 if ($ver eq "3.3nec" || $ver eq "3.3") {
@@ -507,7 +522,12 @@ elsif ($ver eq "2.1") {
 }
 
 $cyls = int($cyls + 0.5);
-die if $cyls >= 1024;
+$cyls = $act_cyls if $cyls > $act_cyls;
+if ($ver eq "7.1osr2") {
+}
+else {
+	die if $cyls >= 1024;
+}
 
 print "Chosen disk geometry C/H/S: $cyls/$heads/$sects (disk $act_cyls)\n";
 
@@ -569,6 +589,7 @@ system("mformat -m 0xF8 ".
 	($clustersize > 0 ? ("-c ".$clustersize)." " : "").
 	($fat_len > 0 ? ("-L ".$fat_len)." " : "").
 	($root_len > 0 ? ("-r ".$root_len)." " : "").
+	($fat == 32 ? "-F " : "").
 	"-t $cyls -h $heads -s $sects -d 2 -i $diskbase\@\@$part_offset") == 0 || die;
 
 print "Unpacking disk 1:\n";
@@ -630,6 +651,39 @@ elsif ($ver eq "2.1") {
 	seek(BIN,$part_offset+0x1A,0); print BIN pack("v",$heads); # and heads
 	seek(BIN,$part_offset+0x1C,0); print BIN pack("v",$sects); # and number of "hidden sectors" preceeding the partition
 	seek(BIN,$part_offset+0x1E,0); print BIN pack("cc",0x80,0); # this is a hard disk
+}
+elsif ($ver eq "7.1osr2" && $fat == 32) {
+	# Windows 9x FAT32
+	system("dd conv=notrunc,nocreat if=fat32.boot.win95osr2.bin of=$diskbase bs=1 seek=".($part_offset   )." skip=0 count=11") == 0 || die;
+	system("dd conv=notrunc,nocreat if=fat32.boot.win95osr2.bin of=$diskbase bs=1 seek=".($part_offset+90)." skip=90 count=".(512-90)) == 0 || die;
+
+	# the disk table will need some fixup
+	open(BIN,"+<","$diskbase") || die
+	binmode(BIN);
+
+	# total sector count fixup
+	my $x = ($cyls * $heads * $sects) - $part_offset_sects;
+	seek(BIN,$part_offset+0x13,0); print BIN pack("v",0);
+	seek(BIN,$part_offset+0x20,0); print BIN pack("V",$x);
+
+	seek(BIN,$part_offset+0x18,0); print BIN pack("v",$sects); # let me tell you the TRUE sectors/track
+	seek(BIN,$part_offset+0x1A,0); print BIN pack("v",$heads); # and heads
+	seek(BIN,$part_offset+0x1C,0); print BIN pack("V",$sects); # and number of "hidden sectors" preceeding the partition
+	seek(BIN,$part_offset+0x40,0); print BIN pack("c",0x80); # this is a hard disk
+
+	# copy the sector we just modified to the backup copy at sector +6
+	seek(BIN,$part_offset,0); read(BIN,$x,512);
+	seek(BIN,$part_offset+(512*6),0); print BIN $x;
+
+	# copy the FSInfo part as well
+	seek(BIN,$part_offset+(512*1),0); read(BIN,$x,512);
+	seek(BIN,$part_offset+(512*(6+1)),0); print BIN $x;
+
+	# and then there's a "part 2" to the boot sector as well :)
+	system("dd conv=notrunc,nocreat if=fat32.boot.win95osr2.part2.bin of=$diskbase bs=1 seek=".($part_offset+(512*2))." skip=0 count=512") == 0 || die;
+	system("dd conv=notrunc,nocreat if=fat32.boot.win95osr2.part2.bin of=$diskbase bs=1 seek=".($part_offset+(512*(2+6)))." skip=0 count=512") == 0 || die;
+
+	close(BIN);
 }
 else {
 	system("dd conv=notrunc,nocreat if=tmp.dsk of=$diskbase bs=1 seek=".($part_offset   )." skip=0 count=11") == 0 || die;
@@ -949,6 +1003,8 @@ system("dd conv=notrunc,nocreat if=mbr.bin of=$diskbase bs=512 count=1") == 0 ||
 # and then edit the partition table directly. we WOULD use fdisk, but fdisk has this
 # terrible fetish for forcing your first partition at least 2048 sectors away from the start
 # of the disk, which is an utter waste of disk space. Fuck you fdisk.
+my $prt_cyls = $cyls;
+$prt_cyls = 1024 if $prt_cyls > 1024;
 open(BIN,"+<","$diskbase") || die
 binmode(BIN);
 seek(BIN,0x1BE,0);
@@ -959,10 +1015,20 @@ print BIN pack("cccccccc",
 	0x00, # cylinder 0 (low 8 bits)
 	$part_type, # partition type (0x06 = MS-DOS FAT16 >= 32MB)
 	$heads-1, # end head
-	$sects | ((($cyls - 1) >> 8) << 6), # end sector/cylinder
-	($cyls - 1) & 0xFF); # end cylinder
+	$sects | ((($prt_cyls - 1) >> 8) << 6), # end sector/cylinder
+	($prt_cyls - 1) & 0xFF); # end cylinder
 print BIN pack("VV",$sects,($sects*$cyls*$heads)-$sects);
 close(BIN);
+
+# FAT32: patch FSInfo
+if ($fat == 32) {
+	# patch FSInfo to report free clusters as "unknown"
+	open(BIN,"+<","$diskbase") || die
+	binmode(BIN);
+	seek(BIN,$part_offset+(512*1)+0x1E8,0); print BIN pack("VV",0xFFFFFFFF,0xFFFFFFFF);
+	seek(BIN,$part_offset+(512*(1+6))+0x1E8,0); print BIN pack("VV",0xFFFFFFFF,0xFFFFFFFF);
+	close(BIN);
+}
 
 # make VDI for VirtualBox, QEMU, etc
 system("qemu-img convert -f raw -O vdi $diskbase $diskbase.vdi") == 0 || die;
