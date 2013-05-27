@@ -614,7 +614,7 @@ else {
 	binmode(BIN);
 
 	# total sector count fixup
-	my $x = ($act_cyls * $heads * $sects) - $part_offset_sects;
+	my $x = ($cyls * $heads * $sects) - $part_offset_sects;
 	seek(BIN,$part_offset+0x13,0); print BIN pack("v",$x > 65535 ? 0 : $x);
 	seek(BIN,$part_offset+0x20,0); print BIN pack("V",$x);
 
