@@ -21,6 +21,7 @@
 #     --ver <n>
 #      
 #         where <n> is:
+#             8.0winme   MS-DOS 8.0 (DOS-only portion of Windows ME--an incredible feat if you can believe it)
 #             7.1win98se MS-DOS 7.1 (DOS-only portion of Windows 98 SE)
 #             7.1win98   MS-DOS 7.1 (DOS-only portion of Windows 98)
 #             7.1osr2    MS-DOS 7.1 (DOS-only portion of Windows 95 OSR2)
@@ -117,7 +118,7 @@ sub shellesc($) {
 my $disk1,$disk2,$disk3,$disk4;
 my $disk1_url,$disk2_url,$disk3_url,$disk4_url;
 
-if ($ver eq "6.22" || $ver eq "6.21" || $ver eq "6.20" || $ver eq "6.0" || $ver eq "7.0" || $ver eq "7.0sp1" || $ver eq "7.1osr2" || $ver eq "7.1win98" || $ver eq "7.1win98se") {
+if ($ver eq "6.22" || $ver eq "6.21" || $ver eq "6.20" || $ver eq "6.0" || $ver eq "7.0" || $ver eq "7.0sp1" || $ver eq "7.1osr2" || $ver eq "7.1win98" || $ver eq "7.1win98se" || $ver eq "8.0winme") {
 	# minimum required disk size for this install: 8MB
 	# silent change the size if the user specified anything less.
 	# if they really want to force it, they can specify a custom geometry.
@@ -148,7 +149,16 @@ elsif ($ver eq "4.01") {
 	}
 }
 
-if ($ver eq "7.1win98se") {
+if ($ver eq "8.0winme") {
+	$diskbase = "$rel/build/msdos80winmehdd";
+
+	$config_sys_file = "config.sys.init.v80winme";
+	$autoexec_bat_file = "autoexec.bat.init.v80winme";
+
+	$disk1 = "msdos.80winme.boot.1.disk.xz";
+	$disk1_url = "Software/DOS/Microsoft MS-DOS/8.0/Windows ME EBD Boot and pure DOS setup/WinME EBD Boot (DOS8.0) + Essentials.ima.xz";
+}
+elsif ($ver eq "7.1win98se") {
 	$diskbase = "$rel/build/msdos710win98sehdd";
 
 	$config_sys_file = "config.sys.init.v710win98se";
@@ -441,7 +451,7 @@ else {
 
 $act_cyls = int($cyls);
 $x = 512 * $cyls * $heads * $sects;
-if ($ver eq "7.1osr2" || $ver eq "7.1win98" || $ver eq "7.1win98se") {
+if ($ver eq "7.1osr2" || $ver eq "7.1win98" || $ver eq "7.1win98se" || $ver eq "8.0winme") {
 	# Windows 95 OSR2 and higher DO support partitions larger than 2GB
 	# IF formatted as FAT32.
 	if ($x >= (7000*1024*1024)) {
@@ -549,7 +559,7 @@ elsif ($ver eq "2.1") {
 
 $cyls = int($cyls + 0.5);
 $cyls = $act_cyls if $cyls > $act_cyls;
-if ($ver eq "7.1osr2" || $ver eq "7.1win98" || $ver eq "7.1win98se") {
+if ($ver eq "7.1osr2" || $ver eq "7.1win98" || $ver eq "7.1win98se" || $ver eq "8.0winme") {
 }
 else {
 	die if $cyls >= 1024;
@@ -701,6 +711,13 @@ elsif ($fat == 32) {
 		system("dd conv=notrunc,nocreat if=fat32.boot.win98se.part2.bin of=$diskbase bs=1 seek=".($part_offset+(512*2))." skip=0 count=512") == 0 || die;
 		system("dd conv=notrunc,nocreat if=fat32.boot.win98se.part2.bin of=$diskbase bs=1 seek=".($part_offset+(512*(2+6)))." skip=0 count=512") == 0 || die;
 	}
+	elsif ($ver eq "8.0winme") {
+		system("dd conv=notrunc,nocreat if=fat32.boot.winme.bin of=$diskbase bs=1 seek=".($part_offset   )." skip=0 count=11") == 0 || die;
+		system("dd conv=notrunc,nocreat if=fat32.boot.winme.bin of=$diskbase bs=1 seek=".($part_offset+90)." skip=90 count=".(512-90)) == 0 || die;
+
+		system("dd conv=notrunc,nocreat if=fat32.boot.winme.part2.bin of=$diskbase bs=1 seek=".($part_offset+(512*2))." skip=0 count=512") == 0 || die;
+		system("dd conv=notrunc,nocreat if=fat32.boot.winme.part2.bin of=$diskbase bs=1 seek=".($part_offset+(512*(2+6)))." skip=0 count=512") == 0 || die;
+	}
 	else {
 		die;
 	}
@@ -764,6 +781,16 @@ if ($ver eq "3.2epson" || $ver eq "2.1") {
 	system("mcopy -i tmp.dsk ::IBMDOS.COM tmp.sys") == 0 || die;
 	system("mcopy -i $diskbase\@\@$part_offset tmp.sys ::IBMDOS.COM") == 0 || die;
 	system("mattrib -a +r +s +h -i $diskbase\@\@$part_offset ::IBMDOS.COM") == 0 || die;
+	unlink("tmp.sys");
+}
+elsif ($ver eq "8.0winme") {
+	system("mcopy -i $diskbase\@\@$part_offset winme.hdd.io.sys ::IO.SYS") == 0 || die;
+	system("mattrib -a +r +s +h -i $diskbase\@\@$part_offset ::IO.SYS") == 0 || die;
+
+	unlink("tmp.sys");
+	system("mcopy -i tmp.dsk ::MSDOS.SYS tmp.sys") == 0 || die;
+	system("mcopy -i $diskbase\@\@$part_offset tmp.sys ::MSDOS.SYS") == 0 || die;
+	system("mattrib -a +r +s +h -i $diskbase\@\@$part_offset ::MSDOS.SYS") == 0 || die;
 	unlink("tmp.sys");
 }
 else {
@@ -963,6 +990,15 @@ elsif ($ver eq "7.1win98se") {
 	system("../../download-item.pl --rel $rel --as msdos.710.win98se.dos.tar.xz --url ".shellesc("Software/DOS/Microsoft MS-DOS/7.10 (Windows 98 SE, DOS mode only)/files/win98se.dos.tar.xz")) == 0 || die;
 	system("cd dos.tmp && tar -xJvf ../$rel/web.cache/msdos.710.win98se.dos.tar.xz") == 0 || die;
 }
+elsif ($ver eq "8.0winme") {
+	system("../../download-item.pl --rel $rel --as msdos.80.winme.dos.zip --url ".shellesc("Software/DOS/Microsoft MS-DOS/8.0/Windows ME EBD Boot and pure DOS setup/MSDOS 8.0 US.zip")) == 0 || die;
+	system("cd dos.tmp && unzip ../$rel/web.cache/msdos.80.winme.dos.zip") == 0 || die;
+	system("cd dos.tmp && mv -v DOS/* .") == 0 || die;
+	system("cd dos.tmp && mv -v EBD/* .") == 0 || die;
+	system("cd dos.tmp && mv -v WIN/* .") == 0 || die;
+	system("cd dos.tmp && mv -v Drivers/* .") == 0 || die;
+	system("cd dos.tmp && rmdir DOS WIN EBD Drivers") == 0 || die;
+}
 
 # http://support.microsoft.com/kb/95631
 # MS-DOS 5.0-6.22: "Configure" DOSSHELL.EXE's video driver by copying VID GRB and INI files
@@ -1034,6 +1070,7 @@ system("mattrib -a +r +s +h -i $diskbase\@\@$part_offset ::DOS/IO.SYS >/dev/null
 system("mattrib -a +r +s +h -i $diskbase\@\@$part_offset ::DOS/MSDOS.SYS >/dev/null 2>&1");
 system("mattrib -a +r +s +h -i $diskbase\@\@$part_offset ::DOS/IBMBIO.COM >/dev/null 2>&1");
 system("mattrib -a +r +s +h -i $diskbase\@\@$part_offset ::DOS/IBMDOS.COM >/dev/null 2>&1");
+system("mattrib -a +r +s +h -i $diskbase\@\@$part_offset ::DOS/WINBOOT.SYS >/dev/null 2>&1");
 
 if ($ver ne "2.1") {
 	# next, add the OAK IDE CD-ROM driver
