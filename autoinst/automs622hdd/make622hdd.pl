@@ -21,6 +21,7 @@
 #     --ver <n>
 #      
 #         where <n> is:
+#             7.1win98   MS-DOS 7.1 (DOS-only portion of Windows 98)
 #             7.1osr2    MS-DOS 7.1 (DOS-only portion of Windows 95 OSR2)
 #             7.0sp1     MS-DOS 7.0 (DOS-only portion of Windows 95 SP1)
 #             7.0        MS-DOS 7.0 (DOS-only portion of Windows 95)
@@ -115,7 +116,7 @@ sub shellesc($) {
 my $disk1,$disk2,$disk3,$disk4;
 my $disk1_url,$disk2_url,$disk3_url,$disk4_url;
 
-if ($ver eq "6.22" || $ver eq "6.21" || $ver eq "6.20" || $ver eq "6.0" || $ver eq "7.0" || $ver eq "7.0sp1" || $ver eq "7.1osr2") {
+if ($ver eq "6.22" || $ver eq "6.21" || $ver eq "6.20" || $ver eq "6.0" || $ver eq "7.0" || $ver eq "7.0sp1" || $ver eq "7.1osr2" || $ver eq "7.1win98") {
 	# minimum required disk size for this install: 8MB
 	# silent change the size if the user specified anything less.
 	# if they really want to force it, they can specify a custom geometry.
@@ -146,7 +147,19 @@ elsif ($ver eq "4.01") {
 	}
 }
 
-if ($ver eq "7.1osr2") {
+if ($ver eq "7.1win98") {
+	$diskbase = "$rel/build/msdos710win98hdd";
+
+	$config_sys_file = "config.sys.init.v710win98";
+	$autoexec_bat_file = "autoexec.bat.init.v710win98";
+
+	$disk1 = "msdos.710win98.boot.1.disk.xz";
+	$disk1_url = "Software/DOS/Microsoft MS-DOS/7.10 (Windows 98, DOS mode only)/files/bootdisk.dsk.xz";
+
+	# TODO: The Windows 95 CD-ROM has an "oldmsdos" folder with some of the classic DOS utilities there.
+	#       Add code here to download those files if --supp is given as the "supplementary" set of files.
+}
+elsif ($ver eq "7.1osr2") {
 	$diskbase = "$rel/build/msdos710osr2hdd";
 
 	$config_sys_file = "config.sys.init.v710osr2";
@@ -415,7 +428,7 @@ else {
 
 $act_cyls = int($cyls);
 $x = 512 * $cyls * $heads * $sects;
-if ($ver eq "7.1osr2") {
+if ($ver eq "7.1osr2" || $ver eq "7.1win98") {
 	# Windows 95 OSR2 and higher DO support partitions larger than 2GB
 	# IF formatted as FAT32.
 	if ($x >= (7000*1024*1024)) {
@@ -523,7 +536,7 @@ elsif ($ver eq "2.1") {
 
 $cyls = int($cyls + 0.5);
 $cyls = $act_cyls if $cyls > $act_cyls;
-if ($ver eq "7.1osr2") {
+if ($ver eq "7.1osr2" || $ver eq "7.1win98") {
 }
 else {
 	die if $cyls >= 1024;
@@ -652,10 +665,19 @@ elsif ($ver eq "2.1") {
 	seek(BIN,$part_offset+0x1C,0); print BIN pack("v",$sects); # and number of "hidden sectors" preceeding the partition
 	seek(BIN,$part_offset+0x1E,0); print BIN pack("cc",0x80,0); # this is a hard disk
 }
-elsif ($ver eq "7.1osr2" && $fat == 32) {
+elsif ($fat == 32) {
 	# Windows 9x FAT32
-	system("dd conv=notrunc,nocreat if=fat32.boot.win95osr2.bin of=$diskbase bs=1 seek=".($part_offset   )." skip=0 count=11") == 0 || die;
-	system("dd conv=notrunc,nocreat if=fat32.boot.win95osr2.bin of=$diskbase bs=1 seek=".($part_offset+90)." skip=90 count=".(512-90)) == 0 || die;
+	if ($ver eq "7.1osr2") {
+		system("dd conv=notrunc,nocreat if=fat32.boot.win95osr2.bin of=$diskbase bs=1 seek=".($part_offset   )." skip=0 count=11") == 0 || die;
+		system("dd conv=notrunc,nocreat if=fat32.boot.win95osr2.bin of=$diskbase bs=1 seek=".($part_offset+90)." skip=90 count=".(512-90)) == 0 || die;
+	}
+	elsif ($ver eq "7.1win98") {
+		system("dd conv=notrunc,nocreat if=fat32.boot.win98.bin of=$diskbase bs=1 seek=".($part_offset   )." skip=0 count=11") == 0 || die;
+		system("dd conv=notrunc,nocreat if=fat32.boot.win98.bin of=$diskbase bs=1 seek=".($part_offset+90)." skip=90 count=".(512-90)) == 0 || die;
+	}
+	else {
+		die;
+	}
 
 	# the disk table will need some fixup
 	open(BIN,"+<","$diskbase") || die
@@ -910,6 +932,10 @@ elsif ($ver eq "7.0sp1") {
 elsif ($ver eq "7.1osr2") {
 	system("../../download-item.pl --rel $rel --as msdos.710osr2.win95.dos.tar.xz --url ".shellesc("Software/DOS/Microsoft MS-DOS/7.10 (Windows 95 OSR2, DOS mode only)/files/win95.dos.tar.xz")) == 0 || die;
 	system("cd dos.tmp && tar -xJvf ../$rel/web.cache/msdos.710osr2.win95.dos.tar.xz") == 0 || die;
+}
+elsif ($ver eq "7.1win98") {
+	system("../../download-item.pl --rel $rel --as msdos.710.win98.dos.tar.xz --url ".shellesc("Software/DOS/Microsoft MS-DOS/7.10 (Windows 98, DOS mode only)/files/win98.dos.tar.xz")) == 0 || die;
+	system("cd dos.tmp && tar -xJvf ../$rel/web.cache/msdos.710.win98.dos.tar.xz") == 0 || die;
 }
 
 # http://support.microsoft.com/kb/95631
