@@ -21,6 +21,7 @@
 #     --ver <n>
 #      
 #         where <n> is:
+#             7.0sp1     MS-DOS 7.0 (DOS-only portion of Windows 95 SP1)
 #             7.0        MS-DOS 7.0 (DOS-only portion of Windows 95)
 #             6.22       MS-DOS 6.22 (default)
 #             6.21       MS-DOS 6.21
@@ -112,7 +113,7 @@ sub shellesc($) {
 my $disk1,$disk2,$disk3,$disk4;
 my $disk1_url,$disk2_url,$disk3_url,$disk4_url;
 
-if ($ver eq "6.22" || $ver eq "6.21" || $ver eq "6.20" || $ver eq "6.0" || $ver eq "7.0") {
+if ($ver eq "6.22" || $ver eq "6.21" || $ver eq "6.20" || $ver eq "6.0" || $ver eq "7.0" || $ver eq "7.0sp1") {
 	# minimum required disk size for this install: 8MB
 	# silent change the size if the user specified anything less.
 	# if they really want to force it, they can specify a custom geometry.
@@ -143,7 +144,19 @@ elsif ($ver eq "4.01") {
 	}
 }
 
-if ($ver eq "7.0") {
+if ($ver eq "7.0sp1") {
+	$diskbase = "$rel/build/msdos70sp1hdd";
+
+	$config_sys_file = "config.sys.init.v70sp1";
+	$autoexec_bat_file = "autoexec.bat.init.v70sp1";
+
+	$disk1 = "msdos.70sp1.boot.1.disk.xz";
+	$disk1_url = "Software/DOS/Microsoft MS-DOS/7.0 (Windows 95 SP1, DOS mode only)/files/bootdisk.dsk.xz";
+
+	# TODO: The Windows 95 CD-ROM has an "oldmsdos" folder with some of the classic DOS utilities there.
+	#       Add code here to download those files if --supp is given as the "supplementary" set of files.
+}
+elsif ($ver eq "7.0") {
 	$diskbase = "$rel/build/msdos70hdd";
 
 	$config_sys_file = "config.sys.init.v70";
@@ -655,7 +668,7 @@ else {
 	system("mattrib -a +r +s +h -i $diskbase\@\@$part_offset ::MSDOS.SYS") == 0 || die;
 	unlink("tmp.sys");
 
-	if ($ver eq "6.22" || $ver eq "7.0") {
+	if ($ver eq "6.22" || $ver eq "7.0" || $ver eq "7.0sp1") {
 		unlink("tmp.sys");
 		system("mcopy -i tmp.dsk ::DRVSPACE.BIN tmp.sys") == 0 || die;
 		system("mcopy -i $diskbase\@\@$part_offset tmp.sys ::DRVSPACE.BIN") == 0 || die;
@@ -823,6 +836,10 @@ if ($ver eq "7.0") {
 	system("../../download-item.pl --rel $rel --as msdos.70.win95.dos.tar.xz --url ".shellesc("Software/DOS/Microsoft MS-DOS/7.0 (Windows 95, DOS mode only)/files/win95.dos.tar.xz")) == 0 || die;
 	system("cd dos.tmp && tar -xJvf ../$rel/web.cache/msdos.70.win95.dos.tar.xz") == 0 || die;
 }
+elsif ($ver eq "7.0sp1") {
+	system("../../download-item.pl --rel $rel --as msdos.70sp1.win95.dos.tar.xz --url ".shellesc("Software/DOS/Microsoft MS-DOS/7.0 (Windows 95 SP1, DOS mode only)/files/win95.dos.tar.xz")) == 0 || die;
+	system("cd dos.tmp && tar -xJvf ../$rel/web.cache/msdos.70sp1.win95.dos.tar.xz") == 0 || die;
+}
 
 # http://support.microsoft.com/kb/95631
 # MS-DOS 5.0-6.22: "Configure" DOSSHELL.EXE's video driver by copying VID GRB and INI files
@@ -897,7 +914,7 @@ system("mattrib -a +r +s +h -i $diskbase\@\@$part_offset ::DOS/IBMDOS.COM >/dev/
 
 if ($ver ne "2.1") {
 	# next, add the OAK IDE CD-ROM driver
-	system("mcopy -i $diskbase\@\@$part_offset oakcdrom.sys ::DOS/OAKCDROM.SYS") == 0 || die;
+	system("mcopy -o -n -i $diskbase\@\@$part_offset oakcdrom.sys ::DOS/OAKCDROM.SYS") == 0 || die;
 }
 
 # Pre-6.0: add MSCDEX.EXE
