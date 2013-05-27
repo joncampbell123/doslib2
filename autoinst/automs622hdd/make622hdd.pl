@@ -21,6 +21,7 @@
 #     --ver <n>
 #      
 #         where <n> is:
+#             7.1osr2    MS-DOS 7.1 (DOS-only portion of Windows 95 OSR2)
 #             7.0sp1     MS-DOS 7.0 (DOS-only portion of Windows 95 SP1)
 #             7.0        MS-DOS 7.0 (DOS-only portion of Windows 95)
 #             6.22       MS-DOS 6.22 (default)
@@ -113,7 +114,7 @@ sub shellesc($) {
 my $disk1,$disk2,$disk3,$disk4;
 my $disk1_url,$disk2_url,$disk3_url,$disk4_url;
 
-if ($ver eq "6.22" || $ver eq "6.21" || $ver eq "6.20" || $ver eq "6.0" || $ver eq "7.0" || $ver eq "7.0sp1") {
+if ($ver eq "6.22" || $ver eq "6.21" || $ver eq "6.20" || $ver eq "6.0" || $ver eq "7.0" || $ver eq "7.0sp1" || $ver eq "7.1osr2") {
 	# minimum required disk size for this install: 8MB
 	# silent change the size if the user specified anything less.
 	# if they really want to force it, they can specify a custom geometry.
@@ -144,7 +145,19 @@ elsif ($ver eq "4.01") {
 	}
 }
 
-if ($ver eq "7.0sp1") {
+if ($ver eq "7.1osr2") {
+	$diskbase = "$rel/build/msdos710osr2hdd";
+
+	$config_sys_file = "config.sys.init.v710osr2";
+	$autoexec_bat_file = "autoexec.bat.init.v710osr2";
+
+	$disk1 = "msdos.710osr2.boot.1.disk.xz";
+	$disk1_url = "Software/DOS/Microsoft MS-DOS/7.10 (Windows 95 OSR2, DOS mode only)/files/bootdisk.dsk.xz";
+
+	# TODO: The Windows 95 CD-ROM has an "oldmsdos" folder with some of the classic DOS utilities there.
+	#       Add code here to download those files if --supp is given as the "supplementary" set of files.
+}
+elsif ($ver eq "7.0sp1") {
 	$diskbase = "$rel/build/msdos70sp1hdd";
 
 	$config_sys_file = "config.sys.init.v70sp1";
@@ -839,6 +852,10 @@ if ($ver eq "7.0") {
 elsif ($ver eq "7.0sp1") {
 	system("../../download-item.pl --rel $rel --as msdos.70sp1.win95.dos.tar.xz --url ".shellesc("Software/DOS/Microsoft MS-DOS/7.0 (Windows 95 SP1, DOS mode only)/files/win95.dos.tar.xz")) == 0 || die;
 	system("cd dos.tmp && tar -xJvf ../$rel/web.cache/msdos.70sp1.win95.dos.tar.xz") == 0 || die;
+}
+elsif ($ver eq "7.1osr2") {
+	system("../../download-item.pl --rel $rel --as msdos.710osr2.win95.dos.tar.xz --url ".shellesc("Software/DOS/Microsoft MS-DOS/7.10 (Windows 95 OSR2, DOS mode only)/files/win95.dos.tar.xz")) == 0 || die;
+	system("cd dos.tmp && tar -xJvf ../$rel/web.cache/msdos.710osr2.win95.dos.tar.xz") == 0 || die;
 }
 
 # http://support.microsoft.com/kb/95631
