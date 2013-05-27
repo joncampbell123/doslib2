@@ -784,7 +784,11 @@ if ($ver eq "3.2epson" || $ver eq "2.1") {
 	unlink("tmp.sys");
 }
 elsif ($ver eq "8.0winme") {
-	system("mcopy -i $diskbase\@\@$part_offset winme.hdd.io.sys ::IO.SYS") == 0 || die;
+	# FIXME: Is there anything we can do to the patched IO.SYS to change
+	# "Starting Windows Emergency Boot Disk" to "Starting Windows Millenium Edition"?
+
+	# FIXME: EMM386.EXE when added to CONFIG.SYS as DEVICE=EMM386.EXE does NOT WORK (it hangs). Why?
+	system("mcopy -i $diskbase\@\@$part_offset winme.hdd.patched.io.sys ::IO.SYS") == 0 || die;
 	system("mattrib -a +r +s +h -i $diskbase\@\@$part_offset ::IO.SYS") == 0 || die;
 
 	unlink("tmp.sys");
@@ -998,6 +1002,28 @@ elsif ($ver eq "8.0winme") {
 	system("cd dos.tmp && mv -v WIN/* .") == 0 || die;
 	system("cd dos.tmp && mv -v Drivers/* .") == 0 || die;
 	system("cd dos.tmp && rmdir DOS WIN EBD Drivers") == 0 || die;
+
+	# HACK: Suggested patch to COMMAND.COM to make it pure DOS bootable.
+	#       This removes Microsoft's deliberate crippling of COMMAND.COM.
+	#       They could have left pure DOS alone but coded Windows ME to outright
+	#       ignore any realmode TSRs.
+	open(CMD,"+<","dos.tmp/COMMAND.COM") || die;
+	binmode(CMD);
+	seek(CMD,0x6510,0);
+	read(CMD,$x,1);
+	if ($x eq chr(0x75)) {
+		seek(CMD,0x6510,0);
+		print CMD chr(0xEB);
+	}
+	else {
+		print "WARNING: COMMAND.COM did not have expected byte\n";
+	}
+	close(CMD);
+
+	# make sure the root directory copy is also updated
+	system("mdel -i $diskbase\@\@$part_offset ::COMMAND.COM");
+	system("mcopy -i $diskbase\@\@$part_offset dos.tmp/COMMAND.COM ::COMMAND.COM") == 0 || die;
+	system("mattrib -a -r -s -i $diskbase\@\@$part_offset ::COMMAND.COM") == 0 || die;
 }
 
 # http://support.microsoft.com/kb/95631
