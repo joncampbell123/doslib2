@@ -36,6 +36,7 @@
 #             3.3nec     MS-DOS 3.3 [NEC version]
 #             3.3        MS-DOS 3.3
 #             3.2epson   MS-DOS 3.2 [SEIKO EPSON version]
+#             2.2td      MS-DOS 2.2 [Weird TeleDisk version, non-bootable by itself, so we combine with 2.1 files]
 #             2.1        MS-DOS 2.1 (actually PC-DOS)
 #
 #     Installed image is English language (US) version.
@@ -363,6 +364,20 @@ elsif ($ver eq "3.2epson") {
 	$disk3 = "msdos.320epson.install.3.disk.xz";
 	$disk3_url = "Software/DOS/Microsoft MS-DOS/3.2 Seiko Epson/360KB/DISK3.IMA.xz";
 }
+elsif ($ver eq "2.2td") {
+	$part_type = 0x01; # FAT12 <= 32MB
+
+	$diskbase = "$rel/build/msdos220tdhdd";
+
+	$config_sys_file = "config.sys.init.v220td";
+	$autoexec_bat_file = "autoexec.bat.init.v220td";
+
+	$disk1 = "msdos.210.install.1.disk.xz";
+	$disk1_url = "Software/DOS/Microsoft MS-DOS/2.1/180KB/DISK1.IMA.xz";
+
+	$disk2 = "msdos.210.install.2.disk.xz";
+	$disk2_url = "Software/DOS/Microsoft MS-DOS/2.1/180KB/DISK2.IMA.xz";
+}
 elsif ($ver eq "2.1") {
 	$part_type = 0x01; # FAT12 <= 32MB
 
@@ -404,7 +419,7 @@ if ($target_size > 0) {
 	$cyls = 1 if $cyls == 0;
 }
 
-if ($ver eq "3.2epson" || $ver eq "2.1") {
+if ($ver eq "3.2epson" || $ver eq "2.1" || $ver eq "2.2td") {
 	if ($user_chs_override == 0) {
 		$sects = 16;
 		$cyls = $target_size / 512 / $heads / $sects;
@@ -486,7 +501,7 @@ elsif ($ver eq "3.2epson") {
 		$cyls = $x / 512 / $heads / $sects;
 	}
 }
-elsif ($ver eq "2.1") {
+elsif ($ver eq "2.1" || $ver eq "2.2td") {
 	# MS-DOS v2.1 and earlier cannot support >= 32MB partitions.
 	# It also cannot support FAT16. Unfortunately, mtools has this
 	# fetish for FAT16 whenever the partition is 16MB or larger.
@@ -542,7 +557,7 @@ elsif ($ver eq "3.2epson") {
 		$fat_len = int(($fat_len+511)/512);
 	}
 }
-elsif ($ver eq "2.1") {
+elsif ($ver eq "2.1" || $ver eq "2.2td") {
 	$clustersize = 4;
 
 	# Always do FAT12. FAT16 is not supported by v2.1
@@ -669,7 +684,7 @@ if ($ver eq "3.3nec" || $ver eq "3.3" || $ver eq "3.2epson") {
 
 	close(BIN);
 }
-elsif ($ver eq "2.1") {
+elsif ($ver eq "2.1" || $ver eq "2.2td") {
 	# copy the boot sector of the install disk, being careful not to overwrite the BPB written by mkdosfs
 	system("dd conv=notrunc,nocreat if=tmp.dsk of=$diskbase bs=1 seek=".($part_offset   )." skip=0 count=11") == 0 || die;
 	system("dd conv=notrunc,nocreat if=tmp.dsk of=$diskbase bs=1 seek=".($part_offset+32)." skip=32 count=".(512-32)) == 0 || die;
@@ -769,7 +784,7 @@ else {
 
 # and copy IO.SYS and MSDOS.SYS over, assuming that mkdosfs has left the root directory completely empty
 # so that our copy operation puts them FIRST in the root directory.
-if ($ver eq "3.2epson" || $ver eq "2.1") {
+if ($ver eq "3.2epson" || $ver eq "2.1" || $ver eq "2.2td") {
 	# IBMBIO.COM
 	unlink("tmp.sys");
 	system("mcopy -i tmp.dsk ::IBMBIO.COM tmp.sys") == 0 || die;
@@ -910,6 +925,21 @@ elsif ($ver eq "3.3") {
 	system("mv -v dos.tmp/x/* dos.tmp/") == 0 || die;
 	system("rm -Rfv dos.tmp/x") == 0 || die;
 
+}
+# MS-DOS 2.2 TeleDisk: we installed MS-DOS 2.1 for the bootable part, now we
+# need to copy the 2.2 parts in
+elsif ($ver eq "2.2td") {
+	system("rm -Rfv dos.tmp/x; mkdir dos.tmp/x") == 0 || die;
+
+	system("../../download-item.pl --rel $rel --as msdos.220td.ref1.disk.xz --url ".shellesc("Software/DOS/Microsoft MS-DOS/2.2/360KB/dos22_disk1.ima.xz")) == 0 || die;
+	system("xz -c -d $rel/web.cache/msdos.220td.ref1.disk.xz >tmp.dsk") == 0 || die;
+	system("mcopy -b -Q -m -v -s -i tmp.dsk ::. dos.tmp/x/") == 0 || die;
+	unlink("tmp.dsk");
+
+	system("rm -v dos.tmp/COMP.COM; mv -vn dos.tmp/x/COMP.EXE dos.tmp/") == 0 || die;
+	system("rm -v dos.tmp/x/COMMAND.COM") == 0 || die; # Fucking worthless COMMAND.COM
+	system("mv -v dos.tmp/x/* dos.tmp/") == 0 || die;
+	system("rmdir dos.tmp/x") == 0 || die;
 }
 
 # unpack the compressed files
@@ -1098,7 +1128,7 @@ system("mattrib -a +r +s +h -i $diskbase\@\@$part_offset ::DOS/IBMBIO.COM >/dev/
 system("mattrib -a +r +s +h -i $diskbase\@\@$part_offset ::DOS/IBMDOS.COM >/dev/null 2>&1");
 system("mattrib -a +r +s +h -i $diskbase\@\@$part_offset ::DOS/WINBOOT.SYS >/dev/null 2>&1");
 
-if ($ver ne "2.1") {
+if ($ver ne "2.1" && $ver ne "2.2td") {
 	# next, add the OAK IDE CD-ROM driver
 	system("mcopy -o -n -i $diskbase\@\@$part_offset oakcdrom.sys ::DOS/OAKCDROM.SYS") == 0 || die;
 }
