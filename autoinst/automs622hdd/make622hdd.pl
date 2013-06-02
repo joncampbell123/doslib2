@@ -124,9 +124,7 @@ if ($ver eq "6.22" || $ver eq "6.21" || $ver eq "6.20" || $ver eq "6.0" || $ver 
 	# silent change the size if the user specified anything less.
 	# if they really want to force it, they can specify a custom geometry.
 	if ($target_size < (8*1024*1024)) {
-		print "WARNING: MS-DOS 6.xx install requires a minimum 8MB hard disk image\n";
 		$target_size = (8*1024*1024);
-		sleep 1;
 	}
 }
 elsif ($ver eq "5.0") {
@@ -134,9 +132,7 @@ elsif ($ver eq "5.0") {
 	# silent change the size if the user specified anything less.
 	# if they really want to force it, they can specify a custom geometry.
 	if ($target_size < (3*1024*1024)) {
-		print "WARNING: MS-DOS 5.xx install requires a minimum 3MB hard disk image\n";
 		$target_size = (3*1024*1024);
-		sleep 1;
 	}
 }
 elsif ($ver eq "4.01") {
@@ -144,9 +140,12 @@ elsif ($ver eq "4.01") {
 	# silent change the size if the user specified anything less.
 	# if they really want to force it, they can specify a custom geometry.
 	if ($target_size < (2*1024*1024)) {
-		print "WARNING: MS-DOS 4.xx install requires a minimum 2MB hard disk image\n";
 		$target_size = (2*1024*1024);
-		sleep 1;
+	}
+}
+else {
+	if ($target_size < (1*1024*1024)) {
+		$target_size = (1*1024*1024);
 	}
 }
 
