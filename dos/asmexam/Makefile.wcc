@@ -482,9 +482,12 @@ $(abs_exe_dir)/w95sysrg.com: w95sysrg.asm
 $(abs_exe_dir)/w95sysrs.com: w95sysrs.asm
 	$(NASM) -o $@ -f bin $(NASMFLAGS) $^
 
-all-txt: $(abs_exe_dir)/emm.txt
+all-txt: $(abs_exe_dir)/emm.txt $(abs_exe_dir)/list.txt
 
 $(abs_exe_dir)/emm.txt: emm.txt
+	cp -v $^ $@
+
+$(abs_exe_dir)/list.txt: LIST
 	cp -v $^ $@
 
 all-targets: all-targets-abs-dirs all-programs all-txt
