@@ -1,0 +1,24 @@
+# This is a separate makefile because GNU automake interferes with GNU make conditionals
+ifdef target_subdir
+
+all-targets-abs-dirs: $(abs_exe_dir) $(abs_lib_dir) $(abs_obj_dir)
+
+all_programs  = $(abs_exe_dir)/dsomgr16.com
+all_programs += $(abs_exe_dir)/dsomgd16.com
+
+all-programs: $(all_programs)
+
+$(abs_exe_dir)/dsomgr16.com: dsomgr16.asm
+	$(NASM) -o $@ -f bin $(NASMFLAGS) $^
+
+$(abs_exe_dir)/dsomgd16.com: dsomgr16.asm
+	$(NASM) -o $@ -f bin $(NASMFLAGS) -DDEBUG=1 $^
+
+all-targets: all-targets-abs-dirs all-programs
+	@true
+
+clean-targets:
+	@rm -Rfv $(abs_exe_dir) $(abs_lib_dir) $(abs_obj_dir)
+
+endif
+
