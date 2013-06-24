@@ -7,9 +7,16 @@ all_programs  = $(abs_exe_dir)/examdll.dso
 
 all-programs: $(all_programs)
 
+$(abs_obj_dir)/examdll.obj: examdll.c
+	$(WCC) -e=2 -zq -zu -m$(W_MMODE) $(W_DEBUG) -bt=dos -oilrtfm -s -wx -$(W_CPULEVEL) -q -fr=nul -fo=$(abs_obj_dir)/.obj -i=.. -i=../.. $^
+
 $(abs_exe_dir)/examdll.dso: $(obj_win32s_compat) $(abs_obj_dir)/examdll.obj
-	@echo option quiet system option nocaseexact option stack=8k, heapsize=1k format windows dll segment TYPE CODE FIXED DISCARDABLE segment TYPE DATA FIXED $(foreach x,$(filter %$(obj_suffix),$^),file "$(x)") option map=$(abs_obj_dir)/empty1.map name $@ >$(abs_obj_dir)/empty1.cmd
-	$(WLINK) @$(abs_obj_dir)/empty1.cmd
+	rm -fv $(abs_obj_dir)/examdll.cmd
+	@echo option quiet option nocaseexact option stack=8k, heapsize=1k format windows dll segment TYPE CODE FIXED DISCARDABLE segment TYPE DATA FIXED $(foreach x,$(filter %$(obj_suffix),$^),file "$(x)") option map=$(abs_obj_dir)/examdll.map >>$(abs_obj_dir)/examdll.cmd
+	@echo EXPORT HELLO1.1=_hello1 >>$(abs_obj_dir)/examdll.cmd
+	@echo EXPORT HELLO2.2=_hello2 >>$(abs_obj_dir)/examdll.cmd
+	@echo name $@  >>$(abs_obj_dir)/examdll.cmd
+	$(WLINK) @$(abs_obj_dir)/examdll.cmd
 
 all-targets: all-targets-abs-dirs all-programs
 	@true

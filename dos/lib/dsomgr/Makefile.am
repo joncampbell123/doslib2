@@ -2,7 +2,7 @@
 BUILD_dos16r=1
 BUILD_dos16r_mm=compact
 
--include ../../config.mak
+-include ../../../config.mak
 -include Makefile.wcc
 
 debugme:
