@@ -102,7 +102,7 @@ void ne_module_free_name_table(struct ne_module *n) {
 }
 
 unsigned int ne_module_raw_name_to_ordinal(unsigned char *p,unsigned int sz,const char *name) {
-	unsigned int i=0,len,ord,count=0; /* <- NTS: counter is there to avoid matching the module name in the first entry */
+	unsigned int i=0,len,ord;
 	unsigned int namel,match;
 
 	namel = strlen(name);
@@ -112,12 +112,12 @@ unsigned int ne_module_raw_name_to_ordinal(unsigned char *p,unsigned int sz,cons
 		if ((i+len+2) > sz) break;
 
 		match = 0;
-		if (len == namel && count != 0) match = (memcmp(p+i,name,namel) == 0);
+		if (len == namel) match = (memcmp(p+i,name,namel) == 0);
 		i += len;
 		ord = *((uint16_t*)(p+i)); i += 2;
-		count++;
 
-		if (match) return ord;
+		/* NTS: do not match ordinal 0 because that is the module name */
+		if (ord != 0 && match) return ord;
 	}
 
 	return 0;

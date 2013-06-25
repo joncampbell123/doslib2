@@ -31,6 +31,7 @@ l2:		pop	ax
 		pop	si
 	}
 
-	return hello1();
+	hello1();
+	return (int)(0xABCDU);
 }
 
