@@ -63,12 +63,30 @@ int ne_module_load_and_apply_segment_relocations(struct ne_module *n,unsigned in
 		src_segn = n->ne_sega[src_segn-1].segment;
 		modp = MK_FP(af->segment,offset);
 
-		if (tmp[0] == 3) { /* 16:16 fixup */
-			*((uint16_t far*)modp) = src_offset;
-			*((uint16_t far*)(modp+2)) = src_segn;
-		}
-		else {
-			fprintf(stdout,"WARNING: Reloc fixup type %u not yet supported\n",tmp[0]);
+		switch (tmp[0]) {
+			case 0x00: /* low byte at offset */
+				*((uint8_t far*)modp) = src_offset&0xFF;
+				break;
+			case 0x02: /* 16-bit segment */
+				*((uint16_t far*)modp) = src_segn;
+				break;
+			case 0x03: /* 16:16 ptr */
+				*((uint16_t far*)modp) = src_offset;
+				*((uint16_t far*)(modp+2)) = src_segn;
+				break;
+			case 0x05: /* 16-bit offset */
+				*((uint16_t far*)modp) = src_offset;
+				break;
+			case 0x0B: /* 16:32 ptr */
+				*((uint32_t far*)modp) = src_offset;
+				*((uint16_t far*)(modp+4)) = src_segn;
+				break;
+			case 0x0D: /* 32-bit offset */
+				*((uint32_t far*)modp) = src_offset;
+				break;
+			default:
+				fprintf(stdout,"WARNING: Reloc fixup type %u not yet supported\n",tmp[0]);
+				break;
 		}
 	}
 

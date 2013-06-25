@@ -267,6 +267,11 @@ int main(int argc,char **argv,char **envp) {
 			fprintf(stdout,"FAILED to get HELLO2\n");
 	}
 
+	/* the library must NOT match the module name in the first slot */
+	entry = ne_module_entry_point_by_name(&ne,"EXAMDLL2");
+	if (entry != NULL)
+		fprintf(stdout,"BUG: entry_point_by_name will match module name\n");
+
 	ne_module_free(&ne);
 	close(fd);
 
