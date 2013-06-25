@@ -14,7 +14,7 @@
 struct ne_header {
 	uint8_t			sig_n,sig_e;				/* +0x00 N E */
 	uint8_t			linker_version,linker_revision;		/* +0x02 */
-	uint16_t		entry_table_offset;			/* +0x04 */
+	uint16_t		entry_table_offset;			/* +0x04 relative to header */
 	uint16_t		entry_table_length;			/* +0x06 */
 	uint32_t		reserved;				/* +0x08 (32-bit CRC) */
 	uint16_t		flags;					/* +0x0C */
@@ -54,6 +54,12 @@ struct ne_segment_assign {
 	uint16_t		segment;				/* 0 if not assigned, else realmode segment */
 	uint16_t		length_para;				/* allocated length in paragraphs */
 };
+
+struct ne_entry_point {
+	uint8_t			flags;
+	uint8_t			segment_index;
+	uint16_t		offset;
+};
 #pragma pack(pop)
 
 struct ne_module {
@@ -62,7 +68,34 @@ struct ne_module {
 	struct ne_header		ne_header;
 	struct ne_segment_def*		ne_segd;
 	struct ne_segment_assign*	ne_sega;
+	uint16_t			ne_entry_points;		/* indices count from 1, from entry #0 */
+	struct ne_entry_point*		ne_entry;
 };
+
+struct ne_entry_point* ne_module_get_ordinal_entry_point(struct ne_module *n,unsigned int ordinal) {
+	if (n == NULL) return NULL;
+	if (ordinal == 0) return NULL;
+	if (n->ne_entry == NULL) return NULL;
+	ordinal--;
+	if (ordinal >= n->ne_entry_points) return NULL;
+	return n->ne_entry + ordinal;
+}
+
+void far *ne_module_entry_point_ordinal(struct ne_module *n,unsigned int ordinal) {
+	struct ne_segment_assign *sega;
+	struct ne_entry_point *nent;
+	
+	nent = ne_module_get_ordinal_entry_point(n,ordinal);
+	if (nent == NULL) return NULL;
+	if (!(nent->flags & 1)) return NULL; /* not "exported" */
+	if (nent->segment_index == 0) return NULL;
+	if (n->ne_segd == NULL || n->ne_sega == NULL) return NULL;
+	if (nent->segment_index > n->ne_header.segment_table_entries) return NULL;
+	sega = n->ne_sega + nent->segment_index - 1;
+	if (sega->segment == 0) return NULL;
+	if (((nent->offset+0xFUL)>>4UL) >= sega->length_para) return NULL;
+	return MK_FP(sega->segment,nent->offset);
+}
 
 void ne_module_zero(struct ne_module *n) {
 	_fmemset(n,0,sizeof(*n));
@@ -205,12 +238,90 @@ void ne_module_dump_segmentinfo(struct ne_module *n,FILE *fp) {
 	}
 }
 
+int ne_module_load_entry_points(struct ne_module *n) {
+	unsigned char far *p;
+	unsigned int i,rd,count,segn,ordinal_count=0;
+
+	if (n == NULL) return 0;
+	if (n->ne_entry != NULL) return 0;
+	if (n->ne_header.entry_table_length <= 2) return 0;
+	if (n->ne_header.entry_table_offset == 0) return 0;
+	if (n->ne_header.entry_table_length > 32768U) return 0;
+
+	p = _fmalloc(n->ne_header.entry_table_length);
+	if (p == NULL) return 1;
+
+	if (lseek(n->fd,n->ne_header_offset+(unsigned long)n->ne_header.entry_table_offset,SEEK_SET) !=
+		(n->ne_header_offset+(unsigned long)n->ne_header.entry_table_offset)) {
+		_ffree(p);
+		return 1;
+	}
+	if (_dos_read(n->fd,p,n->ne_header.entry_table_length,&rd) || rd != n->ne_header.entry_table_length) {
+		_ffree(p);
+		return 1;
+	}
+
+	/* OK. table loaded. parse it first time to count the number of exported symbols */
+	for (i=0;i < n->ne_header.entry_table_length;) {
+		count = p[i++]; if (count == 0) break;
+		segn = p[i++]; if (segn == 0) break;
+		ordinal_count += count;
+
+		if (segn == 0xFF)
+			i += (6 * count);/* moveable segment */
+		else /* fixed/constant */
+			i += (3 * count);
+	}
+
+	if (ordinal_count != 0) {
+		n->ne_entry_points = ordinal_count;
+		n->ne_entry = malloc(n->ne_entry_points * sizeof(struct ne_entry_point));
+		if (n->ne_entry != NULL) {
+			ordinal_count = 0;
+
+			/* second pass: actually parse the struct */
+			for (i=0;i < n->ne_header.entry_table_length;) {
+				count = p[i++]; if (count == 0) break;
+				segn = p[i++]; if (segn == 0) break;
+
+				if (segn == 0xFF) {
+					while (ordinal_count < n->ne_header.entry_table_length && count != 0) {
+						struct ne_entry_point *xx = n->ne_entry + (ordinal_count++);
+						xx->flags = p[i++];
+						i += 2; /* skip "INT 3F" */
+						xx->segment_index = p[i++];
+						xx->offset = *((uint16_t*)(p+i)); i += 2;
+						count--;
+					}
+				}
+				else {
+					while (ordinal_count < n->ne_header.entry_table_length && count != 0) {
+						struct ne_entry_point *xx = n->ne_entry + (ordinal_count++);
+						xx->flags = p[i++];
+						xx->segment_index = segn;
+						xx->offset = *((uint16_t*)(p+i)); i += 2;
+						count--;
+					}
+				}
+			}
+
+			while (ordinal_count < n->ne_entry_points) {
+				struct ne_entry_point *xx = n->ne_entry + (ordinal_count++);
+				memset(xx,0,sizeof(*xx));
+			}
+		}
+	}
+
+	_ffree(p);
+	return 0;
+}
+
 void ne_module_dump_header(struct ne_module *n,FILE *fp) {
 	fprintf(fp,"NE(%Fp) fd=%d hdr=%lu\n",(void far*)n,n->fd,(unsigned long)n->ne_header_offset);
 	fprintf(fp,"         Linker ver: %u.%u\n",
 		n->ne_header.linker_version,n->ne_header.linker_revision);
-	fprintf(fp,"        Entry table: @%u, %u bytes long\n",
-		n->ne_header.entry_table_offset,n->ne_header.entry_table_length);
+	fprintf(fp,"        Entry table: @%lu, %u bytes long\n",
+		(unsigned long)n->ne_header.entry_table_offset+n->ne_header_offset,n->ne_header.entry_table_length);
 	fprintf(fp,"              Flags: 0x%04x\n",n->ne_header.flags);
 	fprintf(fp,"   AUTODATA segment: %u\n",n->ne_header.autodata_segment_index);
 	fprintf(fp,"     Heap init size: %u\n",n->ne_header.heap_initial_size);
@@ -231,6 +342,11 @@ void ne_module_dump_header(struct ne_module *n,FILE *fp) {
 void ne_module_free(struct ne_module *n) {
 	unsigned int x;
 
+	n->ne_entry_points = 0;
+	if (n->ne_entry) {
+		free(n->ne_entry);
+		n->ne_entry = NULL;
+	}
 	if (n->ne_sega != NULL) {
 		struct ne_segment_assign *af;
 
@@ -253,7 +369,10 @@ void ne_module_free(struct ne_module *n) {
 }
 
 int main(int argc,char **argv,char **envp) {
+	struct ne_entry_point* nent;
 	struct ne_module ne;
+	void far *entry;
+	unsigned int xx;
 	int fd;
 
 	/* validate */
@@ -283,6 +402,53 @@ int main(int argc,char **argv,char **envp) {
 	}
 	ne_module_dump_segmentinfo(&ne,stdout);
 	/* TODO: Read relocation data and apply relocations, if applicable */
+	if (ne_module_load_entry_points(&ne)) {
+		fprintf(stderr,"Failed to load entry points\n");
+		return 1;
+	}
+	fprintf(stderr,"%u entry points\n",ne.ne_entry_points);
+	for (xx=1;xx <= ne.ne_entry_points;xx++) {
+		nent = ne_module_get_ordinal_entry_point(&ne,xx);
+		entry = ne_module_entry_point_ordinal(&ne,xx);
+		if (nent != NULL) {
+			fprintf(stderr,"  [%u] flags=0x%02x segn=%u offset=0x%04x entry=%Fp\n",
+				xx,nent->flags,nent->segment_index,nent->offset,entry);
+		}
+	}
+
+	/* 3rd ordinal is MESSAGE data object */
+	entry = ne_module_entry_point_ordinal(&ne,3);
+	if (entry != NULL) {
+		fprintf(stderr,"Got ordinal #3, which should be a string: %Fs\n",entry);
+	}
+	else {
+		fprintf(stderr,"FAILED to get ordinal #3\n");
+	}
+
+	/* 1st and 2nd ordinals are functions */
+	{
+		int (far __stdcall *hello1)() = (int (far __stdcall *)())
+			ne_module_entry_point_ordinal(&ne,1);
+
+		if (hello1 != NULL)
+			fprintf(stderr,"Ordinal #1 function call worked, returned 0x%04x\n",hello1());
+		else
+			fprintf(stderr,"FAILED to get ordinal #1\n");
+	}
+	{
+		int (far __stdcall *hello2)(const char far *msg) = (int (far __stdcall *)(const char far *))
+			ne_module_entry_point_ordinal(&ne,2);
+
+		if (hello2 != NULL)
+			fprintf(stderr,"Ordinal #2 function call worked, returned 0x%04x\n",hello2("This is a test string. I passed this to the function. Test GOOD\r\n"));
+		else
+			fprintf(stderr,"FAILED to get ordinal #2\n");
+	}
+
+	/* 4th ordinal does NOT exist */
+	if (ne_module_entry_point_ordinal(&ne,4) != NULL)
+		fprintf(stderr,"FAILURE: 4th ordinal should not exist\n");
+
 	ne_module_free(&ne);
 	close(fd);
 
