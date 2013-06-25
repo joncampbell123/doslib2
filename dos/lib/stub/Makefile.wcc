@@ -1,0 +1,27 @@
+# This is a separate makefile because GNU automake interferes with GNU make conditionals
+ifdef target_subdir
+
+all-targets-abs-dirs: $(abs_exe_dir) $(abs_lib_dir) $(abs_obj_dir)
+
+all_programs  = $(abs_exe_dir)/stub.exe
+
+all-programs: $(all_programs)
+
+$(abs_exe_dir)/stub.exe: $(abs_obj_dir)/stub.obj
+	mkdir -p $(abs_exe_dir)
+	@echo option quiet system dos file $(abs_obj_dir)/stub.obj >tmp.cmd
+	@echo name $(abs_exe_dir)/stub.exe >>tmp.cmd
+	$(WLINK) @tmp.cmd
+
+$(abs_obj_dir)/stub.obj: stub.asm
+	mkdir -p $(abs_obj_dir)
+	$(NASM) -o $@ -f obj $(NASMFLAGS) $^
+
+all-targets: all-programs
+	@true
+
+clean-targets:
+	@rm -Rfv $(abs_exe_dir) $(abs_lib_dir) $(abs_obj_dir)
+
+endif
+

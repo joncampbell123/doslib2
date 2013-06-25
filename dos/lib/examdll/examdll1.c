@@ -3,11 +3,15 @@
 unsigned char near __cdecl small_code_;
 unsigned char far __cdecl big_code_;
 
-int __stdcall hello1() {
+/* NTS: Must be unsigned char[] not unsigned char * to avoid creating a pointer, and
+ *      therefore causing the creation of relocation data */
+const unsigned char far message[] = "This is a string of text";
+
+int far __stdcall hello1() {
 	return 0x1234;
 }
 
-int __stdcall hello2(const char far *msg) {
+int far __stdcall hello2(const char far *msg) {
 	__asm {
 		push	si
 		push	ds
