@@ -80,6 +80,8 @@ struct ne_module {
 	uint16_t			ne_resident_names_length;
 	unsigned char*			ne_nonresident_names;
 	uint16_t			ne_nonresident_names_length;
+	unsigned char*			ne_imported_names;
+	uint16_t			ne_imported_names_length;
 };
 
 struct ne_entry_point* ne_module_get_ordinal_entry_point(struct ne_module *n,unsigned int ordinal);
@@ -91,6 +93,7 @@ int ne_module_load_segments(struct ne_module *n);
 int ne_module_load_segmentinfo(struct ne_module *n);
 void ne_module_dump_segmentinfo(struct ne_module *n,FILE *fp);
 int ne_module_load_resident_name_table(struct ne_module *n);
+int ne_module_load_imported_name_table(struct ne_module *n);
 int ne_module_load_nonresident_name_table(struct ne_module *n);
 int ne_module_load_name_table(struct ne_module *n);
 int ne_module_load_entry_points(struct ne_module *n);
@@ -106,6 +109,7 @@ int ne_module_load_and_apply_segment_relocations(struct ne_module *n,unsigned in
 int ne_module_free_segment(struct ne_module *n,unsigned int idx/*NTS: Segments in NE executables are 1-based NOT zero-based*/);
 int ne_module_free_segments(struct ne_module *n);
 void ne_module_free_resident_name_table(struct ne_module *n);
+void ne_module_free_imported_name_table(struct ne_module *n);
 void ne_module_free_nonresident_name_table(struct ne_module *n);
 void ne_module_free_entry_points(struct ne_module *n);
 void ne_module_free_name_table(struct ne_module *n);

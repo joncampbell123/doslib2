@@ -14,6 +14,37 @@
 
 #if defined(TARGET_MSDOS) && TARGET_BITS == 16 && defined(TARGET_REALMODE)
 
+int ne_module_load_imported_name_table(struct ne_module *n) {
+	unsigned int rd;
+
+	if (n == NULL) return 0;
+	if (n->ne_imported_names != NULL) return 0;
+	if (n->ne_header.imported_name_table_rel_offset == 0) return 0;
+
+	/* the "length" is implied by the distance from the imported name table to the entry table */
+	if (n->ne_header.imported_name_table_rel_offset >= n->ne_header.entry_table_offset) return 0;
+
+	n->ne_imported_names_length = n->ne_header.entry_table_offset - n->ne_header.imported_name_table_rel_offset;
+	if (n->ne_imported_names_length > 32768) return 0;
+
+	n->ne_imported_names = malloc(n->ne_imported_names_length);
+	if (n->ne_imported_names == NULL) return 1;
+
+	if (lseek(n->fd,n->ne_header.imported_name_table_rel_offset+n->ne_header_offset,SEEK_SET) !=
+		(n->ne_header.imported_name_table_rel_offset+n->ne_header_offset)) {
+		free(n->ne_imported_names);
+		n->ne_imported_names = NULL;
+		return 1;
+	}
+	if (_dos_read(n->fd,n->ne_imported_names,n->ne_imported_names_length,&rd) || rd != n->ne_imported_names_length) {
+		free(n->ne_imported_names);
+		n->ne_imported_names = NULL;
+		return 1;
+	}
+
+	return 0;
+}
+
 int ne_module_load_resident_name_table(struct ne_module *n) {
 	unsigned int rd;
 
@@ -96,7 +127,16 @@ void ne_module_free_nonresident_name_table(struct ne_module *n) {
 	}
 }
 
+void ne_module_free_imported_name_table(struct ne_module *n) {
+	if (n->ne_imported_names) {
+		free(n->ne_imported_names);
+		n->ne_imported_names = NULL;
+		n->ne_imported_names_length = 0;
+	}
+}
+
 void ne_module_free_name_table(struct ne_module *n) {
+	ne_module_free_imported_name_table(n);
 	ne_module_free_resident_name_table(n);
 	ne_module_free_nonresident_name_table(n);
 }

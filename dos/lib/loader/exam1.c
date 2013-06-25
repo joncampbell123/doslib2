@@ -272,6 +272,10 @@ int main(int argc,char **argv,char **envp) {
 	if (entry != NULL)
 		fprintf(stdout,"BUG: entry_point_by_name will match module name\n");
 
+	/* try to load imported name table */
+	if (ne_module_load_imported_name_table(&ne))
+		fprintf(stdout,"Failed to load imp. name table\n");
+
 	ne_module_free(&ne);
 	close(fd);
 
