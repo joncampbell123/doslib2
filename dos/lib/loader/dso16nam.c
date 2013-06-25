@@ -80,6 +80,27 @@ int ne_module_load_name_table(struct ne_module *n) {
 	return !x;
 }
 
+void ne_module_free_resident_name_table(struct ne_module *n) {
+	if (n->ne_resident_names) {
+		free(n->ne_resident_names);
+		n->ne_resident_names = NULL;
+		n->ne_resident_names_length = 0;
+	}
+}
+
+void ne_module_free_nonresident_name_table(struct ne_module *n) {
+	if (n->ne_nonresident_names) {
+		free(n->ne_nonresident_names);
+		n->ne_nonresident_names = NULL;
+		n->ne_nonresident_names_length = 0;
+	}
+}
+
+void ne_module_free_name_table(struct ne_module *n) {
+	ne_module_free_resident_name_table(n);
+	ne_module_free_nonresident_name_table(n);
+}
+
 unsigned int ne_module_raw_name_to_ordinal(unsigned char *p,unsigned int sz,const char *name) {
 	unsigned int i=0,len,ord;
 	unsigned int namel,match;

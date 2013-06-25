@@ -39,6 +39,14 @@ void far *ne_module_entry_point_by_ordinal(struct ne_module *n,unsigned int ordi
 	return MK_FP(sega->segment,nent->offset);
 }
 
+void ne_module_free_entry_points(struct ne_module *n) {
+	n->ne_entry_points = 0;
+	if (n->ne_entry) {
+		free(n->ne_entry);
+		n->ne_entry = NULL;
+	}
+}
+
 int ne_module_load_entry_points(struct ne_module *n) {
 	unsigned char far *p;
 	unsigned int i,rd,count,segn,ordinal_count=0;

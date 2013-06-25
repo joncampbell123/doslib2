@@ -57,6 +57,8 @@ struct ne_segment_def {
 struct ne_segment_assign {
 	uint16_t		segment;				/* 0 if not assigned, else realmode segment */
 	uint16_t		length_para;				/* allocated length in paragraphs */
+	uint16_t		internal_flags;				/* internal flags */
+#define NE_SEGMENT_ASSIGN_IF_RELOC_APPLIED			0x0001	/* relocation data has been applied */
 };
 
 struct ne_entry_point {
@@ -100,6 +102,14 @@ void ne_module_dump_header(struct ne_module *n,FILE *fp);
 void ne_module_free(struct ne_module *n);
 int ne_module_load_segment(struct ne_module *n,unsigned int idx/*NTS: Segments in NE executables are 1-based NOT zero-based*/);
 int ne_module_allocate_segment(struct ne_module *n,unsigned int idx/*NTS: Segments in NE executables are 1-based NOT zero-based*/);
+int ne_module_load_and_apply_segment_relocations(struct ne_module *n,unsigned int idx/*NTS: 1-based, NOT zero-based*/);
+int ne_module_free_segment(struct ne_module *n,unsigned int idx/*NTS: Segments in NE executables are 1-based NOT zero-based*/);
+int ne_module_free_segments(struct ne_module *n);
+void ne_module_free_resident_name_table(struct ne_module *n);
+void ne_module_free_nonresident_name_table(struct ne_module *n);
+void ne_module_free_entry_points(struct ne_module *n);
+void ne_module_free_name_table(struct ne_module *n);
+void ne_module_free_segmentinfo(struct ne_module *n);
 
 #endif
 

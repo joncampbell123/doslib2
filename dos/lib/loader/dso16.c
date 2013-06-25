@@ -67,44 +67,11 @@ void ne_module_dump_header(struct ne_module *n,FILE *fp) {
 }
 
 void ne_module_free(struct ne_module *n) {
-	unsigned int x;
-
-	if (n->ne_nonresident_names) {
-		free(n->ne_nonresident_names);
-		n->ne_nonresident_names = NULL;
-		n->ne_nonresident_names_length = 0;
-	}
-	if (n->ne_resident_names) {
-		free(n->ne_resident_names);
-		n->ne_resident_names = NULL;
-		n->ne_resident_names_length = 0;
-	}
-	n->ne_entry_points = 0;
-	if (n->ne_entry) {
-		free(n->ne_entry);
-		n->ne_entry = NULL;
-	}
-	if (n->ne_sega != NULL) {
-		struct ne_segment_assign *af;
-
-		for (x=0;x < n->ne_header.segment_table_entries;x++) {
-			af = n->ne_sega + x;
-			if (af->segment != 0) {
-				_dos_freemem(af->segment);
-				af->segment = 0;
-				af->length_para = 0;
-			}
-		}
-
-		free(n->ne_sega);
-		n->ne_sega = NULL;
-	}
-	if (n->ne_segd != NULL) {
-		free(n->ne_segd);
-		n->ne_segd = NULL;
-	}
+	ne_module_free_segments(n);
+	ne_module_free_name_table(n);
+	ne_module_free_entry_points(n);
+	ne_module_free_segmentinfo(n);
 	n->fd = -1;
-	ne_module_zero(n);
 }
 
 #endif

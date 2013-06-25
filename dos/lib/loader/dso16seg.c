@@ -14,6 +14,29 @@
 
 #if defined(TARGET_MSDOS) && TARGET_BITS == 16 && defined(TARGET_REALMODE)
 
+int ne_module_free_segment(struct ne_module *n,unsigned int idx/*NTS: Segments in NE executables are 1-based NOT zero-based*/) {
+	struct ne_segment_assign *af;
+	struct ne_segment_def *df;
+
+	if (n == NULL || idx == 0) return 1;
+	if (idx > n->ne_header.segment_table_entries) return 1;
+	if (n->ne_sega == NULL) return 0;
+	if (n->ne_segd == NULL) return 0;
+
+	df = n->ne_segd + idx - 1;
+	af = n->ne_sega + idx - 1;
+	if (af->segment != 0) {
+		_dos_freemem(af->segment);
+		af->length_para = 0;
+		af->segment = 0;
+	}
+
+	/* mark as not allocated. and since we discarded the segment, it's not loaded either. and relocations are lost */
+	df->flags |= ~(0x0006);
+	af->internal_flags &= ~(NE_SEGMENT_ASSIGN_IF_RELOC_APPLIED);
+	return 0;
+}
+
 int ne_module_allocate_segment(struct ne_module *n,unsigned int idx/*NTS: Segments in NE executables are 1-based NOT zero-based*/) {
 	struct ne_segment_assign *af;
 	struct ne_segment_def *df;
@@ -69,6 +92,9 @@ int ne_module_load_segment(struct ne_module *n,unsigned int idx/*NTS: Segments i
 	af = n->ne_sega + idx - 1;
 	if (af->segment == 0) return 1;
 
+	/* if the segment has already been loaded, don't load it again */
+	if (df->flags & 0x0004) return 0;
+
 	/* now if disk data is involved, read it */
 	p = MK_FP(af->segment,0);
 	if (df->length == 0 && df->offset_sectors != 0U) rd = 0x10000UL;
@@ -111,6 +137,15 @@ int ne_module_load_segment(struct ne_module *n,unsigned int idx/*NTS: Segments i
 	return 0;
 }
 
+int ne_module_free_segments(struct ne_module *n) {
+	unsigned int x;
+
+	for (x=1;x <= n->ne_header.segment_table_entries;x++)
+		ne_module_free_segment(n,x);
+
+	return 0;
+}
+
 int ne_module_load_segments(struct ne_module *n) {
 	unsigned int x;
 
@@ -118,6 +153,17 @@ int ne_module_load_segments(struct ne_module *n) {
 		ne_module_load_segment(n,x);
 
 	return 0;
+}
+
+void ne_module_free_segmentinfo(struct ne_module *n) {
+	if (n->ne_sega != NULL) {
+		free(n->ne_sega);
+		n->ne_sega = NULL;
+	}
+	if (n->ne_segd != NULL) {
+		free(n->ne_segd);
+		n->ne_segd = NULL;
+	}
 }
 
 int ne_module_load_segmentinfo(struct ne_module *n) {
@@ -172,12 +218,12 @@ void ne_module_dump_segmentinfo(struct ne_module *n,FILE *fp) {
 
 		if (n->ne_sega != NULL) {
 			af = n->ne_sega + x;
-			if (af->segment != 0) {
+
+			fprintf(fp,"    internal flags=0x%04x\n",af->internal_flags);
+			if (af->segment != 0)
 				fprintf(fp,"    assigned to realmode segment 0x%04x-0x%04x inclusive\n",af->segment,af->segment+af->length_para-1);
-			}
-			else {
+			else
 				fprintf(fp,"    *not yet loaded/assigned a memory address\n");
-			}
 		}
 	}
 }
