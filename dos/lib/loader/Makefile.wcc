@@ -7,13 +7,25 @@ lib_dos_lib_loader_dso16=$(abs_lib_dir)/libdso16$(lib_suffix)
 lib_dos_lib_loader_dso16_wlink=library $(lib_dos_lib_loader_dso16)
 lib_dos_lib_loader_dso16_dependencies=
 
-$(lib_dos_lib_loader_dso16): $(abs_obj_dir)/dso16$(obj_suffix)
+$(lib_dos_lib_loader_dso16): $(abs_obj_dir)/dso16$(obj_suffix) $(abs_obj_dir)/dso16ent$(obj_suffix) $(abs_obj_dir)/dso16nam$(obj_suffix) $(abs_obj_dir)/dso16rel$(obj_suffix) $(abs_obj_dir)/dso16seg$(obj_suffix)
 	$(WLIB) -q -b -c $@ $(foreach x,$^,-+$(x))
 
 $(abs_obj_dir)/exam1$(obj_suffix): exam1.c
 	$(WCC) $(WCCFLAGS) -I../../.. -fo=$(abs_obj_dir)/.obj -i=.. -i=../.. $^
 
 $(abs_obj_dir)/dso16$(obj_suffix): dso16.c
+	$(WCC) $(WCCFLAGS) -I../../.. -fo=$(abs_obj_dir)/.obj -i=.. -i=../.. $^
+
+$(abs_obj_dir)/dso16ent$(obj_suffix): dso16ent.c
+	$(WCC) $(WCCFLAGS) -I../../.. -fo=$(abs_obj_dir)/.obj -i=.. -i=../.. $^
+
+$(abs_obj_dir)/dso16nam$(obj_suffix): dso16nam.c
+	$(WCC) $(WCCFLAGS) -I../../.. -fo=$(abs_obj_dir)/.obj -i=.. -i=../.. $^
+
+$(abs_obj_dir)/dso16rel$(obj_suffix): dso16rel.c
+	$(WCC) $(WCCFLAGS) -I../../.. -fo=$(abs_obj_dir)/.obj -i=.. -i=../.. $^
+
+$(abs_obj_dir)/dso16seg$(obj_suffix): dso16seg.c
 	$(WCC) $(WCCFLAGS) -I../../.. -fo=$(abs_obj_dir)/.obj -i=.. -i=../.. $^
 
 all_programs  = $(abs_exe_dir)/exam1$(exe_suffix)
