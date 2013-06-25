@@ -1,5 +1,5 @@
 -include ../config.mak
 
-SUBDIRS = dsomgr stub examdll
+SUBDIRS = dsomgr stub examdll loader
 ACLOCAL_AMFLAGS = 
 
