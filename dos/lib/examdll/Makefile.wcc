@@ -35,6 +35,7 @@ $(abs_exe_dir)/examdll2.dso: $(obj_win32s_compat) $(abs_obj_dir)/examdll2.obj
 	@echo EXPORT HELLO1.1=_hello1 >>$(abs_obj_dir)/examdll2.cmd
 	@echo EXPORT HELLO2.2=_hello2 >>$(abs_obj_dir)/examdll2.cmd
 	@echo EXPORT MESSAGE.3=_message >>$(abs_obj_dir)/examdll2.cmd
+	@echo EXPORT MESSAGE2.4=_message2 >>$(abs_obj_dir)/examdll2.cmd
 	@echo option modname='EXAMDLL2' >>$(abs_obj_dir)/examdll2.cmd
 	@echo name $@ >>$(abs_obj_dir)/examdll2.cmd
 	$(WLINK) @$(abs_obj_dir)/examdll2.cmd

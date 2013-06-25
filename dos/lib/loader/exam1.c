@@ -97,7 +97,7 @@ void far *ne_module_entry_point_by_ordinal(struct ne_module *n,unsigned int ordi
 	if (nent->segment_index > n->ne_header.segment_table_entries) return NULL;
 	sega = n->ne_sega + nent->segment_index - 1;
 	if (sega->segment == 0) return NULL;
-	if (((nent->offset+0xFUL)>>4UL) >= sega->length_para) return NULL;
+	if ((nent->offset>>4UL) >= sega->length_para) return NULL;
 	return MK_FP(sega->segment,nent->offset);
 }
 
@@ -166,12 +166,12 @@ int ne_module_load_and_apply_relocations(struct ne_module *n) {
 								src_offset = *((uint16_t*)(tmp+6));
 							}
 							else {
-								fprintf(stderr,"WARNING: movable relocation entries not yet supported\n");
+								fprintf(stdout,"WARNING: movable relocation entries not yet supported\n");
 								continue;
 							}
 						}
 						else {
-							fprintf(stderr,"WARNING: Reloc type %u not yet supported\n",tmp[1]);
+							fprintf(stdout,"WARNING: Reloc type %u not yet supported\n",tmp[1]);
 							continue;
 						}
 
@@ -570,6 +570,7 @@ void ne_module_free(struct ne_module *n) {
 		n->ne_segd = NULL;
 	}
 	n->fd = -1;
+	ne_module_zero(n);
 }
 
 int main(int argc,char **argv,char **envp) {
@@ -750,10 +751,20 @@ int main(int argc,char **argv,char **envp) {
 	if (entry != NULL) {
 		fprintf(stdout,"Got ordinal #3, far ptr %Fp\n",entry);
 		entry = *((unsigned char far**)entry);
-		fprintf(stderr,"   Which gives %Fp, %s\n",entry,entry);
+		fprintf(stdout,"   Which gives %Fp, %s\n",entry,entry);
 	}
 	else {
 		fprintf(stdout,"FAILED to get ordinal #3\n");
+	}
+
+	entry = ne_module_entry_point_by_ordinal(&ne,4);
+	if (entry != NULL) {
+		fprintf(stdout,"Got ordinal #4, far ptr %Fp\n",entry);
+		entry = *((unsigned char far**)entry);
+		fprintf(stdout,"   Which gives %Fp, %s\n",entry,entry);
+	}
+	else {
+		fprintf(stdout,"FAILED to get ordinal #4\n");
 	}
 
 	/* 1st and 2nd ordinals are functions */
@@ -776,19 +787,25 @@ int main(int argc,char **argv,char **envp) {
 			fprintf(stdout,"FAILED to get ordinal #2\n");
 	}
 
-	/* 4th ordinal does NOT exist */
-	if (ne_module_entry_point_by_ordinal(&ne,4) != NULL)
-		fprintf(stdout,"FAILURE: 4th ordinal should not exist\n");
-
 	/* do it again, going by name */
 	entry = ne_module_entry_point_by_name(&ne,"MESSAGE");
 	if (entry != NULL) {
 		fprintf(stdout,"Got MESSAGE, far ptr %Fp\n",entry);
 		entry = *((unsigned char far**)entry);
-		fprintf(stderr,"   Which gives %Fp, %s\n",entry,entry);
+		fprintf(stdout,"   Which gives %Fp, %s\n",entry,entry);
 	}
 	else {
 		fprintf(stdout,"FAILURE: Entry 'MESSAGE' does not exist\n");
+	}
+
+	entry = ne_module_entry_point_by_name(&ne,"MESSAGE2");
+	if (entry != NULL) {
+		fprintf(stdout,"Got MESSAGE2, far ptr %Fp\n",entry);
+		entry = *((unsigned char far**)entry);
+		fprintf(stdout,"   Which gives %Fp, %s\n",entry,entry);
+	}
+	else {
+		fprintf(stdout,"FAILURE: Entry 'MESSAGE2' does not exist\n");
 	}
 
 	/* 1st and 2nd ordinals are functions */

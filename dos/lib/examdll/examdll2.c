@@ -6,6 +6,7 @@ unsigned char far __cdecl big_code_;
 /* make a pointer. we WANT relocation data */
 const unsigned char far message_box[] = "This is a string of text";
 const unsigned char far *message = message_box;
+const unsigned char far *message2 = "This is another message";
 
 int far __stdcall hello1() {
 	return 0x1234;
