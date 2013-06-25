@@ -5,6 +5,7 @@
 #include <fcntl.h>
 #include <assert.h>
 #include <stdlib.h>
+#include <malloc.h>
 #include <string.h>
 #include <stdint.h>
 #include <unistd.h>
@@ -41,20 +42,34 @@ struct ne_header {
 	uint16_t		reserved2;				/* +0x3C */
 	uint16_t		windows_version;			/* +0x3E minimum windows version required */
 };									/* =0x40 */
+
+struct ne_segment_def {
+	uint16_t		offset_sectors;				/* +0x00 offset of the segment (in sectors) */
+	uint16_t		length;					/* +0x02 length in bytes. 0x0000 means 64K, unless offset also zero */
+	uint16_t		flags;					/* +0x04 */
+	uint16_t		minimum_allocation_size;		/* +0x06 in bytes. 0x0000 means 64K */
+};
+
+struct ne_segment_assign {
+	uint16_t		segment;				/* 0 if not assigned, else realmode segment */
+	uint16_t		length_para;				/* allocated length in paragraphs */
+};
 #pragma pack(pop)
 
 struct ne_module {
-	int			fd;
-	uint32_t		ne_header_offset;
-	struct ne_header	ne_header;
+	int				fd;
+	uint32_t			ne_header_offset;
+	struct ne_header		ne_header;
+	struct ne_segment_def*		ne_segd;
+	struct ne_segment_assign*	ne_sega;
 };
 
-void ne_module_zero(struct ne_module far *n) {
+void ne_module_zero(struct ne_module *n) {
 	_fmemset(n,0,sizeof(*n));
 	n->fd = -1;
 }
 
-int ne_module_load_header(struct ne_module far *n,int fd) {
+int ne_module_load_header(struct ne_module *n,int fd) {
 	unsigned char tmp[64];
 	unsigned int x;
 
@@ -78,7 +93,119 @@ int ne_module_load_header(struct ne_module far *n,int fd) {
 	return 0;
 }
 
-void ne_module_dump_header(struct ne_module far *n,FILE *fp) {
+int ne_module_load_segments(struct ne_module *n) {
+	struct ne_segment_assign *af;
+	struct ne_segment_def *df;
+	unsigned int x,trd;
+
+	/* TODO: Move to it's own segment */
+	if (n->ne_sega == NULL) {
+		if (n->ne_header.segment_table_entries == 0) return 0;
+		if (n->ne_header.segment_table_entries > 512) return 1;
+
+		n->ne_sega = malloc(n->ne_header.segment_table_entries * sizeof(struct ne_segment_assign));
+		if (n->ne_sega == NULL) return 1;
+		_fmemset(n->ne_sega,0,n->ne_header.segment_table_entries * sizeof(struct ne_segment_assign));
+	}
+
+	for (x=0;x < n->ne_header.segment_table_entries;x++) {
+		df = n->ne_segd + x;
+		af = n->ne_sega + x;
+
+		if (af->segment == 0) {
+			unsigned char far *p;
+			unsigned long sz,rd;
+			unsigned tseg=0;
+
+			rd = df->length;
+			sz = df->minimum_allocation_size;
+			if (sz == 0UL) sz = 0x10000UL;
+			if (df->length == 0 && df->offset_sectors != 0U) rd = 0x10000UL;
+			if (sz < rd) sz = rd;
+			assert(sz != 0UL);
+
+			/* allocate it */
+			af->length_para = (uint16_t)((sz+0xFUL) >> 4UL);
+			if (_dos_allocmem(af->length_para,&tseg)) continue;
+			af->segment = tseg;
+			p = MK_FP(tseg,0);
+
+			/* now if disk data is involved, read it */
+			if (rd != 0) {
+				unsigned long o = ((unsigned long)(df->offset_sectors)) <<
+					(unsigned long)n->ne_header.logical_sector_shift_count;
+
+				if (lseek(n->fd,o,SEEK_SET) == o) {
+					/* FIXME: How do we handle a full 64KB read here? */
+					/* FIXME: Various flags in the FLAGS fields are modified by the loader
+					 *        to indicate that the segment is loaded, etc. we should apply
+					 *        them as well */
+					if (_dos_read(n->fd,p,(unsigned)rd,&trd) || trd != (unsigned)rd) {
+						_dos_freemem(af->segment);
+						af->segment = 0;
+						continue;
+					}
+				}
+			}
+		}
+	}
+
+	return 0;
+}
+
+int ne_module_load_segmentinfo(struct ne_module *n) {
+	unsigned int x;
+
+	if (n->ne_segd != NULL) return 0;
+	if (n->ne_header.segment_table_entries == 0) return 0;
+	if (n->ne_header.segment_table_entries > 512) return 1;
+
+	n->ne_segd = malloc(n->ne_header.segment_table_entries * 8);
+	if (n->ne_segd == NULL) return 1;
+
+	if (lseek(n->fd,n->ne_header_offset+(uint32_t)n->ne_header.segment_table_rel_offset,SEEK_SET) !=
+		(n->ne_header_offset+(uint32_t)n->ne_header.segment_table_rel_offset)) {
+		free(n->ne_segd); n->ne_segd = NULL;
+		return 1;
+	}
+	if (_dos_read(n->fd,n->ne_segd,n->ne_header.segment_table_entries * 8UL,&x) ||
+		x != (n->ne_header.segment_table_entries * 8UL)) {
+		free(n->ne_segd); n->ne_segd = NULL;
+		return 1;
+	}
+
+	return 0;
+}
+
+void ne_module_dump_segmentinfo(struct ne_module *n,FILE *fp) {
+	struct ne_segment_assign *af;
+	struct ne_segment_def *df;
+	unsigned int x;
+
+	fprintf(fp,"NE(%Fp) segment info. %u segments\n",(void far*)n,(unsigned int)n->ne_header.segment_table_entries);
+	if (n == NULL) return;
+
+	for (x=0;x < n->ne_header.segment_table_entries;x++) {
+		df = n->ne_segd + x;
+		fprintf(fp,"Segment #%d\n",(int)(x+1));
+		fprintf(fp,"    offset=%lu\n",(unsigned long)df->offset_sectors << (unsigned long)n->ne_header.logical_sector_shift_count);
+		fprintf(fp,"    length=%lu\n",df->length == 0 && df->offset_sectors != 0 ? 0x10000UL : df->length);
+		fprintf(fp,"    flags=0x%04x\n",df->flags);
+		fprintf(fp,"    minalloc=%lu\n",df->minimum_allocation_size == 0 ? 0x10000UL : df->minimum_allocation_size);
+
+		if (n->ne_sega != NULL) {
+			af = n->ne_sega + x;
+			if (af->segment != 0) {
+				fprintf(fp,"    assigned to realmode segment 0x%04x-0x%04x inclusive\n",af->segment,af->segment+af->length_para-1);
+			}
+			else {
+				fprintf(fp,"    *not yet loaded/assigned a memory address\n");
+			}
+		}
+	}
+}
+
+void ne_module_dump_header(struct ne_module *n,FILE *fp) {
 	fprintf(fp,"NE(%Fp) fd=%d hdr=%lu\n",(void far*)n,n->fd,(unsigned long)n->ne_header_offset);
 	fprintf(fp,"         Linker ver: %u.%u\n",
 		n->ne_header.linker_version,n->ne_header.linker_revision);
@@ -101,8 +228,28 @@ void ne_module_dump_header(struct ne_module far *n,FILE *fp) {
 		n->ne_header.windows_version>>8,n->ne_header.windows_version&0xFF);
 }
 
-void ne_module_free(struct ne_module far *n) {
-	/* TODO: Doesn't do anything yet, but should eventually since memory allocation will be involved */
+void ne_module_free(struct ne_module *n) {
+	unsigned int x;
+
+	if (n->ne_sega != NULL) {
+		struct ne_segment_assign *af;
+
+		for (x=0;x < n->ne_header.segment_table_entries;x++) {
+			af = n->ne_sega + x;
+			if (af->segment != 0) {
+				_dos_freemem(af->segment);
+				af->segment = 0;
+				af->length_para = 0;
+			}
+		}
+
+		free(n->ne_sega);
+		n->ne_sega = NULL;
+	}
+	if (n->ne_segd != NULL) {
+		free(n->ne_segd);
+		n->ne_segd = NULL;
+	}
 }
 
 int main(int argc,char **argv,char **envp) {
@@ -111,6 +258,7 @@ int main(int argc,char **argv,char **envp) {
 
 	/* validate */
 	assert(sizeof(struct ne_header) == 0x40);
+	assert(sizeof(struct ne_segment_def) == 0x08);
 
 	ne_module_zero(&ne);
 
@@ -124,6 +272,17 @@ int main(int argc,char **argv,char **envp) {
 		return 1;
 	}
 	ne_module_dump_header(&ne,stdout);
+	if (ne_module_load_segmentinfo(&ne)) {
+		fprintf(stderr,"Failed to load segment info\n");
+		return 1;
+	}
+	if (ne_module_load_segments(&ne)) {
+		fprintf(stderr,"Failed to load segment\n");
+		ne_module_dump_segmentinfo(&ne,stdout);
+		return 1;
+	}
+	ne_module_dump_segmentinfo(&ne,stdout);
+	/* TODO: Read relocation data and apply relocations, if applicable */
 	ne_module_free(&ne);
 	close(fd);
 
