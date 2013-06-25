@@ -1,0 +1,10 @@
+
+lib_dos_lib_loader_dso16=$(abs_top_srcdir)/build/dos/lib/loader/$(target_subdir)/lib/libdso16$(lib_suffix)
+lib_dos_lib_loader_dso16_wlink=library $(lib_dos_lib_loader_dso16)
+lib_dos_lib_loader_dso16_dependencies=
+
+ifneq ($(lib_dos_lib_loader_dso16),)
+$(lib_dos_lib_loader_dso16):
+	$(MAKE) -C $(abs_top_srcdir)/dos/lib/loader --no-print-directory -$(MAKEFLAGS) all-targets
+endif
+
