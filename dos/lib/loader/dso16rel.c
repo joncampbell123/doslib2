@@ -93,15 +93,63 @@ int ne_module_load_and_apply_segment_relocations(struct ne_module *n,unsigned in
 			/* TODO: Allow calling program to do remapping, etc. via "import_module_ordinal_lookup" */
 			/* TODO: If the module reference did not load segments, or relocations, etc. say so here */
 			if ((entry=ne_module_entry_point_by_ordinal(mod,ordinal)) == NULL) {
-				if (n->enable_debug) fprintf(stderr,"WARNING: Failed to lookup ordinal %u\n",ordinal);
+				if (n->enable_debug) fprintf(stdout,"WARNING: Failed to lookup ordinal %u\n",ordinal);
 				continue;
 			}
 
 			src_segn = FP_SEG(entry);
 			src_offset = FP_OFF(entry);
 
-			if (n->enable_debug) fprintf(stderr,"Ordinal %u of mod %Fp -> %04x:%04x\n",
+			if (n->enable_debug) fprintf(stdout,"Ordinal %u of mod %Fp -> %04x:%04x\n",
 				ordinal,(void far*)mod,(unsigned int)src_segn,(unsigned int)src_offset);
+		}
+		else if ((tmp[1]&3) == 2) { /* import name */
+			unsigned int modidx = *((uint16_t*)(tmp+4));
+			unsigned int nofs = *((uint16_t*)(tmp+6));
+			struct ne_module *mod;
+			unsigned long length;
+			char entrypoint[256];
+			char modname[64];
+			void far *entry;
+
+			if (modidx == 0 || nofs == 0) continue;
+			if ((--modidx) >= n->ne_header.module_reference_table_entries) continue;
+			if (nofs >= n->ne_imported_names_length) continue;
+
+			if ((mod=cached_imp_mod[modidx]) == NULL) {
+				if (n->import_module_lookup == NULL) {
+					if (n->enable_debug) fprintf(stdout,"WARNING: Module imports symbols but caller does not provide module lookup\n");
+					continue;
+				}
+
+				if (ne_module_get_import_module_name(modname,sizeof(modname),n,modidx+1)) continue;
+				if (n->enable_debug) fprintf(stdout,"Looking up module #%d %s\n",modidx+1,modname);
+				if ((mod=cached_imp_mod[modidx]=n->import_module_lookup(n,modname)) == NULL) {
+					if (n->enable_debug) fprintf(stdout,"  Failed to lookup module\n");
+					continue;
+				}
+
+				if (n->enable_debug) fprintf(stdout,"  OK, cached as %Fp\n",(void far*)mod);
+			}
+
+			/* lookup the name */
+			length = n->ne_imported_names[nofs++];
+			if ((nofs+length) > n->ne_imported_names_length) continue;
+			if (length != 0) _fmemcpy(entrypoint,n->ne_imported_names+nofs,length);
+			entrypoint[length] = 0;
+
+			/* TODO: Allow calling program to do remapping, etc. via "import_module_ordinal_lookup" */
+			/* TODO: If the module reference did not load segments, or relocations, etc. say so here */
+			if ((entry=ne_module_entry_point_by_name(mod,entrypoint)) == NULL) {
+				if (n->enable_debug) fprintf(stdout,"WARNING: Failed to lookup name %s\n",entrypoint);
+				continue;
+			}
+
+			src_segn = FP_SEG(entry);
+			src_offset = FP_OFF(entry);
+
+			if (n->enable_debug) fprintf(stdout,"Name %s of mod %Fp -> %04x:%04x\n",
+				entrypoint,(void far*)mod,(unsigned int)src_segn,(unsigned int)src_offset);
 		}
 		else {
 			if (n->enable_debug) fprintf(stdout,"WARNING: Reloc type %u not yet supported (0x%02x)\n",tmp[1]&3,tmp[1]);

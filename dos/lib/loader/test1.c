@@ -23,6 +23,8 @@ struct ne_module ne2;
 static struct ne_module* dso3_mod_lookup(struct ne_module *to_mod,const char *modname) {
 	if (!strcasecmp(modname,"examdll2.dso"))
 		return &ne;
+	if (!strcasecmp(modname,"examdll2")) /* <- NTS: If only the 'IMPORT' directive allowed the file name AND extension >:( */
+		return &ne;
 
 	return NULL;
 }
@@ -400,8 +402,89 @@ int main(int argc,char **argv,char **envp) {
 	}
 
 	ne_module_free(&ne2);
-	ne_module_free(&ne);
 	close(fd);
+
+/* ====================================================== */
+
+	fprintf(stdout,"=== NOW TESTING EXAMDLL4.DSO === \n");
+
+	/* examdll3. This time use struct ne2 */
+	if ((fd=open("examdll4.dso",O_RDONLY|O_BINARY)) < 0) {
+		fprintf(stdout,"Cannot open EXAMDLL4.DSO\n");
+		return 1;
+	}
+	if (ne_module_load_header(&ne2,fd)) {
+		fprintf(stdout,"Failed to load header\n");
+		return 1;
+	}
+	ne_module_dump_header(&ne2,stdout);
+	if (ne_module_load_segmentinfo(&ne2)) {
+		fprintf(stdout,"Failed to load segment info\n");
+		return 1;
+	}
+	if (ne_module_load_segments(&ne2)) {
+		fprintf(stdout,"Failed to load segment\n");
+		ne_module_dump_segmentinfo(&ne2,stdout);
+		return 1;
+	}
+	ne_module_dump_segmentinfo(&ne2,stdout);
+
+	/* try to load imported name table */
+	if (ne_module_load_imported_name_table(&ne2))
+		fprintf(stdout,"Failed to load imp. name table\n");
+
+	if (ne2.ne_imported_names != NULL)
+		fprintf(stdout,"Imported names: %Fp len=%u\n",
+			ne2.ne_imported_names,ne2.ne_imported_names_length);
+	if (ne2.ne_module_reference_table != NULL)
+		fprintf(stdout,"Module ref table:%Fp ents=%u\n",
+			ne2.ne_module_reference_table,ne2.ne_header.module_reference_table_entries);
+
+	fprintf(stdout,"External modules\n");
+	ne_module_dump_imported_module_names(&ne2);
+
+	if (ne_module_load_and_apply_relocations(&ne2))
+		fprintf(stdout,"Failed to load and apply relocation data\n");
+	if (ne_module_load_entry_points(&ne2)) {
+		fprintf(stdout,"Failed to load entry points\n");
+		return 1;
+	}
+	fprintf(stdout,"%u entry points\n",ne2.ne_entry_points);
+	for (xx=1;xx <= ne2.ne_entry_points;xx++) {
+		nent = ne_module_get_ordinal_entry_point(&ne2,xx);
+		entry = ne_module_entry_point_by_ordinal(&ne2,xx);
+		if (nent != NULL) {
+			fprintf(stdout,"  [%u] flags=0x%02x segn=%u offset=0x%04x entry=%Fp\n",
+				xx,nent->flags,nent->segment_index,nent->offset,entry);
+		}
+	}
+
+	/* Load Resident Name Table */
+	if (ne_module_load_name_table(&ne2))
+		fprintf(stdout,"Failed to load name table\n");
+
+	/* dump the resident/nonresident tables */
+	fprintf(stdout,"Resident names:\n");
+	ne_module_dump_resident_table(ne2.ne_resident_names,ne2.ne_resident_names_length,stdout);
+	fprintf(stdout,"Nonresident names:\n");
+	ne_module_dump_resident_table(ne2.ne_nonresident_names,ne2.ne_nonresident_names_length,stdout);
+
+	/* NTS: HOLY CRAP, THIS WORKS! */
+	/* This function would not work properly nor get the strings correct (it calls into EXAMDLL2.DSO)
+	 * if relocations were not applied correctly. */
+	{
+		int (far __stdcall *hello3)(const char far *msg) = (int (far __stdcall *)(const char far *))
+			ne_module_entry_point_by_name(&ne2,"HELLO3");
+
+		if (hello3 != NULL)
+			fprintf(stdout,"HELLO3 function call worked, returned 0x%04x\n",hello3("This is a test string. I passed this to the function. Test GOOD TOO\r\n"));
+		else
+			fprintf(stdout,"FAILED to get HELLO3\n");
+	}
+
+	ne_module_free(&ne2);
+	close(fd);
+	ne_module_free(&ne);
 
 	return 0;
 }
