@@ -88,6 +88,9 @@ struct ne_module {
 
 	/* these callbacks are for the calling program to provide external modules so we can resolve import symbols */
 	struct ne_module*		(*import_module_lookup)(struct ne_module *to_mod,const char *modname);
+	/* these callbacks, if set, allows the program to intercept and redirect imports */
+	void far*			(*import_lookup_by_ordinal)(struct ne_module *to_mod,struct ne_module *from_mod,unsigned int ordinal);
+	void far*			(*import_lookup_by_name)(struct ne_module *to_mod,struct ne_module *from_mod,const char *name);
 };
 
 struct ne_entry_point* ne_module_get_ordinal_entry_point(struct ne_module *n,unsigned int ordinal);

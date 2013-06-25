@@ -90,11 +90,18 @@ int ne_module_load_and_apply_segment_relocations(struct ne_module *n,unsigned in
 				if (n->enable_debug) fprintf(stdout,"  OK, cached as %Fp\n",(void far*)mod);
 			}
 
-			/* TODO: Allow calling program to do remapping, etc. via "import_module_ordinal_lookup" */
 			/* TODO: If the module reference did not load segments, or relocations, etc. say so here */
-			if ((entry=ne_module_entry_point_by_ordinal(mod,ordinal)) == NULL) {
-				if (n->enable_debug) fprintf(stdout,"WARNING: Failed to lookup ordinal %u\n",ordinal);
-				continue;
+			if (n->import_lookup_by_ordinal != NULL) {
+				if ((entry=n->import_lookup_by_ordinal(n,mod,ordinal)) == NULL) {
+					if (n->enable_debug) fprintf(stdout,"WARNING: Failed to lookup ordinal %u\n",ordinal);
+					continue;
+				}
+			}
+			else {
+				if ((entry=ne_module_entry_point_by_ordinal(mod,ordinal)) == NULL) {
+					if (n->enable_debug) fprintf(stdout,"WARNING: Failed to lookup ordinal %u\n",ordinal);
+					continue;
+				}
 			}
 
 			src_segn = FP_SEG(entry);
@@ -138,11 +145,18 @@ int ne_module_load_and_apply_segment_relocations(struct ne_module *n,unsigned in
 			if (length != 0) _fmemcpy(entrypoint,n->ne_imported_names+nofs,length);
 			entrypoint[length] = 0;
 
-			/* TODO: Allow calling program to do remapping, etc. via "import_module_ordinal_lookup" */
 			/* TODO: If the module reference did not load segments, or relocations, etc. say so here */
-			if ((entry=ne_module_entry_point_by_name(mod,entrypoint)) == NULL) {
-				if (n->enable_debug) fprintf(stdout,"WARNING: Failed to lookup name %s\n",entrypoint);
-				continue;
+			if (n->import_lookup_by_name != NULL) {
+				if ((entry=n->import_lookup_by_name(n,mod,entrypoint)) == NULL) {
+					if (n->enable_debug) fprintf(stdout,"WARNING: Failed to lookup name %s\n",entrypoint);
+					continue;
+				}
+			}
+			else {
+				if ((entry=ne_module_entry_point_by_name(mod,entrypoint)) == NULL) {
+					if (n->enable_debug) fprintf(stdout,"WARNING: Failed to lookup name %s\n",entrypoint);
+					continue;
+				}
 			}
 
 			src_segn = FP_SEG(entry);
@@ -152,7 +166,7 @@ int ne_module_load_and_apply_segment_relocations(struct ne_module *n,unsigned in
 				entrypoint,(void far*)mod,(unsigned int)src_segn,(unsigned int)src_offset);
 		}
 		else {
-			if (n->enable_debug) fprintf(stdout,"WARNING: Reloc type %u not yet supported (0x%02x)\n",tmp[1]&3,tmp[1]);
+			if (n->enable_debug) fprintf(stdout,"WARNING: This loader does not support OSFIXUP relocation data\n");
 			continue;
 		}
 
