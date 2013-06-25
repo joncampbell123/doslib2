@@ -82,6 +82,7 @@ struct ne_module {
 	uint16_t			ne_nonresident_names_length;
 	unsigned char*			ne_imported_names;
 	uint16_t			ne_imported_names_length;
+	uint16_t*			ne_module_reference_table;
 };
 
 struct ne_entry_point* ne_module_get_ordinal_entry_point(struct ne_module *n,unsigned int ordinal);
@@ -114,6 +115,8 @@ void ne_module_free_nonresident_name_table(struct ne_module *n);
 void ne_module_free_entry_points(struct ne_module *n);
 void ne_module_free_name_table(struct ne_module *n);
 void ne_module_free_segmentinfo(struct ne_module *n);
+int ne_module_load_module_reference_table_list(struct ne_module *n);
+int ne_module_load_imported_name_table_list(struct ne_module *n);
 
 #endif
 

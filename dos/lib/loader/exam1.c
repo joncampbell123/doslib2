@@ -132,6 +132,20 @@ int main(int argc,char **argv,char **envp) {
 			fprintf(stdout,"FAILED to get HELLO2\n");
 	}
 
+	/* try to load imported name table */
+	if (ne_module_load_imported_name_table(&ne))
+		fprintf(stdout,"Failed to load imp. name table\n");
+
+	if (ne.ne_imported_names != NULL)
+		fprintf(stdout,"Imported names: %Fp len=%u\n",
+			ne.ne_imported_names,ne.ne_imported_names_length);
+	if (ne.ne_module_reference_table != NULL)
+		fprintf(stdout,"Module ref table:%Fp ents=%u\n",
+			ne.ne_module_reference_table,ne.ne_header.module_reference_table_entries);
+
+	fprintf(stdout,"External modules\n");
+	ne_module_dump_imported_module_names(&ne);
+
 	ne_module_free(&ne);
 	close(fd);
 
@@ -275,6 +289,83 @@ int main(int argc,char **argv,char **envp) {
 	/* try to load imported name table */
 	if (ne_module_load_imported_name_table(&ne))
 		fprintf(stdout,"Failed to load imp. name table\n");
+
+	if (ne.ne_imported_names != NULL)
+		fprintf(stdout,"Imported names: %Fp len=%u\n",
+			ne.ne_imported_names,ne.ne_imported_names_length);
+	if (ne.ne_module_reference_table != NULL)
+		fprintf(stdout,"Module ref table:%Fp ents=%u\n",
+			ne.ne_module_reference_table,ne.ne_header.module_reference_table_entries);
+
+	fprintf(stdout,"External modules\n");
+	ne_module_dump_imported_module_names(&ne);
+
+	ne_module_free(&ne);
+	close(fd);
+
+/* ====================================================== */
+
+	fprintf(stdout,"=== NOW TESTING EXAMDLL3.DSO === \n");
+
+	/* examdll2 */
+	if ((fd=open("examdll3.dso",O_RDONLY|O_BINARY)) < 0) {
+		fprintf(stdout,"Cannot open EXAMDLL3.DSO\n");
+		return 1;
+	}
+	if (ne_module_load_header(&ne,fd)) {
+		fprintf(stdout,"Failed to load header\n");
+		return 1;
+	}
+	ne_module_dump_header(&ne,stdout);
+	if (ne_module_load_segmentinfo(&ne)) {
+		fprintf(stdout,"Failed to load segment info\n");
+		return 1;
+	}
+	if (ne_module_load_segments(&ne)) {
+		fprintf(stdout,"Failed to load segment\n");
+		ne_module_dump_segmentinfo(&ne,stdout);
+		return 1;
+	}
+	ne_module_dump_segmentinfo(&ne,stdout);
+	if (ne_module_load_and_apply_relocations(&ne))
+		fprintf(stdout,"Failed to load and apply relocation data\n");
+	if (ne_module_load_entry_points(&ne)) {
+		fprintf(stdout,"Failed to load entry points\n");
+		return 1;
+	}
+	fprintf(stdout,"%u entry points\n",ne.ne_entry_points);
+	for (xx=1;xx <= ne.ne_entry_points;xx++) {
+		nent = ne_module_get_ordinal_entry_point(&ne,xx);
+		entry = ne_module_entry_point_by_ordinal(&ne,xx);
+		if (nent != NULL) {
+			fprintf(stdout,"  [%u] flags=0x%02x segn=%u offset=0x%04x entry=%Fp\n",
+				xx,nent->flags,nent->segment_index,nent->offset,entry);
+		}
+	}
+
+	/* Load Resident Name Table */
+	if (ne_module_load_name_table(&ne))
+		fprintf(stdout,"Failed to load name table\n");
+
+	/* dump the resident/nonresident tables */
+	fprintf(stdout,"Resident names:\n");
+	ne_module_dump_resident_table(ne.ne_resident_names,ne.ne_resident_names_length,stdout);
+	fprintf(stdout,"Nonresident names:\n");
+	ne_module_dump_resident_table(ne.ne_nonresident_names,ne.ne_nonresident_names_length,stdout);
+
+	/* try to load imported name table */
+	if (ne_module_load_imported_name_table(&ne))
+		fprintf(stdout,"Failed to load imp. name table\n");
+
+	if (ne.ne_imported_names != NULL)
+		fprintf(stdout,"Imported names: %Fp len=%u\n",
+			ne.ne_imported_names,ne.ne_imported_names_length);
+	if (ne.ne_module_reference_table != NULL)
+		fprintf(stdout,"Module ref table:%Fp ents=%u\n",
+			ne.ne_module_reference_table,ne.ne_header.module_reference_table_entries);
+
+	fprintf(stdout,"External modules\n");
+	ne_module_dump_imported_module_names(&ne);
 
 	ne_module_free(&ne);
 	close(fd);

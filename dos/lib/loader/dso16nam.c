@@ -14,7 +14,7 @@
 
 #if defined(TARGET_MSDOS) && TARGET_BITS == 16 && defined(TARGET_REALMODE)
 
-int ne_module_load_imported_name_table(struct ne_module *n) {
+int ne_module_load_imported_name_table_list(struct ne_module *n) {
 	unsigned int rd;
 
 	if (n == NULL) return 0;
@@ -42,6 +42,40 @@ int ne_module_load_imported_name_table(struct ne_module *n) {
 		return 1;
 	}
 
+	return 0;
+}
+
+int ne_module_load_module_reference_table_list(struct ne_module *n) {
+	unsigned int rd;
+
+	if (n == NULL) return 0;
+	if (n->ne_module_reference_table != NULL) return 0;
+	if (n->ne_header.module_reference_table_rel_offset == 0) return 0;
+	if (n->ne_header.module_reference_table_entries == 0) return 0;
+	if (n->ne_header.module_reference_table_entries > 256) return 0;
+
+	n->ne_module_reference_table = malloc(sizeof(uint16_t) * n->ne_header.module_reference_table_entries);
+	if (n->ne_module_reference_table == NULL) return 1;
+
+	if (lseek(n->fd,n->ne_header.module_reference_table_rel_offset+n->ne_header_offset,SEEK_SET) !=
+		(n->ne_header.module_reference_table_rel_offset+n->ne_header_offset)) {
+		free(n->ne_module_reference_table);
+		n->ne_module_reference_table = NULL;
+		return 1;
+	}
+	if (_dos_read(n->fd,n->ne_module_reference_table,sizeof(uint16_t) * n->ne_header.module_reference_table_entries,&rd) ||
+		rd != (sizeof(uint16_t) * n->ne_header.module_reference_table_entries)) {
+		free(n->ne_module_reference_table);
+		n->ne_module_reference_table = NULL;
+		return 1;
+	}
+
+	return 0;
+}
+
+int ne_module_load_imported_name_table(struct ne_module *n) {
+	if (ne_module_load_imported_name_table_list(n)) return 1;
+	if (ne_module_load_module_reference_table_list(n)) return 1;
 	return 0;
 }
 
@@ -133,6 +167,10 @@ void ne_module_free_imported_name_table(struct ne_module *n) {
 		n->ne_imported_names = NULL;
 		n->ne_imported_names_length = 0;
 	}
+	if (n->ne_module_reference_table) {
+		free(n->ne_module_reference_table);
+		n->ne_module_reference_table = NULL;
+	}
 }
 
 void ne_module_free_name_table(struct ne_module *n) {
@@ -196,6 +234,33 @@ void ne_module_dump_resident_table(unsigned char *p,unsigned int sz,FILE *fp) {
 
 		ord = *((uint16_t*)(p+i)); i += 2;
 		fprintf(fp," ord=%u\n",ord);
+	}
+}
+
+void ne_module_dump_imported_module_names(struct ne_module *n) {
+	unsigned int x,len,o;
+	char tmp[64];
+
+	if (n == NULL) return;
+	if (n->ne_module_reference_table == NULL) return;
+	if (n->ne_imported_names == NULL) return;
+
+	for (x=0;x < n->ne_header.module_reference_table_entries;x++) {
+		o = n->ne_module_reference_table[x];
+		if (o >= n->ne_imported_names_length) continue;
+
+		len = n->ne_imported_names[o++];
+		if ((o+len) > n->ne_imported_names_length) continue;
+
+		if (len < 63) {
+			if (len > 0) _fmemcpy(tmp,n->ne_imported_names+o,len);
+			tmp[len] = 0;
+		}
+		else {
+			tmp[0] = 0;
+		}
+
+		fprintf(stdout,"  #%d ofs=%u name=%s\n",x,o-1,tmp);
 	}
 }
 

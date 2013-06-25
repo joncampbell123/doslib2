@@ -44,7 +44,7 @@ int ne_module_load_and_apply_segment_relocations(struct ne_module *n,unsigned in
 		offset = *((uint16_t*)(tmp+2));
 		if ((offset>>4UL) >= af->length_para) continue;
 
-		if (tmp[1] == 0) { /* internal ref */
+		if ((tmp[1]&3) == 0) { /* internal ref */
 			src_segn = tmp[4];
 			if (src_segn != 0xFF) {
 				src_offset = *((uint16_t*)(tmp+6));
@@ -55,7 +55,7 @@ int ne_module_load_and_apply_segment_relocations(struct ne_module *n,unsigned in
 			}
 		}
 		else {
-			fprintf(stdout,"WARNING: Reloc type %u not yet supported\n",tmp[1]);
+			fprintf(stdout,"WARNING: Reloc type %u not yet supported (0x%02x)\n",tmp[1]&3,tmp[1]);
 			continue;
 		}
 

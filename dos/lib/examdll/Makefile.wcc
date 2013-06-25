@@ -5,6 +5,7 @@ all-targets-abs-dirs: $(abs_exe_dir) $(abs_lib_dir) $(abs_obj_dir)
 
 all_programs  = $(abs_exe_dir)/examdll1.dso
 all_programs += $(abs_exe_dir)/examdll2.dso
+all_programs += $(abs_exe_dir)/examdll3.dso
 
 all-programs: $(all_programs)
 
@@ -20,6 +21,7 @@ $(abs_exe_dir)/examdll1.dso: $(obj_win32s_compat) $(abs_obj_dir)/examdll1.obj
 	@echo EXPORT HELLO2.2=_hello2 >>$(abs_obj_dir)/examdll1.cmd
 	@echo EXPORT MESSAGE.3=_message >>$(abs_obj_dir)/examdll1.cmd
 	@echo option modname='EXAMDLL1' >>$(abs_obj_dir)/examdll1.cmd
+	@echo option implib=$(abs_lib_dir)/examdll1.lib >>$(abs_obj_dir)/examdll1.cmd
 	@echo name $@ >>$(abs_obj_dir)/examdll1.cmd
 	$(WLINK) @$(abs_obj_dir)/examdll1.cmd
 # -------------
@@ -37,8 +39,25 @@ $(abs_exe_dir)/examdll2.dso: $(obj_win32s_compat) $(abs_obj_dir)/examdll2.obj
 	@echo EXPORT MESSAGE.3=_message >>$(abs_obj_dir)/examdll2.cmd
 	@echo EXPORT MESSAGE2.4=_message2 >>$(abs_obj_dir)/examdll2.cmd
 	@echo option modname='EXAMDLL2' >>$(abs_obj_dir)/examdll2.cmd
+	@echo option implib=$(abs_lib_dir)/examdll2.lib >>$(abs_obj_dir)/examdll2.cmd
 	@echo name $@ >>$(abs_obj_dir)/examdll2.cmd
 	$(WLINK) @$(abs_obj_dir)/examdll2.cmd
+# -------------
+
+# examdll3
+$(abs_obj_dir)/examdll3.obj: examdll3.c
+	$(WCC) -e=2 -zq -zu -m$(W_MMODE) $(W_DEBUG) -bt=dos -oilrtfm -s -wx -$(W_CPULEVEL) -q -fr=nul -fo=$(abs_obj_dir)/.obj -i=.. -i=../.. $^
+
+$(abs_exe_dir)/examdll3.dso: $(obj_win32s_compat) $(abs_obj_dir)/examdll3.obj
+	rm -fv $(abs_obj_dir)/examdll3.cmd
+	@echo option quiet option nocaseexact option stack=8k, heapsize=1k format windows dll segment TYPE CODE FIXED DISCARDABLE segment TYPE DATA FIXED $(foreach x,$(filter %$(obj_suffix),$^),file "$(x)") option map=$(abs_obj_dir)/examdll3.map >>$(abs_obj_dir)/examdll3.cmd
+	@echo option stub=../../../build/dos/lib/stub/$(target_subdir)/exe/stub.exe >>$(abs_obj_dir)/examdll3.cmd
+	@echo EXPORT HELLO3.1=_hello3 >>$(abs_obj_dir)/examdll3.cmd
+	@echo option modname='EXAMDLL3' >>$(abs_obj_dir)/examdll3.cmd
+	@echo library ../../../build/dos/lib/examdll/$(target_subdir)/lib/examdll2.lib >>$(abs_obj_dir)/examdll3.cmd
+	@echo option implib=$(abs_lib_dir)/examdll3.lib >>$(abs_obj_dir)/examdll3.cmd
+	@echo name $@ >>$(abs_obj_dir)/examdll3.cmd
+	$(WLINK) @$(abs_obj_dir)/examdll3.cmd
 # -------------
 
 all-targets: all-targets-abs-dirs all-programs
