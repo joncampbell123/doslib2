@@ -98,6 +98,8 @@ void far *ne_module_entry_point_by_name(struct ne_module *n,const char *name);
 void ne_module_dump_resident_table(unsigned char *p,unsigned int sz,FILE *fp);
 void ne_module_dump_header(struct ne_module *n,FILE *fp);
 void ne_module_free(struct ne_module *n);
+int ne_module_load_segment(struct ne_module *n,unsigned int idx/*NTS: Segments in NE executables are 1-based NOT zero-based*/);
+int ne_module_allocate_segment(struct ne_module *n,unsigned int idx/*NTS: Segments in NE executables are 1-based NOT zero-based*/);
 
 #endif
 
