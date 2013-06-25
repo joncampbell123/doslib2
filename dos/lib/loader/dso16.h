@@ -10,6 +10,9 @@
 #include <unistd.h>
 
 #if defined(TARGET_MSDOS) && TARGET_BITS == 16 && defined(TARGET_REALMODE)
+/* TODO: ^ I believe this code is written in a generic enough fashion I *COULD* get it working
+ *         in 16-bit protected mode as well. Then we could have 16-bit DPMI-enabled DOS programs
+ *         using DSO's as well. */
 
 #pragma pack(push,1)
 struct ne_header {
