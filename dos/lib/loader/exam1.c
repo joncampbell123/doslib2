@@ -130,6 +130,72 @@ int ne_module_load_header(struct ne_module *n,int fd) {
 	return 0;
 }
 
+int ne_module_load_and_apply_relocations(struct ne_module *n) {
+	struct ne_segment_assign *af;
+	struct ne_segment_def *df;
+	unsigned int x;
+
+	if (n == NULL) return 0;
+	if (n->ne_header.segment_table_entries == 0) return 0;
+	if (n->ne_sega == NULL) return 0;
+	if (n->ne_segd == NULL) return 0;
+
+	for (x=0;x < n->ne_header.segment_table_entries;x++) {
+		df = n->ne_segd + x;
+		af = n->ne_sega + x;
+
+		if (af->segment != 0 && (df->flags & 0x100)) {
+			/* relocation data immediately follows the segment on disk */
+			unsigned long o = (((unsigned long)(df->offset_sectors)) <<
+				(unsigned long)n->ne_header.logical_sector_shift_count) +
+				(unsigned long)df->length;
+
+			if (lseek(n->fd,o,SEEK_SET) == o) {
+				uint16_t offset,src_offset,src_segn;
+				unsigned char far *modp;
+				unsigned char tmp[8];
+				uint16_t entries;
+
+				if (read(n->fd,&entries,2) == 2) {
+					while ((entries--) > 0 && read(n->fd,tmp,8) == 8) {
+						offset = *((uint16_t*)(tmp+2));
+
+						if (tmp[1] == 0) { /* internal ref */
+							src_segn = tmp[4];
+							if (src_segn != 0xFF) {
+								src_offset = *((uint16_t*)(tmp+6));
+							}
+							else {
+								fprintf(stderr,"WARNING: movable relocation entries not yet supported\n");
+								continue;
+							}
+						}
+						else {
+							fprintf(stderr,"WARNING: Reloc type %u not yet supported\n",tmp[1]);
+							continue;
+						}
+
+						if (src_segn == 0 || src_segn > n->ne_header.segment_table_entries) continue;
+						src_segn = n->ne_sega[src_segn-1].segment;
+
+						/* TODO: range check */
+						modp = MK_FP(af->segment,offset);
+
+						if (tmp[0] == 3) { /* 16:16 fixup */
+							*((uint16_t far*)modp) = src_offset;
+							*((uint16_t far*)(modp+2)) = src_segn;
+						}
+					}
+				}
+			}
+
+			df->flags &= ~(0x100); /* no more relocation data */
+		}
+	}
+
+	return 0;
+}
+
 int ne_module_load_segments(struct ne_module *n) {
 	struct ne_segment_assign *af;
 	struct ne_segment_def *df;
@@ -305,7 +371,7 @@ int ne_module_load_name_table(struct ne_module *n) {
 
 	x  = (ne_module_load_resident_name_table(n) == 0);
 	x |= (ne_module_load_nonresident_name_table(n) == 0);
-	return x;
+	return !x;
 }
 
 int ne_module_load_entry_points(struct ne_module *n) {
@@ -503,6 +569,7 @@ void ne_module_free(struct ne_module *n) {
 		free(n->ne_segd);
 		n->ne_segd = NULL;
 	}
+	n->fd = -1;
 }
 
 int main(int argc,char **argv,char **envp) {
@@ -520,56 +587,58 @@ int main(int argc,char **argv,char **envp) {
 
 	/* examdll1 */
 	if ((fd=open("examdll1.dso",O_RDONLY|O_BINARY)) < 0) {
-		fprintf(stderr,"Cannot open EXAMDLL1.DSO\n");
+		fprintf(stdout,"Cannot open EXAMDLL1.DSO\n");
 		return 1;
 	}
 	if (ne_module_load_header(&ne,fd)) {
-		fprintf(stderr,"Failed to load header\n");
+		fprintf(stdout,"Failed to load header\n");
 		return 1;
 	}
 	ne_module_dump_header(&ne,stdout);
 	if (ne_module_load_segmentinfo(&ne)) {
-		fprintf(stderr,"Failed to load segment info\n");
+		fprintf(stdout,"Failed to load segment info\n");
 		return 1;
 	}
 	if (ne_module_load_segments(&ne)) {
-		fprintf(stderr,"Failed to load segment\n");
+		fprintf(stdout,"Failed to load segment\n");
 		ne_module_dump_segmentinfo(&ne,stdout);
 		return 1;
 	}
 	ne_module_dump_segmentinfo(&ne,stdout);
-	/* TODO: Read relocation data and apply relocations, if applicable */
+	if (ne_module_load_and_apply_relocations(&ne))
+		fprintf(stdout,"Failed to load and apply relocation data\n");
+
 	if (ne_module_load_entry_points(&ne)) {
-		fprintf(stderr,"Failed to load entry points\n");
+		fprintf(stdout,"Failed to load entry points\n");
 		return 1;
 	}
-	fprintf(stderr,"%u entry points\n",ne.ne_entry_points);
+	fprintf(stdout,"%u entry points\n",ne.ne_entry_points);
 	for (xx=1;xx <= ne.ne_entry_points;xx++) {
 		nent = ne_module_get_ordinal_entry_point(&ne,xx);
 		entry = ne_module_entry_point_by_ordinal(&ne,xx);
 		if (nent != NULL) {
-			fprintf(stderr,"  [%u] flags=0x%02x segn=%u offset=0x%04x entry=%Fp\n",
+			fprintf(stdout,"  [%u] flags=0x%02x segn=%u offset=0x%04x entry=%Fp\n",
 				xx,nent->flags,nent->segment_index,nent->offset,entry);
 		}
 	}
 
 	/* Load Resident Name Table */
 	if (ne_module_load_name_table(&ne))
-		fprintf(stderr,"Failed to load name table\n");
+		fprintf(stdout,"Failed to load name table\n");
 
 	/* dump the resident/nonresident tables */
-	fprintf(stderr,"Resident names:\n");
+	fprintf(stdout,"Resident names:\n");
 	ne_module_dump_resident_table(ne.ne_resident_names,ne.ne_resident_names_length,stdout);
-	fprintf(stderr,"Nonresident names:\n");
+	fprintf(stdout,"Nonresident names:\n");
 	ne_module_dump_resident_table(ne.ne_nonresident_names,ne.ne_nonresident_names_length,stdout);
 
 	/* 3rd ordinal is MESSAGE data object */
 	entry = ne_module_entry_point_by_ordinal(&ne,3);
 	if (entry != NULL) {
-		fprintf(stderr,"Got ordinal #3, which should be a string: %Fs\n",entry);
+		fprintf(stdout,"Got ordinal #3, which should be a string: %Fs\n",entry);
 	}
 	else {
-		fprintf(stderr,"FAILED to get ordinal #3\n");
+		fprintf(stdout,"FAILED to get ordinal #3\n");
 	}
 
 	/* 1st and 2nd ordinals are functions */
@@ -578,30 +647,30 @@ int main(int argc,char **argv,char **envp) {
 			ne_module_entry_point_by_ordinal(&ne,1);
 
 		if (hello1 != NULL)
-			fprintf(stderr,"Ordinal #1 function call worked, returned 0x%04x\n",hello1());
+			fprintf(stdout,"Ordinal #1 function call worked, returned 0x%04x\n",hello1());
 		else
-			fprintf(stderr,"FAILED to get ordinal #1\n");
+			fprintf(stdout,"FAILED to get ordinal #1\n");
 	}
 	{
 		int (far __stdcall *hello2)(const char far *msg) = (int (far __stdcall *)(const char far *))
 			ne_module_entry_point_by_ordinal(&ne,2);
 
 		if (hello2 != NULL)
-			fprintf(stderr,"Ordinal #2 function call worked, returned 0x%04x\n",hello2("This is a test string. I passed this to the function. Test GOOD\r\n"));
+			fprintf(stdout,"Ordinal #2 function call worked, returned 0x%04x\n",hello2("This is a test string. I passed this to the function. Test GOOD\r\n"));
 		else
-			fprintf(stderr,"FAILED to get ordinal #2\n");
+			fprintf(stdout,"FAILED to get ordinal #2\n");
 	}
 
 	/* 4th ordinal does NOT exist */
 	if (ne_module_entry_point_by_ordinal(&ne,4) != NULL)
-		fprintf(stderr,"FAILURE: 4th ordinal should not exist\n");
+		fprintf(stdout,"FAILURE: 4th ordinal should not exist\n");
 
 	/* do it again, going by name */
 	entry = ne_module_entry_point_by_name(&ne,"MESSAGE");
 	if (entry != NULL)
-		fprintf(stderr,"MESSAGE entry point: %Fs\n",entry);
+		fprintf(stdout,"MESSAGE entry point: %Fs\n",entry);
 	else
-		fprintf(stderr,"FAILURE: Entry 'MESSAGE' does not exist\n");
+		fprintf(stdout,"FAILURE: Entry 'MESSAGE' does not exist\n");
 
 	/* 1st and 2nd ordinals are functions */
 	{
@@ -609,18 +678,137 @@ int main(int argc,char **argv,char **envp) {
 			ne_module_entry_point_by_name(&ne,"HELLO1");
 
 		if (hello1 != NULL)
-			fprintf(stderr,"HELLO1 function call worked, returned 0x%04x\n",hello1());
+			fprintf(stdout,"HELLO1 function call worked, returned 0x%04x\n",hello1());
 		else
-			fprintf(stderr,"FAILED to get HELLO1\n");
+			fprintf(stdout,"FAILED to get HELLO1\n");
 	}
 	{
 		int (far __stdcall *hello2)(const char far *msg) = (int (far __stdcall *)(const char far *))
 			ne_module_entry_point_by_name(&ne,"HELLO2");
 
 		if (hello2 != NULL)
-			fprintf(stderr,"HELLO2 function call worked, returned 0x%04x\n",hello2("This is a test string. I passed this to the function. Test GOOD\r\n"));
+			fprintf(stdout,"HELLO2 function call worked, returned 0x%04x\n",hello2("This is a test string. I passed this to the function. Test GOOD\r\n"));
 		else
-			fprintf(stderr,"FAILED to get HELLO2\n");
+			fprintf(stdout,"FAILED to get HELLO2\n");
+	}
+
+	ne_module_free(&ne);
+	close(fd);
+
+/* ====================================================== */
+
+	fprintf(stdout,"=== NOW TESTING EXAMDLL2.DSO === \n");
+
+	/* examdll2 */
+	if ((fd=open("examdll2.dso",O_RDONLY|O_BINARY)) < 0) {
+		fprintf(stdout,"Cannot open EXAMDLL2.DSO\n");
+		return 1;
+	}
+	if (ne_module_load_header(&ne,fd)) {
+		fprintf(stdout,"Failed to load header\n");
+		return 1;
+	}
+	ne_module_dump_header(&ne,stdout);
+	if (ne_module_load_segmentinfo(&ne)) {
+		fprintf(stdout,"Failed to load segment info\n");
+		return 1;
+	}
+	if (ne_module_load_segments(&ne)) {
+		fprintf(stdout,"Failed to load segment\n");
+		ne_module_dump_segmentinfo(&ne,stdout);
+		return 1;
+	}
+	ne_module_dump_segmentinfo(&ne,stdout);
+	if (ne_module_load_and_apply_relocations(&ne))
+		fprintf(stdout,"Failed to load and apply relocation data\n");
+	if (ne_module_load_entry_points(&ne)) {
+		fprintf(stdout,"Failed to load entry points\n");
+		return 1;
+	}
+	fprintf(stdout,"%u entry points\n",ne.ne_entry_points);
+	for (xx=1;xx <= ne.ne_entry_points;xx++) {
+		nent = ne_module_get_ordinal_entry_point(&ne,xx);
+		entry = ne_module_entry_point_by_ordinal(&ne,xx);
+		if (nent != NULL) {
+			fprintf(stdout,"  [%u] flags=0x%02x segn=%u offset=0x%04x entry=%Fp\n",
+				xx,nent->flags,nent->segment_index,nent->offset,entry);
+		}
+	}
+
+	/* Load Resident Name Table */
+	if (ne_module_load_name_table(&ne))
+		fprintf(stdout,"Failed to load name table\n");
+
+	/* dump the resident/nonresident tables */
+	fprintf(stdout,"Resident names:\n");
+	ne_module_dump_resident_table(ne.ne_resident_names,ne.ne_resident_names_length,stdout);
+	fprintf(stdout,"Nonresident names:\n");
+	ne_module_dump_resident_table(ne.ne_nonresident_names,ne.ne_nonresident_names_length,stdout);
+
+	/* 3rd ordinal is MESSAGE data object, which is actually now a far pointer (to test that our relocation code works) */
+	entry = ne_module_entry_point_by_ordinal(&ne,3);
+	if (entry != NULL) {
+		fprintf(stdout,"Got ordinal #3, far ptr %Fp\n",entry);
+		entry = *((unsigned char far**)entry);
+		fprintf(stderr,"   Which gives %Fp, %s\n",entry,entry);
+	}
+	else {
+		fprintf(stdout,"FAILED to get ordinal #3\n");
+	}
+
+	/* 1st and 2nd ordinals are functions */
+	{
+		int (far __stdcall *hello1)() = (int (far __stdcall *)())
+			ne_module_entry_point_by_ordinal(&ne,1);
+
+		if (hello1 != NULL)
+			fprintf(stdout,"Ordinal #1 function call worked, returned 0x%04x\n",hello1());
+		else
+			fprintf(stdout,"FAILED to get ordinal #1\n");
+	}
+	{
+		int (far __stdcall *hello2)(const char far *msg) = (int (far __stdcall *)(const char far *))
+			ne_module_entry_point_by_ordinal(&ne,2);
+
+		if (hello2 != NULL)
+			fprintf(stdout,"Ordinal #2 function call worked, returned 0x%04x\n",hello2("This is a test string. I passed this to the function. Test GOOD\r\n"));
+		else
+			fprintf(stdout,"FAILED to get ordinal #2\n");
+	}
+
+	/* 4th ordinal does NOT exist */
+	if (ne_module_entry_point_by_ordinal(&ne,4) != NULL)
+		fprintf(stdout,"FAILURE: 4th ordinal should not exist\n");
+
+	/* do it again, going by name */
+	entry = ne_module_entry_point_by_name(&ne,"MESSAGE");
+	if (entry != NULL) {
+		fprintf(stdout,"Got MESSAGE, far ptr %Fp\n",entry);
+		entry = *((unsigned char far**)entry);
+		fprintf(stderr,"   Which gives %Fp, %s\n",entry,entry);
+	}
+	else {
+		fprintf(stdout,"FAILURE: Entry 'MESSAGE' does not exist\n");
+	}
+
+	/* 1st and 2nd ordinals are functions */
+	{
+		int (far __stdcall *hello1)() = (int (far __stdcall *)())
+			ne_module_entry_point_by_name(&ne,"HELLO1");
+
+		if (hello1 != NULL)
+			fprintf(stdout,"HELLO1 function call worked, returned 0x%04x\n",hello1());
+		else
+			fprintf(stdout,"FAILED to get HELLO1\n");
+	}
+	{
+		int (far __stdcall *hello2)(const char far *msg) = (int (far __stdcall *)(const char far *))
+			ne_module_entry_point_by_name(&ne,"HELLO2");
+
+		if (hello2 != NULL)
+			fprintf(stdout,"HELLO2 function call worked, returned 0x%04x\n",hello2("This is a test string. I passed this to the function. Test GOOD\r\n"));
+		else
+			fprintf(stdout,"FAILED to get HELLO2\n");
 	}
 
 	ne_module_free(&ne);
