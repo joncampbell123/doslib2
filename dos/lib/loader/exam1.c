@@ -185,6 +185,9 @@ int ne_module_load_and_apply_relocations(struct ne_module *n) {
 							*((uint16_t far*)modp) = src_offset;
 							*((uint16_t far*)(modp+2)) = src_segn;
 						}
+						else {
+							fprintf(stdout,"WARNING: Reloc fixup type %u not yet supported\n",tmp[0]);
+						}
 					}
 				}
 			}
