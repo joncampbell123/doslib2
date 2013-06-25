@@ -70,6 +70,10 @@ struct ne_module {
 	struct ne_segment_assign*	ne_sega;
 	uint16_t			ne_entry_points;		/* indices count from 1, from entry #0 */
 	struct ne_entry_point*		ne_entry;
+	unsigned char*			ne_resident_names;
+	uint16_t			ne_resident_names_length;
+	unsigned char*			ne_nonresident_names;
+	uint16_t			ne_nonresident_names_length;
 };
 
 struct ne_entry_point* ne_module_get_ordinal_entry_point(struct ne_module *n,unsigned int ordinal) {
@@ -81,7 +85,7 @@ struct ne_entry_point* ne_module_get_ordinal_entry_point(struct ne_module *n,uns
 	return n->ne_entry + ordinal;
 }
 
-void far *ne_module_entry_point_ordinal(struct ne_module *n,unsigned int ordinal) {
+void far *ne_module_entry_point_by_ordinal(struct ne_module *n,unsigned int ordinal) {
 	struct ne_segment_assign *sega;
 	struct ne_entry_point *nent;
 	
@@ -238,6 +242,72 @@ void ne_module_dump_segmentinfo(struct ne_module *n,FILE *fp) {
 	}
 }
 
+int ne_module_load_resident_name_table(struct ne_module *n) {
+	unsigned int rd;
+
+	if (n == NULL) return 0;
+	if (n->ne_resident_names != NULL) return 0;
+	if (n->ne_header.resident_name_table_rel_offset == 0) return 0;
+
+	/* the "length" is implied by the distance from the resident table to the module ref table */
+	if (n->ne_header.resident_name_table_rel_offset >= n->ne_header.module_reference_table_rel_offset) return 0;
+
+	n->ne_resident_names_length = n->ne_header.module_reference_table_rel_offset - n->ne_header.resident_name_table_rel_offset;
+	if (n->ne_resident_names_length > 32768) return 0;
+
+	n->ne_resident_names = malloc(n->ne_resident_names_length);
+	if (n->ne_resident_names == NULL) return 1;
+
+	if (lseek(n->fd,n->ne_header.resident_name_table_rel_offset+n->ne_header_offset,SEEK_SET) !=
+		(n->ne_header.resident_name_table_rel_offset+n->ne_header_offset)) {
+		free(n->ne_resident_names);
+		n->ne_resident_names = NULL;
+		return 1;
+	}
+	if (_dos_read(n->fd,n->ne_resident_names,n->ne_resident_names_length,&rd) || rd != n->ne_resident_names_length) {
+		free(n->ne_resident_names);
+		n->ne_resident_names = NULL;
+		return 1;
+	}
+
+	return 0;
+}
+
+int ne_module_load_nonresident_name_table(struct ne_module *n) {
+	unsigned int rd;
+
+	if (n == NULL) return 0;
+	if (n->ne_nonresident_names != NULL) return 0;
+	if (n->ne_header.nonresident_name_table_rel_offset == 0) return 0;
+
+	n->ne_nonresident_names_length = n->ne_header.nonresident_table_size;
+	if (n->ne_nonresident_names_length > 32768) return 0;
+
+	n->ne_nonresident_names = malloc(n->ne_nonresident_names_length);
+	if (n->ne_nonresident_names == NULL) return 1;
+
+	if (lseek(n->fd,n->ne_header.nonresident_name_table_rel_offset,SEEK_SET) != n->ne_header.nonresident_name_table_rel_offset) {
+		free(n->ne_nonresident_names);
+		n->ne_nonresident_names = NULL;
+		return 1;
+	}
+	if (_dos_read(n->fd,n->ne_nonresident_names,n->ne_nonresident_names_length,&rd) || rd != n->ne_nonresident_names_length) {
+		free(n->ne_nonresident_names);
+		n->ne_nonresident_names = NULL;
+		return 1;
+	}
+
+	return 0;
+}
+
+int ne_module_load_name_table(struct ne_module *n) {
+	int x;
+
+	x  = (ne_module_load_resident_name_table(n) == 0);
+	x |= (ne_module_load_nonresident_name_table(n) == 0);
+	return x;
+}
+
 int ne_module_load_entry_points(struct ne_module *n) {
 	unsigned char far *p;
 	unsigned int i,rd,count,segn,ordinal_count=0;
@@ -316,6 +386,63 @@ int ne_module_load_entry_points(struct ne_module *n) {
 	return 0;
 }
 
+unsigned int ne_module_raw_name_to_ordinal(unsigned char *p,unsigned int sz,const char *name) {
+	unsigned int i=0,len,ord;
+	unsigned int namel,match;
+
+	namel = strlen(name);
+	while (i < sz) {
+		len = p[i++];
+		if (len == 0) break;
+		if ((i+len+2) > sz) break;
+
+		match = 0;
+		if (len == namel) match = (memcmp(p+i,name,namel) == 0);
+		i += len;
+		ord = *((uint16_t*)(p+i)); i += 2;
+
+		if (match) return ord;
+	}
+
+	return 0;
+}
+
+unsigned int ne_module_name_to_ordinal(struct ne_module *n,const char *name) {
+	unsigned int ord = 0;
+
+	if (n->ne_resident_names != NULL)
+		ord = ne_module_raw_name_to_ordinal(n->ne_resident_names,n->ne_resident_names_length,name);
+	if (ord == 0 && n->ne_nonresident_names != NULL)
+		ord = ne_module_raw_name_to_ordinal(n->ne_nonresident_names,n->ne_nonresident_names_length,name);
+
+	return ord;
+}
+
+void far *ne_module_entry_point_by_name(struct ne_module *n,const char *name) {
+	unsigned int ord;
+
+	ord = ne_module_name_to_ordinal(n,name);
+	if (ord == 0) return NULL;
+	return ne_module_entry_point_by_ordinal(n,ord);
+}
+
+void ne_module_dump_resident_table(unsigned char *p,unsigned int sz,FILE *fp) {
+	unsigned int i=0,len,ord;
+
+	while (i < sz) {
+		len = p[i++];
+		if (len == 0) break;
+		if ((i+len+2) > sz) break;
+
+		fprintf(fp,"    ");
+		fwrite(p+i,len,1,fp);
+		i += len;
+
+		ord = *((uint16_t*)(p+i)); i += 2;
+		fprintf(fp," ord=%u\n",ord);
+	}
+}
+
 void ne_module_dump_header(struct ne_module *n,FILE *fp) {
 	fprintf(fp,"NE(%Fp) fd=%d hdr=%lu\n",(void far*)n,n->fd,(unsigned long)n->ne_header_offset);
 	fprintf(fp,"         Linker ver: %u.%u\n",
@@ -342,6 +469,16 @@ void ne_module_dump_header(struct ne_module *n,FILE *fp) {
 void ne_module_free(struct ne_module *n) {
 	unsigned int x;
 
+	if (n->ne_nonresident_names) {
+		free(n->ne_nonresident_names);
+		n->ne_nonresident_names = NULL;
+		n->ne_nonresident_names_length = 0;
+	}
+	if (n->ne_resident_names) {
+		free(n->ne_resident_names);
+		n->ne_resident_names = NULL;
+		n->ne_resident_names_length = 0;
+	}
 	n->ne_entry_points = 0;
 	if (n->ne_entry) {
 		free(n->ne_entry);
@@ -409,15 +546,25 @@ int main(int argc,char **argv,char **envp) {
 	fprintf(stderr,"%u entry points\n",ne.ne_entry_points);
 	for (xx=1;xx <= ne.ne_entry_points;xx++) {
 		nent = ne_module_get_ordinal_entry_point(&ne,xx);
-		entry = ne_module_entry_point_ordinal(&ne,xx);
+		entry = ne_module_entry_point_by_ordinal(&ne,xx);
 		if (nent != NULL) {
 			fprintf(stderr,"  [%u] flags=0x%02x segn=%u offset=0x%04x entry=%Fp\n",
 				xx,nent->flags,nent->segment_index,nent->offset,entry);
 		}
 	}
 
+	/* Load Resident Name Table */
+	if (ne_module_load_name_table(&ne))
+		fprintf(stderr,"Failed to load name table\n");
+
+	/* dump the resident/nonresident tables */
+	fprintf(stderr,"Resident names:\n");
+	ne_module_dump_resident_table(ne.ne_resident_names,ne.ne_resident_names_length,stdout);
+	fprintf(stderr,"Nonresident names:\n");
+	ne_module_dump_resident_table(ne.ne_nonresident_names,ne.ne_nonresident_names_length,stdout);
+
 	/* 3rd ordinal is MESSAGE data object */
-	entry = ne_module_entry_point_ordinal(&ne,3);
+	entry = ne_module_entry_point_by_ordinal(&ne,3);
 	if (entry != NULL) {
 		fprintf(stderr,"Got ordinal #3, which should be a string: %Fs\n",entry);
 	}
@@ -428,7 +575,7 @@ int main(int argc,char **argv,char **envp) {
 	/* 1st and 2nd ordinals are functions */
 	{
 		int (far __stdcall *hello1)() = (int (far __stdcall *)())
-			ne_module_entry_point_ordinal(&ne,1);
+			ne_module_entry_point_by_ordinal(&ne,1);
 
 		if (hello1 != NULL)
 			fprintf(stderr,"Ordinal #1 function call worked, returned 0x%04x\n",hello1());
@@ -437,7 +584,7 @@ int main(int argc,char **argv,char **envp) {
 	}
 	{
 		int (far __stdcall *hello2)(const char far *msg) = (int (far __stdcall *)(const char far *))
-			ne_module_entry_point_ordinal(&ne,2);
+			ne_module_entry_point_by_ordinal(&ne,2);
 
 		if (hello2 != NULL)
 			fprintf(stderr,"Ordinal #2 function call worked, returned 0x%04x\n",hello2("This is a test string. I passed this to the function. Test GOOD\r\n"));
@@ -446,8 +593,35 @@ int main(int argc,char **argv,char **envp) {
 	}
 
 	/* 4th ordinal does NOT exist */
-	if (ne_module_entry_point_ordinal(&ne,4) != NULL)
+	if (ne_module_entry_point_by_ordinal(&ne,4) != NULL)
 		fprintf(stderr,"FAILURE: 4th ordinal should not exist\n");
+
+	/* do it again, going by name */
+	entry = ne_module_entry_point_by_name(&ne,"MESSAGE");
+	if (entry != NULL)
+		fprintf(stderr,"MESSAGE entry point: %Fs\n",entry);
+	else
+		fprintf(stderr,"FAILURE: Entry 'MESSAGE' does not exist\n");
+
+	/* 1st and 2nd ordinals are functions */
+	{
+		int (far __stdcall *hello1)() = (int (far __stdcall *)())
+			ne_module_entry_point_by_name(&ne,"HELLO1");
+
+		if (hello1 != NULL)
+			fprintf(stderr,"HELLO1 function call worked, returned 0x%04x\n",hello1());
+		else
+			fprintf(stderr,"FAILED to get HELLO1\n");
+	}
+	{
+		int (far __stdcall *hello2)(const char far *msg) = (int (far __stdcall *)(const char far *))
+			ne_module_entry_point_by_name(&ne,"HELLO2");
+
+		if (hello2 != NULL)
+			fprintf(stderr,"HELLO2 function call worked, returned 0x%04x\n",hello2("This is a test string. I passed this to the function. Test GOOD\r\n"));
+		else
+			fprintf(stderr,"FAILED to get HELLO2\n");
+	}
 
 	ne_module_free(&ne);
 	close(fd);
