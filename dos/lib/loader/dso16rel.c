@@ -15,6 +15,7 @@
 #if defined(TARGET_MSDOS) && TARGET_BITS == 16 && defined(TARGET_REALMODE)
 
 int ne_module_load_and_apply_segment_relocations(struct ne_module *n,unsigned int idx/*NTS: 1-based, NOT zero-based*/) {
+	struct ne_module **cached_imp_mod = NULL;
 	uint16_t offset,src_offset,src_segn;
 	struct ne_segment_assign *af;
 	struct ne_segment_def *df;
@@ -40,6 +41,12 @@ int ne_module_load_and_apply_segment_relocations(struct ne_module *n,unsigned in
 	if (lseek(n->fd,o,SEEK_SET) != o) return 1;
 	if (read(n->fd,&entries,2) != 2) return 1;
 
+	if (n->ne_module_reference_table != NULL && n->ne_header.module_reference_table_entries != 0 && n->ne_header.module_reference_table_entries < 512) {
+		cached_imp_mod = malloc(n->ne_header.module_reference_table_entries * sizeof(void*));
+		if (cached_imp_mod == NULL) return 1;
+		_fmemset(cached_imp_mod,0,n->ne_header.module_reference_table_entries * sizeof(void*));
+	}
+
 	while ((entries--) > 0 && read(n->fd,tmp,8) == 8) {
 		offset = *((uint16_t*)(tmp+2));
 		if ((offset>>4UL) >= af->length_para) continue;
@@ -50,46 +57,116 @@ int ne_module_load_and_apply_segment_relocations(struct ne_module *n,unsigned in
 				src_offset = *((uint16_t*)(tmp+6));
 			}
 			else {
-				fprintf(stdout,"WARNING: movable relocation entries not yet supported\n");
+				if (n->enable_debug) fprintf(stdout,"WARNING: movable relocation entries not yet supported\n");
 				continue;
 			}
+
+			if (src_segn == 0 || src_segn > n->ne_header.segment_table_entries) continue;
+			src_segn = n->ne_sega[src_segn-1].segment;
+		}
+		else if ((tmp[1]&3) == 1) { /* import ordinal */
+			unsigned int modidx = *((uint16_t*)(tmp+4));
+			unsigned int ordinal = *((uint16_t*)(tmp+6));
+			struct ne_module *mod;
+			char modname[64];
+			void far *entry;
+
+			if (modidx == 0 || ordinal == 0) continue;
+			if ((--modidx) >= n->ne_header.module_reference_table_entries) continue;
+
+			if ((mod=cached_imp_mod[modidx]) == NULL) {
+				if (n->import_module_lookup == NULL) {
+					if (n->enable_debug) fprintf(stdout,"WARNING: Module imports symbols but caller does not provide module lookup\n");
+					continue;
+				}
+
+				if (ne_module_get_import_module_name(modname,sizeof(modname),n,modidx+1)) continue;
+				if (n->enable_debug) fprintf(stdout,"Looking up module #%d %s\n",modidx+1,modname);
+				if ((mod=cached_imp_mod[modidx]=n->import_module_lookup(n,modname)) == NULL) {
+					if (n->enable_debug) fprintf(stdout,"  Failed to lookup module\n");
+					continue;
+				}
+
+				if (n->enable_debug) fprintf(stdout,"  OK, cached as %Fp\n",(void far*)mod);
+			}
+
+			/* TODO: Allow calling program to do remapping, etc. via "import_module_ordinal_lookup" */
+			/* TODO: If the module reference did not load segments, or relocations, etc. say so here */
+			if ((entry=ne_module_entry_point_by_ordinal(mod,ordinal)) == NULL) {
+				if (n->enable_debug) fprintf(stderr,"WARNING: Failed to lookup ordinal %u\n",ordinal);
+				continue;
+			}
+
+			src_segn = FP_SEG(entry);
+			src_offset = FP_OFF(entry);
+
+			if (n->enable_debug) fprintf(stderr,"Ordinal %u of mod %Fp -> %04x:%04x\n",
+				ordinal,(void far*)mod,(unsigned int)src_segn,(unsigned int)src_offset);
 		}
 		else {
-			fprintf(stdout,"WARNING: Reloc type %u not yet supported (0x%02x)\n",tmp[1]&3,tmp[1]);
+			if (n->enable_debug) fprintf(stdout,"WARNING: Reloc type %u not yet supported (0x%02x)\n",tmp[1]&3,tmp[1]);
 			continue;
 		}
 
-		if (src_segn == 0 || src_segn > n->ne_header.segment_table_entries) continue;
-		src_segn = n->ne_sega[src_segn-1].segment;
 		modp = MK_FP(af->segment,offset);
 
-		switch (tmp[0]) {
-			case 0x00: /* low byte at offset */
-				*((uint8_t far*)modp) = src_offset&0xFF;
-				break;
-			case 0x02: /* 16-bit segment */
-				*((uint16_t far*)modp) = src_segn;
-				break;
-			case 0x03: /* 16:16 ptr */
-				*((uint16_t far*)modp) = src_offset;
-				*((uint16_t far*)(modp+2)) = src_segn;
-				break;
-			case 0x05: /* 16-bit offset */
-				*((uint16_t far*)modp) = src_offset;
-				break;
-			case 0x0B: /* 16:32 ptr */
-				*((uint32_t far*)modp) = src_offset;
-				*((uint16_t far*)(modp+4)) = src_segn;
-				break;
-			case 0x0D: /* 32-bit offset */
-				*((uint32_t far*)modp) = src_offset;
-				break;
-			default:
-				fprintf(stdout,"WARNING: Reloc fixup type %u not yet supported\n",tmp[0]);
-				break;
+		if (tmp[1]&4) { /* bit 2 set here means we ADD the relocation, not overwrite */
+			switch (tmp[0]) {
+				case 0x00: /* low byte at offset */
+					*((uint8_t far*)modp) += src_offset&0xFF;
+					break;
+				case 0x02: /* 16-bit segment */
+					*((uint16_t far*)modp) += src_segn;
+					break;
+				case 0x03: /* 16:16 ptr */
+					*((uint16_t far*)modp) += src_offset;
+					*((uint16_t far*)(modp+2)) += src_segn;
+					break;
+				case 0x05: /* 16-bit offset */
+					*((uint16_t far*)modp) += src_offset;
+					break;
+				case 0x0B: /* 16:32 ptr */
+					*((uint32_t far*)modp) += src_offset;
+					*((uint16_t far*)(modp+4)) += src_segn;
+					break;
+				case 0x0D: /* 32-bit offset */
+					*((uint32_t far*)modp) += src_offset;
+					break;
+				default:
+					if (n->enable_debug) fprintf(stdout,"WARNING: Reloc fixup type %u not yet supported [ADD]\n",tmp[0]);
+					break;
+			}
+		}
+		else {
+			switch (tmp[0]) {
+				case 0x00: /* low byte at offset */
+					*((uint8_t far*)modp) = src_offset&0xFF;
+					break;
+				case 0x02: /* 16-bit segment */
+					*((uint16_t far*)modp) = src_segn;
+					break;
+				case 0x03: /* 16:16 ptr */
+					*((uint16_t far*)modp) = src_offset;
+					*((uint16_t far*)(modp+2)) = src_segn;
+					break;
+				case 0x05: /* 16-bit offset */
+					*((uint16_t far*)modp) = src_offset;
+					break;
+				case 0x0B: /* 16:32 ptr */
+					*((uint32_t far*)modp) = src_offset;
+					*((uint16_t far*)(modp+4)) = src_segn;
+					break;
+				case 0x0D: /* 32-bit offset */
+					*((uint32_t far*)modp) = src_offset;
+					break;
+				default:
+					if (n->enable_debug) fprintf(stdout,"WARNING: Reloc fixup type %u not yet supported\n",tmp[0]);
+					break;
+			}
 		}
 	}
 
+	if (cached_imp_mod) free(cached_imp_mod);
 	af->internal_flags |= NE_SEGMENT_ASSIGN_IF_RELOC_APPLIED;
 	return 0;
 }

@@ -237,30 +237,34 @@ void ne_module_dump_resident_table(unsigned char *p,unsigned int sz,FILE *fp) {
 	}
 }
 
+int ne_module_get_import_module_name(char *buf,int buflen,struct ne_module *n,unsigned int modidx) {
+	unsigned int len,o;
+
+	if (n == NULL || modidx == 0 || buf == NULL || buflen <= 4) return 1;
+	if (n->ne_module_reference_table == NULL) return 1;
+	if (n->ne_imported_names == NULL) return 1;
+	if ((--modidx) >= n->ne_header.module_reference_table_entries) return 1;
+	o = n->ne_module_reference_table[modidx];
+	if (o >= n->ne_imported_names_length) return 1;
+	len = n->ne_imported_names[o++];
+	if ((o+len) > n->ne_imported_names_length) return 1;
+	if ((len+1) > buflen) len = buflen - 1;
+	if (len != 0) _fmemcpy(buf,n->ne_imported_names+o,len);
+	buf[len] = 0;
+	return 0;
+}
+
 void ne_module_dump_imported_module_names(struct ne_module *n) {
-	unsigned int x,len,o;
+	unsigned int x;
 	char tmp[64];
 
 	if (n == NULL) return;
 	if (n->ne_module_reference_table == NULL) return;
 	if (n->ne_imported_names == NULL) return;
 
-	for (x=0;x < n->ne_header.module_reference_table_entries;x++) {
-		o = n->ne_module_reference_table[x];
-		if (o >= n->ne_imported_names_length) continue;
-
-		len = n->ne_imported_names[o++];
-		if ((o+len) > n->ne_imported_names_length) continue;
-
-		if (len < 63) {
-			if (len > 0) _fmemcpy(tmp,n->ne_imported_names+o,len);
-			tmp[len] = 0;
-		}
-		else {
-			tmp[0] = 0;
-		}
-
-		fprintf(stdout,"  #%d ofs=%u name=%s\n",x,o-1,tmp);
+	for (x=1;x <= n->ne_header.module_reference_table_entries;x++) {
+		if (ne_module_get_import_module_name(tmp,sizeof(tmp),n,x)) continue;
+		fprintf(stdout,"  Module #%d name=%s\n",x,tmp);
 	}
 }
 
