@@ -83,6 +83,7 @@ struct ne_module {
 	unsigned char*			ne_imported_names;
 	uint16_t			ne_imported_names_length;
 	uint16_t*			ne_module_reference_table;
+	struct ne_module**		cached_imp_mod;
 	unsigned char			enable_debug:1;
 	unsigned char			_reserved_:7;
 
@@ -127,6 +128,7 @@ int ne_module_load_module_reference_table_list(struct ne_module *n);
 int ne_module_load_imported_name_table_list(struct ne_module *n);
 int ne_module_get_import_module_name(char *buf,int buflen,struct ne_module *n,unsigned int modidx);
 void ne_module_dump_imported_module_names(struct ne_module *n);
+void ne_module_flush_import_module_cache(struct ne_module *n);
 
 #endif
 

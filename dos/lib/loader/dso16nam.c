@@ -161,6 +161,13 @@ void ne_module_free_nonresident_name_table(struct ne_module *n) {
 	}
 }
 
+void ne_module_flush_import_module_cache(struct ne_module *n) {
+	if (n->cached_imp_mod) {
+		free(n->cached_imp_mod);
+		n->cached_imp_mod = NULL;
+	}
+}
+
 void ne_module_free_imported_name_table(struct ne_module *n) {
 	if (n->ne_imported_names) {
 		free(n->ne_imported_names);
@@ -176,6 +183,7 @@ void ne_module_free_imported_name_table(struct ne_module *n) {
 void ne_module_free_name_table(struct ne_module *n) {
 	ne_module_free_imported_name_table(n);
 	ne_module_free_resident_name_table(n);
+	ne_module_flush_import_module_cache(n);
 	ne_module_free_nonresident_name_table(n);
 }
 

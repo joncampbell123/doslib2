@@ -15,7 +15,6 @@
 #if defined(TARGET_MSDOS) && TARGET_BITS == 16 && defined(TARGET_REALMODE)
 
 int ne_module_load_and_apply_segment_relocations(struct ne_module *n,unsigned int idx/*NTS: 1-based, NOT zero-based*/) {
-	struct ne_module **cached_imp_mod = NULL;
 	uint16_t offset,src_offset,src_segn;
 	struct ne_segment_assign *af;
 	struct ne_segment_def *df;
@@ -41,10 +40,11 @@ int ne_module_load_and_apply_segment_relocations(struct ne_module *n,unsigned in
 	if (lseek(n->fd,o,SEEK_SET) != o) return 1;
 	if (read(n->fd,&entries,2) != 2) return 1;
 
-	if (n->ne_module_reference_table != NULL && n->ne_header.module_reference_table_entries != 0 && n->ne_header.module_reference_table_entries < 512) {
-		cached_imp_mod = malloc(n->ne_header.module_reference_table_entries * sizeof(void*));
-		if (cached_imp_mod == NULL) return 1;
-		_fmemset(cached_imp_mod,0,n->ne_header.module_reference_table_entries * sizeof(void*));
+	if (n->ne_module_reference_table != NULL && n->ne_header.module_reference_table_entries != 0 &&
+		n->ne_header.module_reference_table_entries < 512 && n->cached_imp_mod == NULL) {
+		n->cached_imp_mod = malloc(n->ne_header.module_reference_table_entries * sizeof(void*));
+		if (n->cached_imp_mod == NULL) return 1;
+		_fmemset(n->cached_imp_mod,0,n->ne_header.module_reference_table_entries * sizeof(void*));
 	}
 
 	while ((entries--) > 0 && read(n->fd,tmp,8) == 8) {
@@ -74,7 +74,7 @@ int ne_module_load_and_apply_segment_relocations(struct ne_module *n,unsigned in
 			if (modidx == 0 || ordinal == 0) continue;
 			if ((--modidx) >= n->ne_header.module_reference_table_entries) continue;
 
-			if ((mod=cached_imp_mod[modidx]) == NULL) {
+			if ((mod=n->cached_imp_mod[modidx]) == NULL) {
 				if (n->import_module_lookup == NULL) {
 					if (n->enable_debug) fprintf(stdout,"WARNING: Module imports symbols but caller does not provide module lookup\n");
 					continue;
@@ -82,7 +82,7 @@ int ne_module_load_and_apply_segment_relocations(struct ne_module *n,unsigned in
 
 				if (ne_module_get_import_module_name(modname,sizeof(modname),n,modidx+1)) continue;
 				if (n->enable_debug) fprintf(stdout,"Looking up module #%d %s\n",modidx+1,modname);
-				if ((mod=cached_imp_mod[modidx]=n->import_module_lookup(n,modname)) == NULL) {
+				if ((mod=n->cached_imp_mod[modidx]=n->import_module_lookup(n,modname)) == NULL) {
 					if (n->enable_debug) fprintf(stdout,"  Failed to lookup module\n");
 					continue;
 				}
@@ -123,7 +123,7 @@ int ne_module_load_and_apply_segment_relocations(struct ne_module *n,unsigned in
 			if ((--modidx) >= n->ne_header.module_reference_table_entries) continue;
 			if (nofs >= n->ne_imported_names_length) continue;
 
-			if ((mod=cached_imp_mod[modidx]) == NULL) {
+			if ((mod=n->cached_imp_mod[modidx]) == NULL) {
 				if (n->import_module_lookup == NULL) {
 					if (n->enable_debug) fprintf(stdout,"WARNING: Module imports symbols but caller does not provide module lookup\n");
 					continue;
@@ -131,7 +131,7 @@ int ne_module_load_and_apply_segment_relocations(struct ne_module *n,unsigned in
 
 				if (ne_module_get_import_module_name(modname,sizeof(modname),n,modidx+1)) continue;
 				if (n->enable_debug) fprintf(stdout,"Looking up module #%d %s\n",modidx+1,modname);
-				if ((mod=cached_imp_mod[modidx]=n->import_module_lookup(n,modname)) == NULL) {
+				if ((mod=n->cached_imp_mod[modidx]=n->import_module_lookup(n,modname)) == NULL) {
 					if (n->enable_debug) fprintf(stdout,"  Failed to lookup module\n");
 					continue;
 				}
@@ -228,7 +228,6 @@ int ne_module_load_and_apply_segment_relocations(struct ne_module *n,unsigned in
 		}
 	}
 
-	if (cached_imp_mod) free(cached_imp_mod);
 	af->internal_flags |= NE_SEGMENT_ASSIGN_IF_RELOC_APPLIED;
 	return 0;
 }
