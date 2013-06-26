@@ -14,7 +14,7 @@ all-programs: $(all_programs)
 $(abs_obj_dir)/examdll1.obj: examdll1.c
 	$(WCC) -e=2 -zq -zu -m$(W_MMODE) $(W_DEBUG) -bt=dos -oilrtfm -s -wx -$(W_CPULEVEL) -q -fr=nul -fo=$(abs_obj_dir)/.obj -i=.. -i=../.. $^
 
-$(abs_exe_dir)/examdll1.dso: $(obj_win32s_compat) $(abs_obj_dir)/examdll1.obj
+$(abs_exe_dir)/examdll1.dso: $(obj_win32s_compat) $(abs_obj_dir)/examdll1.obj ../../../build/dos/lib/stub/$(target_subdir)/exe/stub.exe
 	rm -fv $(abs_obj_dir)/examdll1.cmd
 	@echo option quiet option nocaseexact option stack=8k, heapsize=1k format windows dll segment TYPE CODE FIXED DISCARDABLE segment TYPE DATA FIXED $(foreach x,$(filter %$(obj_suffix),$^),file "$(x)") option map=$(abs_obj_dir)/examdll1.map >>$(abs_obj_dir)/examdll1.cmd
 	@echo option stub=../../../build/dos/lib/stub/$(target_subdir)/exe/stub.exe >>$(abs_obj_dir)/examdll1.cmd
@@ -31,7 +31,7 @@ $(abs_exe_dir)/examdll1.dso: $(obj_win32s_compat) $(abs_obj_dir)/examdll1.obj
 $(abs_obj_dir)/examdll2.obj: examdll2.c
 	$(WCC) -e=2 -zq -zu -m$(W_MMODE) $(W_DEBUG) -bt=dos -oilrtfm -s -wx -$(W_CPULEVEL) -q -fr=nul -fo=$(abs_obj_dir)/.obj -i=.. -i=../.. $^
 
-$(abs_exe_dir)/examdll2.dso: $(obj_win32s_compat) $(abs_obj_dir)/examdll2.obj
+$(abs_exe_dir)/examdll2.dso: $(obj_win32s_compat) $(abs_obj_dir)/examdll2.obj ../../../build/dos/lib/stub/$(target_subdir)/exe/stub.exe
 	rm -fv $(abs_obj_dir)/examdll2.cmd
 	@echo option quiet option nocaseexact option stack=8k, heapsize=1k format windows dll segment TYPE CODE FIXED DISCARDABLE segment TYPE DATA FIXED $(foreach x,$(filter %$(obj_suffix),$^),file "$(x)") option map=$(abs_obj_dir)/examdll2.map >>$(abs_obj_dir)/examdll2.cmd
 	@echo option stub=../../../build/dos/lib/stub/$(target_subdir)/exe/stub.exe >>$(abs_obj_dir)/examdll2.cmd
@@ -49,7 +49,7 @@ $(abs_exe_dir)/examdll2.dso: $(obj_win32s_compat) $(abs_obj_dir)/examdll2.obj
 $(abs_obj_dir)/examdll3.obj: examdll3.c
 	$(WCC) -e=2 -zq -zu -m$(W_MMODE) $(W_DEBUG) -bt=dos -oilrtfm -s -wx -$(W_CPULEVEL) -q -fr=nul -fo=$(abs_obj_dir)/.obj -i=.. -i=../.. $^
 
-$(abs_exe_dir)/examdll3.dso: $(obj_win32s_compat) $(abs_obj_dir)/examdll3.obj
+$(abs_exe_dir)/examdll3.dso: $(obj_win32s_compat) $(abs_obj_dir)/examdll3.obj ../../../build/dos/lib/stub/$(target_subdir)/exe/stub.exe
 	rm -fv $(abs_obj_dir)/examdll3.cmd
 	@echo option quiet option nocaseexact option stack=8k, heapsize=1k format windows dll segment TYPE CODE FIXED DISCARDABLE segment TYPE DATA FIXED $(foreach x,$(filter %$(obj_suffix),$^),file "$(x)") option map=$(abs_obj_dir)/examdll3.map >>$(abs_obj_dir)/examdll3.cmd
 	@echo option stub=../../../build/dos/lib/stub/$(target_subdir)/exe/stub.exe >>$(abs_obj_dir)/examdll3.cmd
@@ -65,7 +65,7 @@ $(abs_exe_dir)/examdll3.dso: $(obj_win32s_compat) $(abs_obj_dir)/examdll3.obj
 $(abs_obj_dir)/examdll4.obj: examdll4.c
 	$(WCC) -e=2 -zq -zu -m$(W_MMODE) $(W_DEBUG) -bt=dos -oilrtfm -s -wx -$(W_CPULEVEL) -q -fr=nul -fo=$(abs_obj_dir)/.obj -i=.. -i=../.. $^
 
-$(abs_exe_dir)/examdll4.dso: $(obj_win32s_compat) $(abs_obj_dir)/examdll4.obj
+$(abs_exe_dir)/examdll4.dso: $(obj_win32s_compat) $(abs_obj_dir)/examdll4.obj ../../../build/dos/lib/stub/$(target_subdir)/exe/stub.exe
 	rm -fv $(abs_obj_dir)/examdll4.cmd
 	@echo option quiet option nocaseexact option stack=8k, heapsize=1k format windows dll segment TYPE CODE FIXED DISCARDABLE segment TYPE DATA FIXED $(foreach x,$(filter %$(obj_suffix),$^),file "$(x)") option map=$(abs_obj_dir)/examdll4.map >>$(abs_obj_dir)/examdll4.cmd
 	@echo option stub=../../../build/dos/lib/stub/$(target_subdir)/exe/stub.exe >>$(abs_obj_dir)/examdll4.cmd
@@ -84,6 +84,9 @@ all-targets: all-targets-abs-dirs all-programs
 
 clean-targets:
 	@rm -Rfv $(abs_exe_dir) $(abs_lib_dir) $(abs_obj_dir)
+
+../../../build/dos/lib/stub/$(target_subdir)/exe/stub.exe:
+	$(MAKE) -C ../stub
 
 endif
 

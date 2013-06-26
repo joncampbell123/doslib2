@@ -43,14 +43,26 @@ all-programs: $(all_programs)
 $(abs_exe_dir)/examdll1.dso: ../../../build/dos/lib/examdll/$(target_subdir)/exe/examdll1.dso
 	@cp -v $^ $@
 
+../../../build/dos/lib/examdll/$(target_subdir)/exe/examdll1.dso:
+	$(MAKE) -C ../examdll
+
 $(abs_exe_dir)/examdll2.dso: ../../../build/dos/lib/examdll/$(target_subdir)/exe/examdll2.dso
 	@cp -v $^ $@
+
+../../../build/dos/lib/examdll/$(target_subdir)/exe/examdll2.dso:
+	$(MAKE) -C ../examdll
 
 $(abs_exe_dir)/examdll3.dso: ../../../build/dos/lib/examdll/$(target_subdir)/exe/examdll3.dso
 	@cp -v $^ $@
 
+../../../build/dos/lib/examdll/$(target_subdir)/exe/examdll3.dso:
+	$(MAKE) -C ../examdll
+
 $(abs_exe_dir)/examdll4.dso: ../../../build/dos/lib/examdll/$(target_subdir)/exe/examdll4.dso
 	@cp -v $^ $@
+
+../../../build/dos/lib/examdll/$(target_subdir)/exe/examdll4.dso:
+	$(MAKE) -C ../examdll
 
 $(abs_exe_dir)/test1$(exe_suffix): $(abs_obj_dir)/test1$(obj_suffix) $(lib_dos_lib_loader_dso16) $(lib_dos_lib_loader_dso16_dependencies)
 	@echo option quiet system $(WLINK_SYSTEM) $(WLINKFLAGS) $(WLINK_SEGMENTS) $(lib_dos_lib_loader_dso16_wlink) $(foreach x,$(filter %$(obj_suffix),$^),file "$(x)") option map=$(abs_obj_dir)/test1.map name $@ >$(abs_obj_dir)/test1.cmd
