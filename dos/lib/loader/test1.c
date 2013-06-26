@@ -319,8 +319,7 @@ int main(int argc,char **argv,char **envp) {
 
 	fprintf(stdout,"External modules\n");
 	ne_module_dump_imported_module_names(&ne);
-
-	/* <- FIXME: Should be function call in API to forget file handle */
+	ne_module_release_fd(&ne); /* we're closing the file descriptor, let it know */
 	close(fd);
 
 /* ====================================================== */

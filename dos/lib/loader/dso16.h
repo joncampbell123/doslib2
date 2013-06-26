@@ -84,8 +84,11 @@ struct ne_module {
 	uint16_t			ne_imported_names_length;
 	uint16_t*			ne_module_reference_table;
 	struct ne_module**		cached_imp_mod;
+	uint16_t			reference_count;
 	unsigned char			enable_debug:1;
-	unsigned char			_reserved_:7;
+	unsigned char			auto_free_on_release:1;
+	unsigned char			auto_close_fd:1;
+	unsigned char			_reserved_:5;
 
 	/* these callbacks are for the calling program to provide external modules so we can resolve import symbols */
 	struct ne_module*		(*import_module_lookup)(struct ne_module *to_mod,const char *modname);
@@ -129,6 +132,9 @@ int ne_module_load_imported_name_table_list(struct ne_module *n);
 int ne_module_get_import_module_name(char *buf,int buflen,struct ne_module *n,unsigned int modidx);
 void ne_module_dump_imported_module_names(struct ne_module *n);
 void ne_module_flush_import_module_cache(struct ne_module *n);
+uint16_t ne_module_addref(struct ne_module *n);
+uint16_t ne_module_release(struct ne_module *n);
+void ne_module_release_fd(struct ne_module *n);
 
 #endif
 

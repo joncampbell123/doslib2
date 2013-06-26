@@ -162,7 +162,16 @@ void ne_module_free_nonresident_name_table(struct ne_module *n) {
 }
 
 void ne_module_flush_import_module_cache(struct ne_module *n) {
+	unsigned int x;
+
 	if (n->cached_imp_mod) {
+		for (x=0;x < n->ne_header.module_reference_table_entries;x++) {
+			if (n->cached_imp_mod[x] != NULL) {
+				ne_module_release(n->cached_imp_mod[x]);
+				n->cached_imp_mod[x] = NULL;
+			}
+		}
+
 		free(n->cached_imp_mod);
 		n->cached_imp_mod = NULL;
 	}

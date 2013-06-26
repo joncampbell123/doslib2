@@ -88,6 +88,7 @@ int ne_module_load_and_apply_segment_relocations(struct ne_module *n,unsigned in
 				}
 
 				if (n->enable_debug) fprintf(stdout,"  OK, cached as %Fp\n",(void far*)mod);
+				ne_module_addref(mod);
 			}
 
 			/* TODO: If the module reference did not load segments, or relocations, etc. say so here */
@@ -137,6 +138,7 @@ int ne_module_load_and_apply_segment_relocations(struct ne_module *n,unsigned in
 				}
 
 				if (n->enable_debug) fprintf(stdout,"  OK, cached as %Fp\n",(void far*)mod);
+				ne_module_addref(mod);
 			}
 
 			/* lookup the name */

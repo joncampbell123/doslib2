@@ -67,11 +67,63 @@ void ne_module_dump_header(struct ne_module *n,FILE *fp) {
 }
 
 void ne_module_free(struct ne_module *n) {
+	if (n->enable_debug) {
+		if (n->reference_count != 0)
+			fprintf(stderr,"WARNING: Module %Fp is being freed when refcount=%u\n",
+				(void far*)n,n->reference_count);
+	}
+
+	ne_module_release_fd(n);
 	ne_module_free_segments(n);
 	ne_module_free_name_table(n);
 	ne_module_free_entry_points(n);
 	ne_module_free_segmentinfo(n);
+}
+
+void ne_module_release_fd(struct ne_module *n) {
+	if (n->auto_close_fd) {
+		if (n->fd >= 0) {
+			if (n->enable_debug) {
+				fprintf(stderr,"Module %Fp closing file descriptor %d (we own it)\n",
+					(void far*)n,n->fd);
+			}
+			close(n->fd);
+		}
+	}
+	else {
+		if (n->fd >= 0) {
+			if (n->enable_debug) {
+				fprintf(stderr,"Module %Fp forgetting file descriptor %d (we don't own it)\n",
+					(void far*)n,n->fd);
+			}
+		}
+	}
+
 	n->fd = -1;
+}
+
+uint16_t ne_module_addref(struct ne_module *n) {
+	return (++n->reference_count);
+}
+
+uint16_t ne_module_release(struct ne_module *n) {
+	if (n->reference_count != 0) {
+		if ((--n->reference_count) == 0) {
+			if (n->auto_free_on_release) {
+				if (n->enable_debug) fprintf(stderr,"Module %Fp refcount==0 and auto-free-on-release, freeing resources now.\n");
+				ne_module_release_fd(n);
+				ne_module_free_segments(n);
+				ne_module_free_name_table(n);
+				ne_module_free_entry_points(n);
+				ne_module_free_segmentinfo(n);
+			}
+		}
+	}
+	else {
+		if (n->enable_debug) fprintf(stderr,"WARNING: Module %Fp release() when module already has refcount==0\n");
+	}
+
+	return n->reference_count;
 }
 
 #endif
