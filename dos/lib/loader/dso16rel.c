@@ -77,6 +77,7 @@ int ne_module_load_and_apply_segment_relocations(struct ne_module *n,unsigned in
 			if ((mod=n->cached_imp_mod[modidx]) == NULL) {
 				if (n->import_module_lookup == NULL) {
 					if (n->enable_debug) fprintf(stdout,"WARNING: Module imports symbols but caller does not provide module lookup\n");
+					if (n->must_resolve_dependencies) return 1;
 					continue;
 				}
 
@@ -84,6 +85,7 @@ int ne_module_load_and_apply_segment_relocations(struct ne_module *n,unsigned in
 				if (n->enable_debug) fprintf(stdout,"Looking up module #%d %s\n",modidx+1,modname);
 				if ((mod=n->cached_imp_mod[modidx]=n->import_module_lookup(n,modname)) == NULL) {
 					if (n->enable_debug) fprintf(stdout,"  Failed to lookup module\n");
+					if (n->must_resolve_dependencies) return 1;
 					continue;
 				}
 
@@ -95,12 +97,14 @@ int ne_module_load_and_apply_segment_relocations(struct ne_module *n,unsigned in
 			if (n->import_lookup_by_ordinal != NULL) {
 				if ((entry=n->import_lookup_by_ordinal(n,mod,ordinal)) == NULL) {
 					if (n->enable_debug) fprintf(stdout,"WARNING: Failed to lookup ordinal %u\n",ordinal);
+					if (n->must_resolve_dependencies) return 1;
 					continue;
 				}
 			}
 			else {
 				if ((entry=ne_module_entry_point_by_ordinal(mod,ordinal)) == NULL) {
 					if (n->enable_debug) fprintf(stdout,"WARNING: Failed to lookup ordinal %u\n",ordinal);
+					if (n->must_resolve_dependencies) return 1;
 					continue;
 				}
 			}
@@ -127,6 +131,7 @@ int ne_module_load_and_apply_segment_relocations(struct ne_module *n,unsigned in
 			if ((mod=n->cached_imp_mod[modidx]) == NULL) {
 				if (n->import_module_lookup == NULL) {
 					if (n->enable_debug) fprintf(stdout,"WARNING: Module imports symbols but caller does not provide module lookup\n");
+					if (n->must_resolve_dependencies) return 1;
 					continue;
 				}
 
@@ -134,6 +139,7 @@ int ne_module_load_and_apply_segment_relocations(struct ne_module *n,unsigned in
 				if (n->enable_debug) fprintf(stdout,"Looking up module #%d %s\n",modidx+1,modname);
 				if ((mod=n->cached_imp_mod[modidx]=n->import_module_lookup(n,modname)) == NULL) {
 					if (n->enable_debug) fprintf(stdout,"  Failed to lookup module\n");
+					if (n->must_resolve_dependencies) return 1;
 					continue;
 				}
 
@@ -151,12 +157,14 @@ int ne_module_load_and_apply_segment_relocations(struct ne_module *n,unsigned in
 			if (n->import_lookup_by_name != NULL) {
 				if ((entry=n->import_lookup_by_name(n,mod,entrypoint)) == NULL) {
 					if (n->enable_debug) fprintf(stdout,"WARNING: Failed to lookup name %s\n",entrypoint);
+					if (n->must_resolve_dependencies) return 1;
 					continue;
 				}
 			}
 			else {
 				if ((entry=ne_module_entry_point_by_name(mod,entrypoint)) == NULL) {
 					if (n->enable_debug) fprintf(stdout,"WARNING: Failed to lookup name %s\n",entrypoint);
+					if (n->must_resolve_dependencies) return 1;
 					continue;
 				}
 			}
@@ -169,6 +177,7 @@ int ne_module_load_and_apply_segment_relocations(struct ne_module *n,unsigned in
 		}
 		else {
 			if (n->enable_debug) fprintf(stdout,"WARNING: This loader does not support OSFIXUP relocation data\n");
+			if (n->must_resolve_dependencies) return 1;
 			continue;
 		}
 
@@ -198,6 +207,7 @@ int ne_module_load_and_apply_segment_relocations(struct ne_module *n,unsigned in
 					break;
 				default:
 					if (n->enable_debug) fprintf(stdout,"WARNING: Reloc fixup type %u not yet supported [ADD]\n",tmp[0]);
+					if (n->must_resolve_dependencies) return 1;
 					break;
 			}
 		}
@@ -225,6 +235,7 @@ int ne_module_load_and_apply_segment_relocations(struct ne_module *n,unsigned in
 					break;
 				default:
 					if (n->enable_debug) fprintf(stdout,"WARNING: Reloc fixup type %u not yet supported\n",tmp[0]);
+					if (n->must_resolve_dependencies) return 1;
 					break;
 			}
 		}
@@ -236,12 +247,15 @@ int ne_module_load_and_apply_segment_relocations(struct ne_module *n,unsigned in
 
 int ne_module_load_and_apply_relocations(struct ne_module *n) {
 	unsigned int x;
+	int y;
 
 	if (n == NULL) return 0;
 	if (n->ne_header.segment_table_entries == 0) return 0;
 
-	for (x=1;x <= n->ne_header.segment_table_entries;x++)
-		ne_module_load_and_apply_segment_relocations(n,x);
+	for (x=1;x <= n->ne_header.segment_table_entries;x++) {
+		y = ne_module_load_and_apply_segment_relocations(n,x);
+		if (y) return 1;
+	}
 
 	return 0;
 }

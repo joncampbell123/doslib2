@@ -88,7 +88,8 @@ struct ne_module {
 	unsigned char			enable_debug:1;
 	unsigned char			auto_free_on_release:1;
 	unsigned char			auto_close_fd:1;
-	unsigned char			_reserved_:5;
+	unsigned char			must_resolve_dependencies:1;
+	unsigned char			_reserved_:4;
 
 	/* these callbacks are for the calling program to provide external modules so we can resolve import symbols */
 	struct ne_module*		(*import_module_lookup)(struct ne_module *to_mod,const char *modname);

@@ -29,45 +29,6 @@ static struct ne_module* dso3_mod_lookup(struct ne_module *to_mod,const char *mo
 	return NULL;
 }
 
-/* intercept */
-static const char far *intercepted_message = "This message is not the original. It was intercepted successfully.";
-
-/* intercept HELLO2 */
-static int far __stdcall int_hello2(const char far *msg) {
-	fprintf(stdout,"Surprise! HELLO2 has been intercepted! You tried to say:\n%Fs",msg);
-	return (int)(0xA5A5U);
-}
-
-static void far* dso3_lookup_ordinal_hook(struct ne_module *to_mod,struct ne_module *from_mod,unsigned int ordinal) {
-	if (from_mod == &ne) {
-		if (ordinal == 2) {
-			fprintf(stdout," :) Intercepting hello (#%d)\n",ordinal);
-			return int_hello2;
-		}
-		else if (ordinal == 3) {
-			fprintf(stdout," :) Intercepting message (#%d)\n",ordinal);
-			return (void far*)(&intercepted_message);
-		}
-	}
-
-	return ne_module_entry_point_by_ordinal(from_mod,ordinal);
-}
-
-static void far* dso3_lookup_name_hook(struct ne_module *to_mod,struct ne_module *from_mod,const char *name) {
-	if (from_mod == &ne) {
-		if (!strcasecmp(name,"HELLO2")) {
-			fprintf(stdout," :) Intercepting hello %s\n",name);
-			return int_hello2;
-		}
-		else if (!strcasecmp(name,"MESSAGE")) {
-			fprintf(stdout," :) Intercepting %s\n",name);
-			return (void far*)(&intercepted_message);
-		}
-	}
-
-	return ne_module_entry_point_by_name(from_mod,name);
-}
-
 int main(int argc,char **argv,char **envp) {
 	struct ne_entry_point* nent;
 	void far *entry;
@@ -83,8 +44,6 @@ int main(int argc,char **argv,char **envp) {
 	ne_module_zero(&ne2);
 	ne2.enable_debug = 1;
 	ne2.import_module_lookup = dso3_mod_lookup;
-	ne2.import_lookup_by_name = dso3_lookup_name_hook;
-	ne2.import_lookup_by_ordinal = dso3_lookup_ordinal_hook;
 
 	fprintf(stdout,"=== NOW TESTING EXAMDLL2.DSO === \n");
 

@@ -16,6 +16,7 @@
 
 void ne_module_zero(struct ne_module *n) {
 	_fmemset(n,0,sizeof(*n));
+	n->must_resolve_dependencies = 1;
 	n->fd = -1;
 }
 
