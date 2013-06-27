@@ -97,6 +97,10 @@ struct ne_module {
 	void far*			(*import_lookup_by_name)(struct ne_module *to_mod,struct ne_module *from_mod,const char *name);
 };
 
+static inline ne_module_set_fd_ownership(struct ne_module *n,unsigned char x) {
+	n->auto_close_fd = x?1:0;
+}
+
 struct ne_entry_point* ne_module_get_ordinal_entry_point(struct ne_module *n,unsigned int ordinal);
 void far *ne_module_entry_point_by_ordinal(struct ne_module *n,unsigned int ordinal);
 void ne_module_zero(struct ne_module *n);
