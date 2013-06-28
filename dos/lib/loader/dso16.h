@@ -103,7 +103,7 @@ struct ne_module {
 	/* we allow this struct to be linked together as a list */
 	struct ne_module*		prev;
 	struct ne_module*		next;
-} ne_module;
+};
 
 static inline void ne_module_set_fd_ownership(struct ne_module *n,unsigned char x) {
 	n->auto_close_fd = x?1:0;
