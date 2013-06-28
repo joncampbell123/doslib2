@@ -127,5 +127,54 @@ uint16_t ne_module_release(struct ne_module *n) {
 	return n->reference_count;
 }
 
-#endif
+int ne_module_general_load_fd(struct ne_module *n,int fd) {
+	if (ne_module_load_header(n,fd)) {
+		if (n->enable_debug) fprintf(stdout,"%Fp Failed to load header\n",(void far*)n);
+		return 1;
+	}
+	if (ne_module_load_segmentinfo(n)) {
+		if (n->enable_debug) fprintf(stdout,"%Fp Failed to load segment info\n",(void far*)n);
+		return 1;
+	}
+	if (ne_module_load_segments(n)) {
+		if (n->enable_debug) fprintf(stdout,"%Fp Failed to load segment\n",(void far*)n);
+		return 1;
+	}
+	if (ne_module_load_imported_name_table(n)) {
+		if (n->enable_debug) fprintf(stdout,"%Fp Failed to load imp. name table\n",(void far*)n);
+		return 1;
+	}
+	if (ne_module_load_name_table(n)) {
+		if (n->enable_debug) fprintf(stdout,"%Fp Failed to load name table\n",(void far*)n);
+		return 1;
+	}
+	if (ne_module_load_and_apply_relocations(n)) {
+		if (n->enable_debug) fprintf(stdout,"%Fp Failed to load and apply relocation data\n",(void far*)n);
+		return 1;
+	}
+	if (ne_module_load_entry_points(n)) {
+		if (n->enable_debug) fprintf(stdout,"%Fp Failed to load entry points\n",(void far*)n);
+		return 1;
+	}
 
+	return 0;
+}
+
+int ne_module_general_load(struct ne_module *n,const char *name) {
+	int fd;
+
+	if (n->fd >= 0) return 1;
+	if ((fd=open(name,O_RDONLY|O_BINARY)) < 0) {
+		if (n->enable_debug) fprintf(stdout,"Cannot open %s\n",name);
+		return 1;
+	}
+	ne_module_set_fd_ownership(n,1);
+	if (ne_module_general_load_fd(n,fd)) {
+		if (n->enable_debug) fprintf(stdout,"Failed to load module %s\n",name);
+		return 1;
+	}
+	fd = -1; /* forget the handle */
+	return 0;
+}
+
+#endif

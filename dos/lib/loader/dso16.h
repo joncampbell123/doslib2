@@ -98,7 +98,7 @@ struct ne_module {
 	void far*			(*import_lookup_by_name)(struct ne_module *to_mod,struct ne_module *from_mod,const char *name);
 };
 
-static inline ne_module_set_fd_ownership(struct ne_module *n,unsigned char x) {
+static inline void ne_module_set_fd_ownership(struct ne_module *n,unsigned char x) {
 	n->auto_close_fd = x?1:0;
 }
 
@@ -140,6 +140,8 @@ void ne_module_flush_import_module_cache(struct ne_module *n);
 uint16_t ne_module_addref(struct ne_module *n);
 uint16_t ne_module_release(struct ne_module *n);
 void ne_module_release_fd(struct ne_module *n);
+int ne_module_general_load_fd(struct ne_module *n,int fd);
+int ne_module_general_load(struct ne_module *n,const char *name);
 
 #endif
 
