@@ -42,6 +42,7 @@ int main(int argc,char **argv,char **envp) {
 	assert(sizeof(struct ne_header) == 0x40);
 	assert(sizeof(struct ne_segment_def) == 0x08);
 
+	ne_mod_debug = 1;
 	if ((nem1=ne_module_loadlibrary("examdll2")) == NULL) {
 		fprintf(stdout,"Cannot open EXAMDLL2.DSO\n");
 		return 1;

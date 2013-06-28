@@ -156,12 +156,17 @@ struct ne_module *ne_module_loadlibrary(const char *name);
 struct ne_module *ne_module_loadlibrary_nref(const char *name);
 void ne_module_freelibrary(struct ne_module *n);
 void ne_module_gclibrary();
+void ne_module_init();
 
 extern struct ne_module*			ne_mod_first;
 extern unsigned char				ne_mod_debug;
 extern unsigned char				ne_mod_ne_debug;
 extern struct ne_module*			(*ne_module_default_lookup)(struct ne_module *to_mod,const char *modname);
-
+extern char**					ne_module_dso_file_extensions;
+extern char*					ne_module_dso_file_extensions_default[];
+extern char**					ne_module_dso_search_paths;
+extern char*					ne_module_dso_search_paths_default[];
+	
 #endif
 
 #endif /* _DOS_LIB_LOADER_DSO16_H */
