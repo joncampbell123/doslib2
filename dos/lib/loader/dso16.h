@@ -1,4 +1,7 @@
 
+#ifndef _DOS_LIB_LOADER_DSO16_H
+#define _DOS_LIB_LOADER_DSO16_H
+
 #include <dos.h>
 #include <stdio.h>
 #include <fcntl.h>
@@ -96,7 +99,11 @@ struct ne_module {
 	/* these callbacks, if set, allows the program to intercept and redirect imports */
 	void far*			(*import_lookup_by_ordinal)(struct ne_module *to_mod,struct ne_module *from_mod,unsigned int ordinal);
 	void far*			(*import_lookup_by_name)(struct ne_module *to_mod,struct ne_module *from_mod,const char *name);
-};
+
+	/* we allow this struct to be linked together as a list */
+	struct ne_module*		prev;
+	struct ne_module*		next;
+} ne_module;
 
 static inline void ne_module_set_fd_ownership(struct ne_module *n,unsigned char x) {
 	n->auto_close_fd = x?1:0;
@@ -142,6 +149,20 @@ uint16_t ne_module_release(struct ne_module *n);
 void ne_module_release_fd(struct ne_module *n);
 int ne_module_general_load_fd(struct ne_module *n,int fd);
 int ne_module_general_load(struct ne_module *n,const char *name);
+void ne_module_free_all();
+struct ne_module *ne_module_getmodulehandle(const char *name);
+struct ne_module* ne_module_default_lookup_default(struct ne_module *to_mod,const char *modname);
+struct ne_module *ne_module_loadlibrary(const char *name);
+struct ne_module *ne_module_loadlibrary_nref(const char *name);
+void ne_module_freelibrary(struct ne_module *n);
+void ne_module_gclibrary();
+
+extern struct ne_module*			ne_mod_first;
+extern unsigned char				ne_mod_debug;
+extern unsigned char				ne_mod_ne_debug;
+extern struct ne_module*			(*ne_module_default_lookup)(struct ne_module *to_mod,const char *modname);
 
 #endif
+
+#endif /* _DOS_LIB_LOADER_DSO16_H */
 

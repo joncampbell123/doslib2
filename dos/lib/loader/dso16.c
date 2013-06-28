@@ -112,11 +112,7 @@ uint16_t ne_module_release(struct ne_module *n) {
 		if ((--n->reference_count) == 0) {
 			if (n->auto_free_on_release) {
 				if (n->enable_debug) fprintf(stderr,"Module %Fp refcount==0 and auto-free-on-release, freeing resources now.\n");
-				ne_module_release_fd(n);
-				ne_module_free_segments(n);
-				ne_module_free_name_table(n);
-				ne_module_free_entry_points(n);
-				ne_module_free_segmentinfo(n);
+				ne_module_free(n);
 			}
 		}
 	}
