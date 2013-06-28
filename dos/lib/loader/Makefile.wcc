@@ -28,6 +28,9 @@ $(abs_obj_dir)/test5$(obj_suffix): test5.c
 $(abs_obj_dir)/test6$(obj_suffix): test6.c
 	$(WCC) $(WCCFLAGS) -I../../.. -fo=$(abs_obj_dir)/.obj -i=.. -i=../.. $^
 
+$(abs_obj_dir)/test6b$(obj_suffix): test6b.c
+	$(WCC) $(WCCFLAGS) -I../../.. -fo=$(abs_obj_dir)/.obj -i=.. -i=../.. $^
+
 $(abs_obj_dir)/dso16$(obj_suffix): dso16.c
 	$(WCC) $(WCCFLAGS) -I../../.. -fo=$(abs_obj_dir)/.obj -i=.. -i=../.. $^
 
@@ -52,6 +55,7 @@ all_programs += $(abs_exe_dir)/test3$(exe_suffix)
 all_programs += $(abs_exe_dir)/test4$(exe_suffix)
 all_programs += $(abs_exe_dir)/test5$(exe_suffix)
 all_programs += $(abs_exe_dir)/test6$(exe_suffix)
+all_programs += $(abs_exe_dir)/test6b$(exe_suffix)
 
 all_programs += $(abs_exe_dir)/examdll1.dso
 all_programs += $(abs_exe_dir)/examdll2.dso
@@ -107,6 +111,10 @@ $(abs_exe_dir)/test5$(exe_suffix): $(abs_obj_dir)/test5$(obj_suffix) $(lib_dos_l
 $(abs_exe_dir)/test6$(exe_suffix): $(abs_obj_dir)/test6$(obj_suffix) $(lib_dos_lib_loader_dso16) $(lib_dos_lib_loader_dso16_dependencies)
 	@echo option quiet system $(WLINK_SYSTEM) $(WLINKFLAGS) $(WLINK_SEGMENTS) $(lib_dos_lib_loader_dso16_wlink) $(foreach x,$(filter %$(obj_suffix),$^),file "$(x)") option map=$(abs_obj_dir)/test6.map name $@ >$(abs_obj_dir)/test6.cmd
 	$(WLINK) @$(abs_obj_dir)/test6.cmd
+
+$(abs_exe_dir)/test6b$(exe_suffix): $(abs_obj_dir)/test6b$(obj_suffix) $(lib_dos_lib_loader_dso16) $(lib_dos_lib_loader_dso16_dependencies)
+	@echo option quiet system $(WLINK_SYSTEM) $(WLINKFLAGS) $(WLINK_SEGMENTS) $(lib_dos_lib_loader_dso16_wlink) $(foreach x,$(filter %$(obj_suffix),$^),file "$(x)") option map=$(abs_obj_dir)/test6b.map name $@ >$(abs_obj_dir)/test6b.cmd
+	$(WLINK) @$(abs_obj_dir)/test6b.cmd
 
 all-targets: all-targets-abs-dirs all-programs
 	@true
