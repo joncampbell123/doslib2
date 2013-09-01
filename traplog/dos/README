@@ -1,0 +1,41 @@
+
+Trap Flag Logging for MS-DOS.
+This utility can be used to run a program and record CPU
+state per instruction (using the 8086 trap flag and INT 1
+trap interrupt).
+
+WARNING: There are a million ways anti-debugger tricks can
+         defeat this program's tracing. This program is not
+         expected to correctly handle those programs. It is
+         intended for use with the test routines also
+         present in this directory.
+
+NOTE: To avoid reentrancy issues or excess tracing data, this
+      code will NOT trace into the MS-DOS system calls.
+
+There are several versions of this code, one for each general
+class of processor.
+
+tfl8086.com ......... Minimalist tracing for 8086/8088 processors.
+                      It can be run on 286 and higher processors,
+                      but if the test program involves switching
+                      to protected mode the program will not trace
+                      execution correctly. On 386 or higher systems,
+                      this code will work but will only capture the
+                      lower 16-bit portions of the CPU registers.
+
+TODO:
+
+tfl286.com .......... Tracing utility for 286 or higher processors.
+                      Captures machine status word in addition to
+                      other 16-bit registers. Also contains code to
+                      detect switching to protected mode (LMSW)
+                      and bail out appropriately.
+
+tfl386.com .......... Tracing utility for 386 or higher processors.
+                      CPU state capture includes 32-bit registers,
+                      segment registers (CS,DS,ES,FS,GS,SS), control
+                      and debug registers. Also contains code to
+                      detect switching to protected mode and bail
+                      out appropriately.
+
