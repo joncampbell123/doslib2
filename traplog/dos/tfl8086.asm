@@ -160,7 +160,12 @@ ld4:		lodsb
 		int	21h
 		mov	ds,bx
 		mov	es,bx
-		jmp	far word [cs:exec_pblk+0x12]	; jump to the program with interrupts disabled
+
+; build IRET stack frame. I hope the DOS program doesn't rely on the stack contents at SS:SP!
+		pushf
+		push	word [cs:exec_pblk+0x12+2]	; CS
+		push	word [cs:exec_pblk+0x12]	; IP
+		iret					; IRET to program (with interrupts disabled)
 
 ; execution begins here when program returns
 on_program_exit:
