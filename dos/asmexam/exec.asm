@@ -29,6 +29,7 @@
 
 ; OK proceed
 		cld
+		xor	ax,ax
 		mov	cx,12
 		mov	di,exec_fcb
 		rep	stosw
@@ -75,7 +76,7 @@ exec_err:	mov	ax,cs
 		segment .data
 
 exec_path:	db	'COMMAND.COM',0
-exec_cmdtail:	db	'.\ /K echo hello',13,0
+exec_cmdtail:	db	' /K echo hello',13,0
 str_fail:	db	'Failed',13,10,'$'
 str_ok:		db	'Exec OK',13,10,'$'
 
