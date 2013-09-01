@@ -1,0 +1,20 @@
+# This is a separate makefile because GNU automake interferes with GNU make conditionals
+ifdef target_subdir
+
+all-targets-abs-dirs: $(abs_exe_dir) $(abs_lib_dir) $(abs_obj_dir)
+
+all_programs  = $(abs_exe_dir)/tfl8086.com
+
+all-programs: $(all_programs)
+
+$(abs_exe_dir)/tfl8086.com: tfl8086.asm
+	$(NASM) -o $@ -f bin $(NASMFLAGS) $^
+
+all-targets: all-targets-abs-dirs all-programs
+	@true
+
+clean-targets:
+	@rm -Rfv $(abs_exe_dir) $(abs_lib_dir) $(abs_obj_dir)
+
+endif
+
