@@ -48,14 +48,14 @@
 		mov	dx,exec_path
 		mov	bx,exec_pblk
 		int	21h		; do it
-		pop	si		; discard possibly corrupted WORD
-		jc	exec_err
 
 		cli			; DOS 2.x is said to screw up the stack pointer.
-		mov	ax,cs		; just in case restore it proper.
-		mov	ss,ax
+		mov	bx,cs		; just in case restore it proper.
+		mov	ss,bx
 		mov	sp,stack_end - 2
 		sti
+
+		jc	exec_err	; if it failed, say so
 
 		push	cs
 		pop	ds

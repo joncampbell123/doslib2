@@ -91,6 +91,9 @@
    exec2.com          Use the EXEC call to run another  [MS-DOS 2.0+]
                       program, passing along the command
                       line as well.
+   execload.com       Use the EXEC cal to load a program[MS-DOS 2.0+]
+                      into memory, then execute it
+                      directly (using AL=1)
    dir.com            List directory contents using     [MS-DOS 2.0+]
                       findfirst/findnext (*.*)
    dir20.com          Alternate version of dir.com that [MS-DOS 2.0+]
