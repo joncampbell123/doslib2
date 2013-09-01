@@ -4,6 +4,33 @@
 		bits 16			; 16-bit real mode
 		org 0x100		; DOS .COM executable starts at 0x100 in memory
 
+; structs
+
+REC_8086	EQU			0x8086
+REC_LENGTH	EQU			36
+
+		struc cpu_state_record_8086
+			.r_recid	resw	1		; record ID. set to REC_8086
+			.r_reclen	resw	1		; record length
+			.r_di		resw	1
+			.r_si		resw	1
+			.r_bp		resw	1
+			.r_sp		resw	1
+			.r_bx		resw	1
+			.r_dx		resw	1
+			.r_cx		resw	1
+			.r_ax		resw	1
+			.r_flags	resw	1
+			.r_ip		resw	1
+			.r_cs		resw	1
+			.r_ss		resw	1
+			.r_ds		resw	1
+			.r_es		resw	1
+			.r_csip_capture	resd	1		; snapshot of the first 4 bytes at CS:IP
+		endstruc ; =36 bytes
+
+; code
+
 		segment .text
 
 		push	cs
@@ -133,8 +160,7 @@ ld4:		lodsb
 		int	21h
 		mov	ds,bx
 		mov	es,bx
-		sti
-		jmp	far word [cs:exec_pblk+0x12]	; jump to the program
+		jmp	far word [cs:exec_pblk+0x12]	; jump to the program with interrupts disabled
 
 ; execution begins here when program returns
 on_program_exit:
