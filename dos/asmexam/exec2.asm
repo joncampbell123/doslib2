@@ -1,5 +1,9 @@
 ;--------------------------------------------------------------------------------------
-; TFL8086.COM
+; EXEC2.COM
+;
+; Use INT 21h AH=0x4B to execute a program. This time, we accept the path of the program
+; to run from the command line, and then we copy down the text following that path and
+; give it to the sub-program as it's command line.
 ;--------------------------------------------------------------------------------------
 		bits 16			; 16-bit real mode
 		org 0x100		; DOS .COM executable starts at 0x100 in memory

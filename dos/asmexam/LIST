@@ -88,6 +88,9 @@
                       alloc/free/resize memory blocks   
    exec.com           Use the EXEC call to run          [MS-DOS 2.0+]
                       COMMAND.COM             
+   exec2.com          Use the EXEC call to run another  [MS-DOS 2.0+]
+                      program, passing along the command
+                      line as well.
    dir.com            List directory contents using     [MS-DOS 2.0+]
                       findfirst/findnext (*.*)
    dir20.com          Alternate version of dir.com that [MS-DOS 2.0+]

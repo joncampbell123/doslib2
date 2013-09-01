@@ -11,7 +11,7 @@ WARNING: There are a million ways anti-debugger tricks can
          present in this directory.
 
 NOTE: To avoid reentrancy issues or excess tracing data, this
-      code will NOT trace into the MS-DOS system calls.
+      code will NOT trace into the MS-DOS/BIOS system calls.
 
 There are several versions of this code, one for each general
 class of processor.
