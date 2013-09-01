@@ -155,14 +155,31 @@ ld4:		lodsb
 		mov	sp,[cs:exec_pblk+0x0E]
 		mov	ss,[cs:exec_pblk+0x10]
 
+; save INT 01 vector and write our own into place
+		push	es
+		xor	ax,ax
+		mov	es,ax
+		mov	ax,[es:(0x01*4)]
+		mov	[cs:old_int01],ax
+		mov	ax,[es:(0x01*4)+2]
+		mov	[cs:old_int01+2],ax
+		mov	word [es:(0x01*4)],on_int1_trap
+		mov	word [es:(0x01*4)+2],cs
+		pop	es
+
 ; most DOS programs expect the segment registers configured in a certain way (DS=ES=PSP segment)
 		mov	ah,0x51		; DOS 2.x compatible get PSP segment
 		int	21h
 		mov	ds,bx
 		mov	es,bx
 
+		int	1		; *DEBUG*
+
 ; build IRET stack frame. I hope the DOS program doesn't rely on the stack contents at SS:SP!
-		pushf
+		pushf					; load FLAGS into AX
+		pop	ax
+		or	ax,0x100			; set trap flag (TF)
+		push	ax				; EFLAGS
 		push	word [cs:exec_pblk+0x12+2]	; CS
 		push	word [cs:exec_pblk+0x12]	; IP
 		iret					; IRET to program (with interrupts disabled)
@@ -182,6 +199,16 @@ on_program_exit:
 		mov	dx,str_ok_exit
 		int	21h
 
+; restore INT 01 vector
+		push	es
+		xor	ax,ax
+		mov	es,ax
+		mov	ax,[cs:old_int01]
+		mov	[es:(0x01*4)],ax
+		mov	ax,[cs:old_int01+2]
+		mov	[es:(0x01*4)+2],ax
+		pop	es
+
 exit:		mov	ax,4C00h
 		int	21h
 
@@ -197,6 +224,17 @@ puts:		mov	ah,0x09
 		int	21h
 		ret
 
+; INT 0x01 TRAP HANDLER
+on_int1_trap:	push	ax
+		push	bx
+		mov	ah,0x0E
+		mov	al,'T'
+		xor	bx,bx
+		int	10h
+		pop	bx
+		pop	ax
+		iret
+
 		segment .data
 
 str_fail:	db	'Failed',13,10,'$'
@@ -206,6 +244,8 @@ str_need_param:	db	'Need a program to run'
 crlf:		db	13,10,'$'
 
 		segment .bss
+
+old_int01:	resd	1
 
 exec_path:	resw	1
 stack_beg:	resb	0x400-1
