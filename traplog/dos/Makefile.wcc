@@ -5,7 +5,12 @@ all-targets-abs-dirs: $(abs_exe_dir) $(abs_lib_dir) $(abs_obj_dir)
 
 all_programs  = $(abs_exe_dir)/tfl8086.com
 
+all_programs += $(abs_exe_dir)/tflogdump
+
 all-programs: $(all_programs)
+
+$(abs_exe_dir)/tflogdump: tflogdump.c
+	gcc -o $@ $<
 
 $(abs_exe_dir)/tfl8086.com: tfl8086.asm
 	$(NASM) -o $@ -f bin $(NASMFLAGS) $^

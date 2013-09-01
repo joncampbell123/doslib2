@@ -197,6 +197,13 @@ ld4:		lodsb
 		push	ax				; EFLAGS
 		push	word [cs:exec_pblk+0x12+2]	; CS
 		push	word [cs:exec_pblk+0x12]	; IP
+		xor	ax,ax
+		mov	bx,ax
+		mov	cx,ax
+		mov	dx,ax
+		mov	si,ax
+		mov	di,ax
+		mov	bp,ax
 		iret					; IRET to program (with interrupts disabled)
 
 ; execution begins here when program returns

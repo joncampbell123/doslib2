@@ -1,6 +1,7 @@
 
 BUILD_dos16r=1
 BUILD_dos16r_mm=compact
+BUILD_linux_host=1
 
 -include ../../config.mak
 -include Makefile.wcc
