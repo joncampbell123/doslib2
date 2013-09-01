@@ -1,5 +1,11 @@
 ;--------------------------------------------------------------------------------------
 ; TFL8086.COM
+;
+; WARNING: This makes use of INT 21h AH=0x4B AL=0x01 to LOAD BUT NOT EXECUTE the program.
+;          A quick test reveals DOSBox 0.74 does not support this INT 21h call 100%
+;          correctly. It will initially work, but DOSBox does not maintain accounting
+;          to know that the first INT 21h will come from the sub-program, so when the
+;          sub-program exits, we do NOT regain control!
 ;--------------------------------------------------------------------------------------
 		bits 16			; 16-bit real mode
 		org 0x100		; DOS .COM executable starts at 0x100 in memory

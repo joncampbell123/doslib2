@@ -7,6 +7,8 @@ all_programs  = $(abs_exe_dir)/tfl8086.com
 
 all_programs += $(abs_exe_dir)/tflogdump
 
+all_programs += $(abs_exe_dir)/sanity1.com
+
 all-programs: $(all_programs)
 
 $(abs_exe_dir)/tflogdump: tflogdump.c
@@ -14,6 +16,9 @@ $(abs_exe_dir)/tflogdump: tflogdump.c
 
 $(abs_exe_dir)/tfl8086.com: tfl8086.asm
 	$(NASM) -o $@ -f bin $(NASMFLAGS) $^
+
+$(abs_exe_dir)/sanity1.com: sanity1.asm
+	$(NASM) -o $@ -l $@.lst -f bin $(NASMFLAGS) $^
 
 all-targets: all-targets-abs-dirs all-programs
 	@true
