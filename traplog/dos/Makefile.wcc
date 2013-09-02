@@ -4,20 +4,32 @@ ifdef target_subdir
 all-targets-abs-dirs: $(abs_exe_dir) $(abs_lib_dir) $(abs_obj_dir)
 
 all_programs  = $(abs_exe_dir)/tfl8086.com
+all_programs += $(abs_exe_dir)/tfl8086p.com
+all_programs += $(abs_exe_dir)/tfl8086e.com
 
 all_programs += $(abs_exe_dir)/tflogdump
 
 all_programs += $(abs_exe_dir)/sanity1.com
+all_programs += $(abs_exe_dir)/sanity2.com
 
 all-programs: $(all_programs)
 
 $(abs_exe_dir)/tflogdump: tflogdump.c
 	gcc -o $@ $<
 
+$(abs_exe_dir)/tfl8086e.com: tfl8086.asm
+	$(NASM) -o $@ -f bin $(NASMFLAGS) -DEVERYTHING=1 $^
+
+$(abs_exe_dir)/tfl8086p.com: tfl8086.asm
+	$(NASM) -o $@ -f bin $(NASMFLAGS) -DPARANOID=1 $^
+
 $(abs_exe_dir)/tfl8086.com: tfl8086.asm
 	$(NASM) -o $@ -f bin $(NASMFLAGS) $^
 
 $(abs_exe_dir)/sanity1.com: sanity1.asm
+	$(NASM) -o $@ -l $@.lst -f bin $(NASMFLAGS) $^
+
+$(abs_exe_dir)/sanity2.com: sanity2.asm
 	$(NASM) -o $@ -l $@.lst -f bin $(NASMFLAGS) $^
 
 all-targets: all-targets-abs-dirs all-programs

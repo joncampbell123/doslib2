@@ -6,6 +6,21 @@
 ;          correctly. It will initially work, but DOSBox does not maintain accounting
 ;          to know that the first INT 21h will come from the sub-program, so when the
 ;          sub-program exits, we do NOT regain control!
+;
+; KNOWN LIMITATIONS:
+;   - MS-DOS 6.22: If the program we are tracing uses INT 21h AH=0x4B to execute another
+;                  program, this code will not trace into that program, because somewhere
+;                  along the way DOS manages to clear the trap flag. Example: MS-DOS's
+;                  EDIT.COM uses INT 21h AH=0x4B to exec to QBASIC.EXE. This trap logging
+;                  utility is only able to trace up to the point where EDIT.COM made the
+;                  INT 21h call to run QBASIC.EXE.
+;
+; #defines usable here
+;   PARANOID=1         If set, flushes buffer to disk after EVERY log entry. Use it for
+;                      cases where the program crashes or hangs the system.
+;
+;   EVERYTHING=1       Log everything, even BIOS and DOS calls. WARNING: THIS CAN CAUSE
+;                      PROBLEMS DUE TO REENTRANCY ISSUES. USE AS A LAST RESORT!
 ;--------------------------------------------------------------------------------------
 		bits 16			; 16-bit real mode
 		org 0x100		; DOS .COM executable starts at 0x100 in memory
@@ -13,7 +28,7 @@
 ; structs
 
 REC_8086	EQU			0x8086
-REC_LENGTH	EQU			36
+REC_LENGTH	EQU			40
 
 		struc cpu_state_record_8086
 			.r_recid	resw	1		; record ID. set to REC_8086
@@ -33,7 +48,8 @@ REC_LENGTH	EQU			36
 			.r_ds		resw	1
 			.r_es		resw	1
 			.r_csip_capture	resd	1		; snapshot of the first 4 bytes at CS:IP
-		endstruc ; =36 bytes
+			.r_sssp_capture	resd	1		; snapshot of the first 4 bytes at SS:IP
+		endstruc ; =40 bytes
 
 ; code
 
@@ -280,8 +296,7 @@ on_int1_trap:	cli
 
 		mov	ax,cs
 		mov	ds,ax
-		mov	ax,word [cs:intstack_save+2]
-		mov	es,ax				; our ES = caller's SS
+		mov	es,word [cs:intstack_save+2]	; our ES = caller's SS
 		mov	si,word [cs:intstack_save]	; our SI = caller's SP
 
 		mov	ax,word [es:si+2]		; read segment from IRET frame
@@ -289,6 +304,7 @@ on_int1_trap:	cli
 		mov	bp,sp				; SS:BP = pointer to saved CPU register state on stack
 							;         ES,DS,BP,DI,SI,DX,CX,BX,AX = 18 bytes
 
+%ifndef EVERYTHING
 		; if the trap occured below the PSP segment, or above system memory,
 		; then do not log the CPU state. we are not interested in tracing
 		; the DOS or the BIOS. in fact, we call into DOS to write the CPU
@@ -297,6 +313,7 @@ on_int1_trap:	cli
 		jb	.return
 		cmp	ax,[max_seg]
 		jae	.return
+%endif
 
 		cmp	word [record_buf_write],record_buf_size - REC_LENGTH
 		jbe	.no_flush
@@ -327,7 +344,9 @@ on_int1_trap:	cli
 		mov	ax,[bp+16]
 		mov	word [di + cpu_state_record_8086.r_ax],ax
 		mov	si,word [intstack_save]			; our SI = caller's SP
+		add	si,6					; minus the IRET stack frame
 		mov	word [di + cpu_state_record_8086.r_sp],si
+		sub	si,6
 		mov	ax,word [es:si]
 		mov	word [di + cpu_state_record_8086.r_ip],ax
 		mov	ax,word [es:si+2]
@@ -346,6 +365,16 @@ on_int1_trap:	cli
 		mov	word [di + cpu_state_record_8086.r_csip_capture],cx
 		mov	word [di + cpu_state_record_8086.r_csip_capture + 2],dx
 
+		push	ds
+		mov	bx,word [cs:intstack_save]		; BX = SP
+		add	bx,6					; minus the IRET stack frame
+		mov	ds,word [cs:intstack_save+2]		; DS = SS
+		mov	cx,[bx]					; first 4 bytes at SS:SP
+		mov	dx,[bx+2]
+		pop	ds
+		mov	word [di + cpu_state_record_8086.r_sssp_capture],cx
+		mov	word [di + cpu_state_record_8086.r_sssp_capture + 2],dx
+
 ; increment record
 		add	word [record_buf_write],REC_LENGTH
 
@@ -355,7 +384,23 @@ on_int1_trap:	cli
 		inc	word [es:158]
 		pop	es
 
-.return:	pop	es
+; we're going to return
+.return:
+
+%ifdef PARANOID
+		call	flush_record
+%endif
+
+; but before we do, we can catch many attempts to reset the TF bit
+; by setting it again on the FLAGS image of the stack. in some emulators
+; and some CPUs, the CPU will issue one more TRAP interrupt following
+; an instruction that clears TF (such as attempting to clear TF using POPF).
+		mov	es,word [cs:intstack_save+2]	; our ES = caller's SS
+		mov	si,word [cs:intstack_save]	; our SI = caller's SP
+		or	word [es:si+4],0x100		; set TF in the FLAGS image on the stack
+
+; now return
+		pop	es
 		pop	ds
 		pop	bp
 		pop	di
@@ -381,11 +426,13 @@ flush_record:	cmp	word [record_buf_write],0
 		push	bx
 		push	cx
 		push	dx
+		push	si
 		mov	ah,0x40
 		mov	bx,word [logfd]
 		mov	cx,word [record_buf_write]
 		mov	dx,record_buf
 		int	21h
+		pop	si
 		pop	dx
 		pop	cx
 		pop	bx
@@ -431,7 +478,12 @@ vga_seg:	resw	1
 record_buf_write:resw	1
 record_buf:	resb	record_buf_size
 record_buf_end	equ	$
-record_buf_size equ	4096
+
+%ifdef PARANOID
+record_buf_size equ	256
+%else
+record_buf_size equ	16384
+%endif
 
 ENDOFIMAGE:	resb	1		; this offset is used by the program to know how large it is
 
