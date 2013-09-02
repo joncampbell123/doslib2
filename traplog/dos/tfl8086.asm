@@ -15,12 +15,23 @@
 ;                  utility is only able to trace up to the point where EDIT.COM made the
 ;                  INT 21h call to run QBASIC.EXE.
 ;
+;   - Everything: There's something our EXEC code is not doing right that causes DOS to
+;                 crash if EXE files are involved (COM files are OK). It's not just this
+;                 code, the EXEC, EXEC2 and EXECLOAD samples in dos/asmexam are crashing
+;                 the same way for some reason. It seems to worsen when this program
+;                 uses a larger log buffer.
+;
+;                 So I guess until this mystery is solved, you can't use this program
+;                 reliably on EXE files (or COM files with an EXE signature).
+;
 ; #defines usable here
 ;   PARANOID=1         If set, flushes buffer to disk after EVERY log entry. Use it for
 ;                      cases where the program crashes or hangs the system.
 ;
 ;   EVERYTHING=1       Log everything, even BIOS and DOS calls. WARNING: THIS CAN CAUSE
 ;                      PROBLEMS DUE TO REENTRANCY ISSUES. USE AS A LAST RESORT!
+;
+;   PLACEBO=1          Go through the motions but don't actually enable the trap flag.
 ;--------------------------------------------------------------------------------------
 		bits 16			; 16-bit real mode
 		org 0x100		; DOS .COM executable starts at 0x100 in memory
@@ -57,6 +68,16 @@ REC_LENGTH	EQU			40
 
 		push	cs
 		pop	ds
+		push	cs
+		pop	es
+
+		cld
+		mov	di,ENDOFFILE+1
+		mov	cx,ENDOFIMAGE
+		sub	cx,di
+		shr	cx,1
+		xor	ax,ax
+		rep	stosw
 
 		mov	[intstack_seg],cs
 		mov	word [vga_seg],0xB800		; TODO: Autodetect mono/color segment
@@ -188,9 +209,8 @@ ld4:		lodsb
 ;      we're in the program's context) and then when execution returns, INT 21h AGAIN to terminate
 ;      ourself normally.
 		cli
-		mov	sp,[cs:exec_pblk+0x0E]
-		mov	ss,[cs:exec_pblk+0x10]
 
+%ifndef PLACEBO
 ; save INT 01 vector and write our own into place
 		push	es
 		xor	ax,ax
@@ -202,6 +222,7 @@ ld4:		lodsb
 		mov	word [es:(0x01*4)],on_int1_trap
 		mov	word [es:(0x01*4)+2],cs
 		pop	es
+%endif
 
 ; most DOS programs expect the segment registers configured in a certain way (DS=ES=PSP segment)
 		mov	ah,0x51		; DOS 2.x compatible get PSP segment
@@ -213,10 +234,14 @@ ld4:		lodsb
 		mov	word [cs:max_seg],0xA000	; maximum segment
 
 ; build IRET stack frame. I hope the DOS program doesn't rely on the stack contents at SS:SP!
+		mov	ss,[cs:exec_pblk+0x0E+2]
+		mov	sp,[cs:exec_pblk+0x0E]
 		pushf					; load FLAGS into AX
+%ifndef PLACEBO
 		pop	ax
-		or	ax,0x100			; set trap flag (TF)
+		or	ax,0x300			; set trap flag (TF) and interrupt flag (IF)
 		push	ax				; EFLAGS
+%endif
 		push	word [cs:exec_pblk+0x12+2]	; CS
 		push	word [cs:exec_pblk+0x12]	; IP
 		xor	ax,ax
@@ -244,8 +269,11 @@ on_program_exit:
 		int	21h
 
 ; flush remaining buffer
+%ifndef PLACEBO
 		call	flush_record
+%endif
 
+%ifndef PLACEBO
 ; restore INT 01 vector
 		push	es
 		xor	ax,ax
@@ -255,6 +283,7 @@ on_program_exit:
 		mov	ax,[cs:old_int01+2]
 		mov	[es:(0x01*4)+2],ax
 		pop	es
+%endif
 
 exit:		mov	ax,4C00h
 		int	21h
@@ -271,6 +300,7 @@ puts:		mov	ah,0x09
 		int	21h
 		ret
 
+%ifndef PLACEBO
 ; INT 0x01 TRAP HANDLER
 on_int1_trap:	cli
 
@@ -440,6 +470,7 @@ flush_record:	cmp	word [record_buf_write],0
 
 		mov	word [record_buf_write],0
 .exit		ret
+%endif
 
 		segment .data
 
@@ -452,6 +483,8 @@ crlf:		db	13,10,'$'
 logfilename:	db	'TF8086.LOG',0
 
 		segment .bss
+
+ENDOFFILE	equ	$		; this offset is where the COM file ends
 
 logfd:		resw	1
 
@@ -477,12 +510,11 @@ vga_seg:	resw	1
 
 record_buf_write:resw	1
 record_buf:	resb	record_buf_size
-record_buf_end	equ	$
 
 %ifdef PARANOID
 record_buf_size equ	256
 %else
-record_buf_size equ	16384
+record_buf_size equ	32768
 %endif
 
 ENDOFIMAGE:	resb	1		; this offset is used by the program to know how large it is
