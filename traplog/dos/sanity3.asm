@@ -26,6 +26,15 @@
 		int	49h		; Under normal circumstances, the trap flag is cleared upon INT xx it seems.
 		nop			; <- Some CPUs and emulators: The CPU skips the first instruction following INT xx
 
+; dredge up words from beneath the stack
+		mov	bp,sp
+		mov	ax,[bp-2]
+		mov	bx,[bp-4]
+		mov	cx,[bp-6]
+		mov	ax,[bp-6-2]
+		mov	bx,[bp-6-4]
+		mov	cx,[bp-6-6]
+
 ; restore INT 49h
 		push	es
 		xor	ax,ax

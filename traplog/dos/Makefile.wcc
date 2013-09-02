@@ -7,6 +7,8 @@ all_programs  = $(abs_exe_dir)/tfl8086.com
 all_programs += $(abs_exe_dir)/tfl8086p.com
 all_programs += $(abs_exe_dir)/tfl8086e.com
 all_programs += $(abs_exe_dir)/tfl8086d.com
+all_programs += $(abs_exe_dir)/tfl8086i.com
+all_programs += $(abs_exe_dir)/tfl8086q.com
 
 all_programs += $(abs_exe_dir)/tflogdump
 
@@ -23,10 +25,16 @@ $(abs_exe_dir)/tfl8086d.com: tfl8086.asm
 	$(NASM) -o $@ -l $@.lst -f bin $(NASMFLAGS) -DPLACEBO=1 $^
 
 $(abs_exe_dir)/tfl8086e.com: tfl8086.asm
-	$(NASM) -o $@ -l $@.lst -f bin $(NASMFLAGS) -DEVERYTHING=1 $^
+	$(NASM) -o $@ -l $@.lst -f bin $(NASMFLAGS) -DEVERYTHING=1 -DTF_INTERRUPT=1 $^
 
 $(abs_exe_dir)/tfl8086p.com: tfl8086.asm
 	$(NASM) -o $@ -l $@.lst -f bin $(NASMFLAGS) -DPARANOID=1 $^
+
+$(abs_exe_dir)/tfl8086q.com: tfl8086.asm
+	$(NASM) -o $@ -l $@.lst -f bin $(NASMFLAGS) -DPARANOID=1 -DTF_INTERRUPT=1 $^
+
+$(abs_exe_dir)/tfl8086i.com: tfl8086.asm
+	$(NASM) -o $@ -l $@.lst -f bin $(NASMFLAGS) -DPARANOID=1 -DTF_INTERRUPT=1 $^
 
 $(abs_exe_dir)/tfl8086.com: tfl8086.asm
 	$(NASM) -o $@ -l $@.lst -f bin $(NASMFLAGS) $^

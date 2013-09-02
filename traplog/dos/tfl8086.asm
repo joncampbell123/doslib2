@@ -33,6 +33,9 @@
 ;
 ;   PLACEBO=1          Go through the motions but don't actually enable the trap flag
 ;                      or hook INT 1.
+;
+;   TF_INTERRUPT=1     Look for software interrupt instructions and trace into the
+;                      interrupt vector.
 ;--------------------------------------------------------------------------------------
 		bits 16			; 16-bit real mode
 		org 0x100		; DOS .COM executable starts at 0x100 in memory
@@ -257,22 +260,11 @@ ld4:		lodsb
 ; execution begins here when program returns
 on_program_exit:
 		cli			; DOS 2.x is said to screw up the stack pointer.
+		mov	byte [cs:stop_trap],1
 		mov	bx,cs		; just in case restore it proper.
 		mov	ss,bx
 		mov	sp,stack_end - 2
 		sti
-
-; print str_ok_exit to show we regained control
-		push	cs
-		pop	ds
-		mov	ah,0x09
-		mov	dx,str_ok_exit
-		int	21h
-
-; flush remaining buffer
-%ifndef PLACEBO
-		call	flush_record
-%endif
 
 %ifndef PLACEBO
 ; restore INT 01 vector
@@ -284,6 +276,18 @@ on_program_exit:
 		mov	ax,[cs:old_int01+2]
 		mov	[es:(0x01*4)+2],ax
 		pop	es
+%endif
+
+; print str_ok_exit to show we regained control
+		push	cs
+		pop	ds
+		mov	ah,0x09
+		mov	dx,str_ok_exit
+		int	21h
+
+; flush remaining buffer
+%ifndef PLACEBO
+		call	flush_record
 %endif
 
 exit:		mov	ax,4C00h
@@ -304,6 +308,11 @@ puts:		mov	ah,0x09
 %ifndef PLACEBO
 ; INT 0x01 TRAP HANDLER
 on_int1_trap:	cli
+
+		cmp	byte [cs:stop_trap],0
+		jz	.do_trap
+		iret
+.do_trap:
 
 		; save the stack pointer off and switch to our own stack.
 		; we cannot make any assumptions about the stack we're on.
@@ -430,6 +439,46 @@ on_int1_trap:	cli
 		mov	si,word [cs:intstack_save]	; our SI = caller's SP
 		or	word [es:si+4],0x100		; set TF in the FLAGS image on the stack
 
+; opcode-specific hacks
+		mov	bx,word [es:si]				; BX = IP
+		mov	ds,word [es:si+2]			; DS = CS
+		mov	ax,[bx]					; first 2 bytes at CS:IP
+
+%ifdef TF_INTERRUPT
+		cmp	al,0xCD					; INT xx    0xCD 0xxx
+		jz	.op_int_xx
+%endif
+		jmp	.finish_opcode
+
+%ifdef TF_INTERRUPT
+; INT xx     0xCD 0xxx (AH=interrupt AL=0xCD)
+.op_int_xx:	xor	bh,bh
+		mov	bl,ah
+		add	bx,bx
+		add	bx,bx					; BX=offset of vector
+
+		; load interrupt vector into DX:CX
+		push	ds
+		xor	ax,ax
+		mov	ds,ax
+		mov	cx,[bx]
+		mov	dx,[bx+2]				; DX:CX = vector
+		pop	ds
+
+		; allocate 6 bytes on the stack
+		sub	word [cs:intstack_save],6		; caller's SP -= 6
+		mov	word [es:si-6],cx			; offset of int vector
+		mov	word [es:si-4],dx			; segment of int vector
+		mov	ax,word [es:si+4]			; FLAGS from caller
+		mov	word [es:si-2],ax			; flags
+
+		; move instruction pointer 2 bytes ahead to skip over INT xx
+		add	word [es:si],2				; caller IP += 2
+
+		jmp	.finish_opcode
+%endif
+.finish_opcode:
+
 ; now return
 		pop	es
 		pop	ds
@@ -458,11 +507,16 @@ flush_record:	cmp	word [record_buf_write],0
 		push	cx
 		push	dx
 		push	si
-		mov	ah,0x40
+		mov	ah,0x40				; write file
 		mov	bx,word [logfd]
 		mov	cx,word [record_buf_write]
 		mov	dx,record_buf
 		int	21h
+
+		mov	ah,0x68				; flush/commit file
+		mov	bx,word [logfd]
+		int	21h
+
 		pop	si
 		pop	dx
 		pop	cx
@@ -504,6 +558,8 @@ exec_fcb:	resb	24
 exec_pblk:	resb	0x14
 
 exec_cmdtail:	resb	130
+
+stop_trap:	resb	1
 
 min_seg:	resw	1		; minimum segment to trace
 max_seg:	resw	1		; maximum segment to trace
