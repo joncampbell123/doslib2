@@ -334,6 +334,8 @@ on_int1_trap:	cli
 		push	ds
 		push	es
 
+.check_again:
+
 		mov	ax,cs
 		mov	ds,ax
 		mov	es,word [cs:intstack_save+2]	; our ES = caller's SS
@@ -475,7 +477,10 @@ on_int1_trap:	cli
 		; move instruction pointer 2 bytes ahead to skip over INT xx
 		add	word [es:si],2				; caller IP += 2
 
-		jmp	.finish_opcode
+		; jump back and log CPU state again to reflect entering
+		; the interrupt vector. if we don't do this, the trap log
+		; will miss the first instruction of the interrupt vector.
+		jmp	.check_again
 %endif
 .finish_opcode:
 
