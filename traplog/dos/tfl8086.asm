@@ -31,7 +31,8 @@
 ;   EVERYTHING=1       Log everything, even BIOS and DOS calls. WARNING: THIS CAN CAUSE
 ;                      PROBLEMS DUE TO REENTRANCY ISSUES. USE AS A LAST RESORT!
 ;
-;   PLACEBO=1          Go through the motions but don't actually enable the trap flag.
+;   PLACEBO=1          Go through the motions but don't actually enable the trap flag
+;                      or hook INT 1.
 ;--------------------------------------------------------------------------------------
 		bits 16			; 16-bit real mode
 		org 0x100		; DOS .COM executable starts at 0x100 in memory
