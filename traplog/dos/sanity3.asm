@@ -25,6 +25,8 @@
 ; call int 49h
 		int	49h		; Under normal circumstances, the trap flag is cleared upon INT xx it seems.
 		nop			; <- Some CPUs and emulators: The CPU skips the first instruction following INT xx
+					; tfl8086.com builds without TF_INTERRUPT will not be able to trace into this
+					; interrupt call.
 
 ; dredge up words from beneath the stack
 		mov	bp,sp
