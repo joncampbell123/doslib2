@@ -3,6 +3,7 @@
 # Clean up the tree
 for x in \*~ .libs autom4te.cache configure config.log config.status configure.scan autoscan.log; do find -name $x -exec rm -Rfv {} + ; done
 find -name \*.deps -exec rm -Rfv {} +
+find -iname \*.log -exec rm -fv {} +
 find -name \*.so -exec rm -fv {} +
 find -name \*.lo -exec rm -fv {} +
 find -name \*~ -exec rm -fv {} +
