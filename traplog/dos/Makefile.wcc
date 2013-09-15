@@ -15,6 +15,7 @@ all_programs += $(abs_exe_dir)/tflogdump
 all_programs += $(abs_exe_dir)/sanity1.com
 all_programs += $(abs_exe_dir)/sanity2.com
 all_programs += $(abs_exe_dir)/sanity3.com
+all_programs += $(abs_exe_dir)/sanity4.com
 
 all-programs: $(all_programs)
 
@@ -46,6 +47,9 @@ $(abs_exe_dir)/sanity2.com: sanity2.asm
 	$(NASM) -o $@ -l $@.lst -f bin $(NASMFLAGS) $^
 
 $(abs_exe_dir)/sanity3.com: sanity3.asm
+	$(NASM) -o $@ -l $@.lst -f bin $(NASMFLAGS) $^
+
+$(abs_exe_dir)/sanity4.com: sanity4.asm
 	$(NASM) -o $@ -l $@.lst -f bin $(NASMFLAGS) $^
 
 all-targets: all-targets-abs-dirs all-programs
