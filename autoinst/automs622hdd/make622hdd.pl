@@ -93,6 +93,51 @@ for ($i=0;$i < @ARGV;) {
 
 			$target_size = $cyls * $heads * $sects * 512 if $tc >= 1;
 		}
+		elsif ($a eq "help" || $a eq "h") {
+			print "   --size <n>                Size of hard drive in MB to create.\n";
+			print "                               Note that very early versions of MS-DOS have limits\n";
+			print "                               on disk capacity. If the size you specify is too large\n";
+			print "                               then this script will limit the partition in the image\n";
+			print "                               to the maximum supported by DOS and the rest of the image\n";
+			print "                               will remain unused by DOS.\n";
+			print "   --supp                    install Supplementary Disk 4, if available (MS-DOS 6.22)\n";
+			print "   --geometry C/H/S          Force hard disk geometry (default: S=63 H=16 C=however many tracks)\n";
+			print "                               Note that MS-DOS 3.x and earler have known issues with\n";
+			print "                               certain geometry values, such as MS-DOS 3.0 and hard drives\n";
+			print "                               with more than about 40 sectors/track. Unless you know what\n";
+			print "                               you're doing or you're using a more recent version, do not\n";
+			print "                               use this option.\n";
+			print "   --dosshell-vid <n>        pre-configure DOSSHELL.EXE video.\n";
+			print "        none                   Don't configure any driver\n";
+			print "        vga                    VGA color (default)\n";
+			print "        vgamono                VGA mono\n";
+			print "        ega                    EGA color\n";
+			print "        egamono                EGA mono\n";
+			print "        herc                   MDA/Hercules\n";
+			print "        cga                    CGA\n";
+			print "        mono                   Mono text\n";
+			print "        8514                   8514 color\n";
+			print "        8514mono               8514 mono\n";
+			print "   --ver <n>                 setup a specific version of DOS\n";
+			print "        8.0winme               MS-DOS 8.0 (DOS-only portion of Windows ME)\n";
+			print "        7.1win98se             MS-DOS 7.1 (DOS-only portion of Windows 98 SE)\n";
+			print "        7.1win98               MS-DOS 7.1 (DOS-only portion of Windows 98)\n";
+			print "        7.1osr2                MS-DOS 7.1 (DOS-only portion of Windows 95 OSR2)\n";
+			print "        7.0sp1                 MS-DOS 7.0 (DOS-only portion of Windows 95 SP1)\n";
+			print "        7.0                    MS-DOS 7.0 (DOS-only portion of Windows 95)\n";
+			print "        6.22                   MS-DOS 6.22 (default)\n";
+			print "        6.21                   MS-DOS 6.21\n";
+			print "        6.20                   MS-DOS 6.20\n";
+			print "        6.0                    MS-DOS 6.0\n";
+			print "        5.0                    MS-DOS 5.0\n";
+			print "        4.01                   MS-DOS 4.01\n";
+			print "        3.3nec                 MS-DOS 3.3 [NEC version]\n";
+			print "        3.3                    MS-DOS 3.3\n";
+			print "        3.2epson               MS-DOS 3.2 [SEIKO EPSON version]\n";
+			print "        2.2td                  MS-DOS 2.2 [Weird TeleDisk version, non-bootable by itself, so we combine with 2.1 files]\n";
+			print "        2.1                    MS-DOS 2.1 (actually PC-DOS)\n";
+			exit 1;
+		}
 		else {
 			die "Unknown switch $a\n";
 		}
