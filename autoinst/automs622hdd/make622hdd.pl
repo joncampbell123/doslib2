@@ -635,6 +635,7 @@ print "Chosen disk geometry C/H/S: $cyls/$heads/$sects (disk $act_cyls)\n";
 sub unpack_dos_tmp() {
 # unpack the compressed files
 	my @l = (
+		"DRVSPACE.IN_","DRVSPACE.INF",	# NTS: This must be first, or else DRVSPACE.IN_ will be incorrectly installed as DRVSPACE.INI
 		".SY_",".SYS",
 		".EX_",".EXE",
 		".TX_",".TXT",
