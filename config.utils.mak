@@ -5,6 +5,13 @@ abs_exe_dir=$(abs_top_builddir)/build/$(rel_srcdir)/$(target_subdir)/exe
 abs_obj_dir=$(abs_top_builddir)/build/$(rel_srcdir)/$(target_subdir)/obj
 abs_lib_dir=$(abs_top_builddir)/build/$(rel_srcdir)/$(target_subdir)/lib
 
+ifeq ($(target_subdir),linux/i686)
+target_subdir_is_linux=1
+endif
+ifeq ($(target_subdir),linux/x86_64)
+target_subdir_is_linux=1
+endif
+
 linux_host_mach=$(shell uname -m)
 
 $(abs_exe_dir):

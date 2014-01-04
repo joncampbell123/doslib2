@@ -14,7 +14,7 @@ all_programs += $(abs_exe_dir)/get4g_2m.com
 all_programs += $(abs_exe_dir)/get4g_4m.com
 all_programs += $(abs_exe_dir)/get4g_8m.com
 endif
-ifeq ($(target_subdir),linux/host)
+ifeq ($(target_subdir_is_linux),1)
 all_programs  = $(abs_exe_dir)/linux_get1m
 all_programs += $(abs_exe_dir)/linux_get4g
 all_programs += $(abs_exe_dir)/linux_get4g_2m
@@ -54,27 +54,27 @@ endif
 endif
 
 $(abs_exe_dir)/linux_get1m: linux_get1m.c
-ifeq ($(target_subdir),linux/host)
+ifeq ($(target_subdir_is_linux),1)
 	$(CC) $(CFLAGS) -I.. -I../.. -D_FILE_OFFSET_BITS=64 -o $@ $^
 endif
 
 $(abs_exe_dir)/linux_get4g: linux_get4g.c
-ifeq ($(target_subdir),linux/host)
+ifeq ($(target_subdir_is_linux),1)
 	$(CC) $(CFLAGS) -I.. -I../.. -D_FILE_OFFSET_BITS=64 -o $@ $^
 endif
 
 $(abs_exe_dir)/linux_get4g_2m: linux_get4g_2m.c
-ifeq ($(target_subdir),linux/host)
+ifeq ($(target_subdir_is_linux),1)
 	$(CC) $(CFLAGS) -I.. -I../.. -D_FILE_OFFSET_BITS=64 -o $@ $^
 endif
 
 $(abs_exe_dir)/linux_get4g_4m: linux_get4g_4m.c
-ifeq ($(target_subdir),linux/host)
+ifeq ($(target_subdir_is_linux),1)
 	$(CC) $(CFLAGS) -I.. -I../.. -D_FILE_OFFSET_BITS=64 -o $@ $^
 endif
 
 $(abs_exe_dir)/linux_get4g_8m: linux_get4g_8m.c
-ifeq ($(target_subdir),linux/host)
+ifeq ($(target_subdir_is_linux),1)
 	$(CC) $(CFLAGS) -I.. -I../.. -D_FILE_OFFSET_BITS=64 -o $@ $^
 endif
 

@@ -1,4 +1,6 @@
 ifneq ($(BUILD_linux_host),)
+  linux_host_mach=$(shell uname -m)
+
   ifneq ($(linux_host_mach),)
     ifeq ($(BUILD_linux_host_debug),)
       BUILD_linux_host_debug=1

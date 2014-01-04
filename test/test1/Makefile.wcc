@@ -11,7 +11,7 @@ endif
 all-programs: $(all_programs)
 
 $(abs_exe_dir)/test1$(exe_suffix): $(obj_win32s_compat) $(abs_obj_dir)/test1$(obj_suffix)
-ifeq ($(target_subdir),linux/host)
+ifeq ($(target_subdir_is_linux),1)
 	$(CC) $(LDFLAGS) -o $@ $^
 else
 	@echo option quiet system $(WLINK_SYSTEM) $(WLINKFLAGS) $(WLINK_SEGMENTS) $(foreach x,$(filter %$(obj_suffix),$^),file "$(x)") option map=$(abs_obj_dir)/test1.map name $@ >$(abs_obj_dir)/test1.cmd
@@ -28,7 +28,7 @@ endif
 
 ifeq ($(TARGET_GUI_CONSOLE),1)
 $(abs_exe_dir)/test1c$(exe_suffix): $(obj_win32s_compat) $(abs_obj_dir)/test1c$(obj_suffix)
- ifeq ($(target_subdir),linux/host)
+ ifeq ($(target_subdir_is_linux),1)
 	$(CC) $(LDFLAGS_CONSOLE) -o $@ $^
  else
 	@echo option quiet system $(WLINK_SYSTEM_CONSOLE) $(WLINKFLAGS_CONSOLE) $(WLINK_SEGMENTS_CONSOLE) $(foreach x,$(filter %$(obj_suffix),$^),file "$(x)") option map=$(abs_obj_dir)/test1c.map name $@ >$(abs_obj_dir)/test1c.cmd
@@ -44,7 +44,7 @@ $(abs_exe_dir)/test1c$(exe_suffix): $(obj_win32s_compat) $(abs_obj_dir)/test1c$(
  endif
 
 $(abs_obj_dir)/test1c$(obj_suffix): test1c.c $(abs_obj_dir)/test1$(obj_suffix)
- ifeq ($(target_subdir),linux/host)
+ ifeq ($(target_subdir_is_linux),1)
 	$(CC) $(CFLAGS_CONSOLE) -I.. -I../.. -c -o $@ $(filter %.c,$^)
  else
 	$(WCC) $(WCCFLAGS_CONSOLE) -fo=$(abs_obj_dir)/.obj -i=.. -i=../.. $(filter %.c,$^)
@@ -52,7 +52,7 @@ $(abs_obj_dir)/test1c$(obj_suffix): test1c.c $(abs_obj_dir)/test1$(obj_suffix)
 endif
 
 $(abs_obj_dir)/test1$(obj_suffix): test1.c
-ifeq ($(target_subdir),linux/host)
+ifeq ($(target_subdir_is_linux),1)
 	$(CC) $(CFLAGS) -I.. -I../.. -c -o $@ $^
 else
 	$(WCC) $(WCCFLAGS) -fo=$(abs_obj_dir)/.obj -i=.. -i=../.. $^

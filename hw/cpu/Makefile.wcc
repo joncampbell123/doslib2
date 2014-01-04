@@ -12,14 +12,14 @@ lib_hw_cpu_libcpusse_wlink=library $(lib_hw_cpu_libcpusse)
 lib_hw_cpu_libcpusse_dependencies=$(lib_hw_cpu_libcpu)
 
 $(lib_hw_cpu_libcpu): $(abs_obj_dir)/cpu$(obj_suffix) $(abs_obj_dir)/det86$(obj_suffix) $(abs_obj_dir)/det386$(obj_suffix) $(abs_obj_dir)/detfpu$(obj_suffix) $(abs_obj_dir)/cpuid$(obj_suffix) $(abs_obj_dir)/dpmi$(obj_suffix) $(abs_obj_dir)/dpmie16$(obj_suffix)
-ifeq ($(target_subdir),linux/host)
+ifeq ($(target_subdir_is_linux),1)
 	$(AR) r $@ $^
 else
 	$(WLIB) -q -b -c $@ $(foreach x,$^,-+$(x))
 endif
 
 $(lib_hw_cpu_libcpusse): $(abs_obj_dir)/cpusse$(obj_suffix) $(abs_obj_dir)/ssetest_linux$(obj_suffix) $(abs_obj_dir)/ssetest_win32$(obj_suffix) $(abs_obj_dir)/ssetest_dpmi32$(obj_suffix) $(abs_obj_dir)/ssetest_dpmi32win386$(obj_suffix) $(abs_obj_dir)/ssetest_dpmi16$(obj_suffix) $(abs_obj_dir)/ssetest_wintoolhelp$(obj_suffix) $(abs_obj_dir)/ssetest_wintoolhelp386$(obj_suffix) $(abs_obj_dir)/ssetest_dos16rm_dpmi$(obj_suffix) $(abs_obj_dir)/ssetest_dos16rm_dpmi32$(obj_suffix)
-ifeq ($(target_subdir),linux/host)
+ifeq ($(target_subdir_is_linux),1)
 	$(AR) r $@ $^
 else
 	$(WLIB) -q -b -c $@ $(foreach x,$^,-+$(x))
@@ -62,35 +62,35 @@ $(abs_obj_dir)/ssetest_wintoolhelp386$(obj_suffix): ssetest_wintoolhelp386.asm
 	nasm -I$(abs_top_srcdir) $(NASMFLAGS) -o $@ -f $(NASMFORMAT) $^
 
 $(abs_obj_dir)/cpu$(obj_suffix): cpu.c
-ifeq ($(target_subdir),linux/host)
+ifeq ($(target_subdir_is_linux),1)
 	$(CC) $(CFLAGS) -I.. -I../.. -c -o $@ $^
 else
 	$(WCC) $(WCCFLAGS) -fo=$(abs_obj_dir)/.obj -i=.. -i=../.. $^
 endif
 
 $(abs_obj_dir)/dpmi$(obj_suffix): dpmi.c
-ifeq ($(target_subdir),linux/host)
+ifeq ($(target_subdir_is_linux),1)
 	$(CC) $(CFLAGS) -I.. -I../.. -c -o $@ $^
 else
 	$(WCC) $(WCCFLAGS) -fo=$(abs_obj_dir)/.obj -i=.. -i=../.. $^
 endif
 
 $(abs_obj_dir)/cpusse$(obj_suffix): cpusse.c
-ifeq ($(target_subdir),linux/host)
+ifeq ($(target_subdir_is_linux),1)
 	$(CC) $(CFLAGS) -I.. -I../.. -c -o $@ $^
 else
 	$(WCC) $(WCCFLAGS) -fo=$(abs_obj_dir)/.obj -i=.. -i=../.. $^
 endif
 
 $(abs_obj_dir)/ssetest_win32$(obj_suffix): ssetest_win32.c
-ifeq ($(target_subdir),linux/host)
+ifeq ($(target_subdir_is_linux),1)
 	$(CC) $(CFLAGS) -I.. -I../.. -c -o $@ $^
 else
 	$(WCC) $(WCCFLAGS) -fo=$(abs_obj_dir)/.obj -i=.. -i=../.. $^
 endif
 
 $(abs_obj_dir)/ssetest_linux$(obj_suffix): ssetest_linux.c
-ifeq ($(target_subdir),linux/host)
+ifeq ($(target_subdir_is_linux),1)
 	$(CC) $(CFLAGS) -I.. -I../.. -c -o $@ $^
 else
 	$(WCC) $(WCCFLAGS) -fo=$(abs_obj_dir)/.obj -i=.. -i=../.. $^
@@ -107,7 +107,7 @@ include $(abs_top_srcdir)/windows/winfcon/Makefile.dpl
 all-programs: $(all_programs)
 
 $(abs_exe_dir)/test1$(exe_suffix): $(obj_win32s_compat) $(abs_obj_dir)/test1$(obj_suffix) $(lib_windows_winfcon) $(lib_windows_winfcon_dependencies) $(lib_hw_cpu_libcpu) $(lib_hw_cpu_libcpu_dependencies) $(lib_hw_cpu_libcpusse) $(lib_hw_cpu_libcpusse_dependencies)
-ifeq ($(target_subdir),linux/host)
+ifeq ($(target_subdir_is_linux),1)
 	$(CC) $(LDFLAGS) -o $@ $^
 else
 	@echo option quiet system $(WLINK_SYSTEM) $(WLINKFLAGS) $(WLINK_SEGMENTS) $(foreach x,$(filter %$(obj_suffix),$^),file "$(x)") $(lib_windows_winfcon_wlink) $(lib_hw_cpu_libcpu_wlink) $(lib_hw_cpu_libcpusse_wlink) option map=$(abs_obj_dir)/test1.map name $@ >$(abs_obj_dir)/test1.cmd
@@ -124,7 +124,7 @@ endif
 
 ifeq ($(TARGET_GUI_CONSOLE),1)
 $(abs_exe_dir)/test1c$(exe_suffix): $(obj_win32s_compat) $(abs_obj_dir)/test1c$(obj_suffix) $(lib_hw_cpu_libcpu) $(lib_hw_cpu_libcpu_dependencies) $(lib_hw_cpusse_libcpu) $(lib_hw_cpu_libcpusse_dependencies)
- ifeq ($(target_subdir),linux/host)
+ ifeq ($(target_subdir_is_linux),1)
 	$(CC) $(LDFLAGS_CONSOLE) -o $@ $^
  else
 	@echo option quiet system $(WLINK_SYSTEM_CONSOLE) $(WLINKFLAGS_CONSOLE) $(WLINK_SEGMENTS_CONSOLE) $(foreach x,$(filter %$(obj_suffix),$^),file "$(x)") $(foreach x,$(filter %$(lib_suffix),$^),library "$(x)") $(lib_hw_cpu_libcpu_wlink) $(lib_hw_cpu_libcpusse_wlink) option map=$(abs_obj_dir)/test1c.map name $@ >$(abs_obj_dir)/test1c.cmd
@@ -140,7 +140,7 @@ $(abs_exe_dir)/test1c$(exe_suffix): $(obj_win32s_compat) $(abs_obj_dir)/test1c$(
  endif
 
 $(abs_obj_dir)/test1c$(obj_suffix): test1c.c $(abs_obj_dir)/test1$(obj_suffix)
- ifeq ($(target_subdir),linux/host)
+ ifeq ($(target_subdir_is_linux),1)
 	$(CC) $(CFLAGS_CONSOLE) -I.. -I../.. -c -o $@ $(filter %.c,$^)
  else
 	$(WCC) $(WCCFLAGS_CONSOLE) -fo=$(abs_obj_dir)/.obj -i=.. -i=../.. $(filter %.c,$^)
@@ -148,7 +148,7 @@ $(abs_obj_dir)/test1c$(obj_suffix): test1c.c $(abs_obj_dir)/test1$(obj_suffix)
 endif
 
 $(abs_obj_dir)/test1$(obj_suffix): test1.c
-ifeq ($(target_subdir),linux/host)
+ifeq ($(target_subdir_is_linux),1)
 	$(CC) $(CFLAGS) -I.. -I../.. -c -o $@ $^
 else
 	$(WCC) $(WCCFLAGS) -fo=$(abs_obj_dir)/.obj -i=.. -i=../.. $^

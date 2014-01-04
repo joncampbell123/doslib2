@@ -14,14 +14,14 @@ endif
 
 ifneq ($(lib_windows_winfvtcn),)
 $(abs_obj_dir)/winfvtcn$(obj_suffix): winfvtcn.c
- ifeq ($(target_subdir),linux/host)
+ ifeq ($(target_subdir_is_linux),1)
 	$(CC) $(CFLAGS) -I.. -I../.. -c -o $@ $^
  else
 	$(WCC) $(WCCFLAGS) -fo=$(abs_obj_dir)/.obj -i=.. -i=../.. $^
  endif
 
 $(lib_windows_winfvtcn): $(abs_obj_dir)/winfvtcn$(obj_suffix)
- ifeq ($(target_subdir),linux/host)
+ ifeq ($(target_subdir_is_linux),1)
 	$(AR) r $@ $^
  else
 	$(WLIB) -q -b -c $@ $(foreach x,$^,-+$(x))
@@ -29,7 +29,7 @@ $(lib_windows_winfvtcn): $(abs_obj_dir)/winfvtcn$(obj_suffix)
 endif
 
 $(abs_exe_dir)/test1$(exe_suffix): $(obj_win32s_compat) $(abs_obj_dir)/test1$(obj_suffix) $(lib_windows_winfvtcn) $(lib_windows_winfvtcn_dependencies) $(lib_hw_cpu_libcpu) $(lib_hw_cpu_libcpu_dependencies)
-ifeq ($(target_subdir),linux/host)
+ifeq ($(target_subdir_is_linux),1)
 	$(CC) $(LDFLAGS) -o $@ $^
 else
 	@echo option quiet system $(WLINK_SYSTEM) $(WLINKFLAGS) $(WLINK_SEGMENTS) $(foreach x,$(filter %$(obj_suffix),$^),file "$(x)") $(lib_windows_winfvtcn_wlink) $(lib_hw_cpu_libcpu_wlink) option map=$(abs_obj_dir)/test1.map name $@ >$(abs_obj_dir)/test1.cmd
@@ -45,7 +45,7 @@ else
 endif
 
 $(abs_exe_dir)/vtmplay$(exe_suffix): $(obj_win32s_compat) $(abs_obj_dir)/vtmplay$(obj_suffix) $(lib_windows_winfvtcn) $(lib_windows_winfvtcn_dependencies) $(lib_hw_cpu_libcpu) $(lib_hw_cpu_libcpu_dependencies)
-ifeq ($(target_subdir),linux/host)
+ifeq ($(target_subdir_is_linux),1)
 	$(CC) $(LDFLAGS) -o $@ $^
 else
 	@echo option quiet system $(WLINK_SYSTEM) $(WLINKFLAGS) $(WLINK_SEGMENTS) $(foreach x,$(filter %$(obj_suffix),$^),file "$(x)") $(lib_windows_winfvtcn_wlink) $(lib_hw_cpu_libcpu_wlink) option map=$(abs_obj_dir)/vtmplay.map name $@ >$(abs_obj_dir)/vtmplay.cmd
@@ -72,14 +72,14 @@ else
 endif
 
 $(abs_obj_dir)/test1$(obj_suffix): test1.c
-ifeq ($(target_subdir),linux/host)
+ifeq ($(target_subdir_is_linux),1)
 	$(CC) $(CFLAGS) -I.. -I../.. -c -o $@ $^
 else
 	$(WCC) $(WCCFLAGS) -fo=$(abs_obj_dir)/.obj -i=.. -i=../.. $^
 endif
 
 $(abs_obj_dir)/vtmplay$(obj_suffix): vtmplay.c
-ifeq ($(target_subdir),linux/host)
+ifeq ($(target_subdir_is_linux),1)
 	$(CC) $(CFLAGS) -I.. -I../.. -c -o $@ $^
 else
 	$(WCC) $(WCCFLAGS) -fo=$(abs_obj_dir)/.obj -i=.. -i=../.. $^
