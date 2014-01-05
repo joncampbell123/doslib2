@@ -4,7 +4,7 @@
 #include <stdint.h>
 #include <efistdarg.h>
 
-#include <efi/example/efidoslib_base.h>
+#include <efi/doslib/efidoslib_base.h>
 
 EFI_SYSTEM_TABLE*				doslib_efisys = NULL;
 EFI_HANDLE					doslib_efiimg = NULL;

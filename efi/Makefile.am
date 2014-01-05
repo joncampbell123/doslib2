@@ -1,6 +1,6 @@
 -include ../config.mak
 
-SUBDIRS = example
+SUBDIRS = doslib example
 ACLOCAL_AMFLAGS = 
 
 library_includedir = $(includedir)/doslib2/efi

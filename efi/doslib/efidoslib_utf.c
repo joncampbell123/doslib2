@@ -4,8 +4,8 @@
 #include <stdint.h>
 #include <efistdarg.h>
 
-#include <efi/example/efidoslib_base.h>
-#include <efi/example/efidoslib_utf.h>
+#include <efi/doslib/efidoslib_base.h>
+#include <efi/doslib/efidoslib_utf.h>
 
 int utf8_encode(char **ptr,char *fence,uint32_t code) {
 	int uchar_size=1;

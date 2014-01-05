@@ -3,18 +3,23 @@ ifdef target_subdir
 
 all-targets-abs-dirs: $(abs_exe_dir) $(abs_lib_dir) $(abs_obj_dir)
 
-all_programs  = $(abs_exe_dir)/hello.efi
+all_programs = $(abs_exe_dir)/printf.efi
 
 all-programs: $(all_programs)
 
 
-$(abs_exe_dir)/hello.efi: $(abs_obj_dir)/hello.so
+lib_efi_efidoslib_libefidoslib=$(abs_lib_dir)/libefidoslib$(lib_suffix)
+lib_efi_efidoslib_libefidoslib_wlink=library $(lib_efi_efidoslib_libefidoslib)
+lib_efi_efidoslib_libefidoslib_dependencies=
+
+
+$(abs_exe_dir)/printf.efi: $(abs_obj_dir)/printf.so
 	$(EFI_LD_OBJCOPY) $^ $@
 
-$(abs_obj_dir)/hello.so: $(abs_obj_dir)/hello.o
+$(abs_obj_dir)/printf.so: $(abs_obj_dir)/printf.o $(abs_obj_dir)/efidoslib_base.o $(abs_obj_dir)/efidoslib_utf.o $(abs_obj_dir)/efidoslib_printf.o $(abs_obj_dir)/efidoslib_assert.o
 	$(EFI_LD_SO) $(LDFLAGS) $^ -o $@ $(LDFLAGS_POST)
 
-$(abs_obj_dir)/hello.o: hello.c
+$(abs_obj_dir)/printf.o: printf.c
 	$(EFI_CC) $(CFLAGS) -c -o $@ $^
 
 

@@ -4,7 +4,7 @@
 #include <stdint.h>
 #include <efistdarg.h>
 
-#include <efi/example/efidoslib_base.h>
+#include <efi/doslib/efidoslib_base.h>
 
 void _assert(int c,const char *c_str) {
 	if (1 || c == 0) {
