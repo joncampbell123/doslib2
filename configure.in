@@ -194,6 +194,8 @@ AC_CONFIG_FILES(test/Makefile)
 AC_CONFIG_FILES(test/test1/Makefile)
 AC_CONFIG_FILES(hw/Makefile)
 AC_CONFIG_FILES(hw/cpu/Makefile)
+AC_CONFIG_FILES(efi/Makefile)
+AC_CONFIG_FILES(efi/example/Makefile)
 
 AC_OUTPUT
 

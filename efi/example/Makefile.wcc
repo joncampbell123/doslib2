@@ -1,0 +1,26 @@
+# This is a separate makefile because GNU automake interferes with GNU make conditionals
+ifdef target_subdir
+
+all-targets-abs-dirs: $(abs_exe_dir) $(abs_lib_dir) $(abs_obj_dir)
+
+all_programs  = $(abs_exe_dir)/hello.efi
+
+all-programs: $(all_programs)
+
+$(abs_exe_dir)/hello.efi: $(abs_obj_dir)/hello.so
+	$(EFI_LD_OBJCOPY) $^ $@
+
+$(abs_obj_dir)/hello.so: $(abs_obj_dir)/hello.o
+	$(EFI_LD_SO) $(LDFLAGS) -o $@ $^
+
+$(abs_obj_dir)/hello.o: hello.c
+	$(EFI_CC) $(CFLAGS) -c -o $@ $^
+
+all-targets: all-targets-abs-dirs all-programs
+	@true
+
+clean-targets:
+	@rm -Rfv $(abs_exe_dir) $(abs_lib_dir) $(abs_obj_dir)
+
+endif
+
