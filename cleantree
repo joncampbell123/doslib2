@@ -29,4 +29,5 @@ rm -fv dos/asmexam/test*.dsk
 rm -fv config_public.h
 rm -v .web.dl.nfo
 rm -Rfv web.cache
+rm -v build-test.iso
 

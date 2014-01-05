@@ -11,7 +11,7 @@ $(abs_exe_dir)/hello.efi: $(abs_obj_dir)/hello.so
 	$(EFI_LD_OBJCOPY) $^ $@
 
 $(abs_obj_dir)/hello.so: $(abs_obj_dir)/hello.o
-	$(EFI_LD_SO) $(LDFLAGS) -o $@ $^
+	$(EFI_LD_SO) $(LDFLAGS) $^ -o $@ $(LDFLAGS_POST)
 
 $(abs_obj_dir)/hello.o: hello.c
 	$(EFI_CC) $(CFLAGS) -c -o $@ $^
