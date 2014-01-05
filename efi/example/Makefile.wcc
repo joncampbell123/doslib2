@@ -22,14 +22,23 @@ $(abs_obj_dir)/hello.o: hello.c
 $(abs_exe_dir)/printf.efi: $(abs_obj_dir)/printf.so
 	$(EFI_LD_OBJCOPY) $^ $@
 
-$(abs_obj_dir)/printf.so: $(abs_obj_dir)/printf.o $(abs_obj_dir)/efidoslib_base.o
+$(abs_obj_dir)/printf.so: $(abs_obj_dir)/printf.o $(abs_obj_dir)/efidoslib_base.o $(abs_obj_dir)/efidoslib_utf.o $(abs_obj_dir)/efidoslib_printf.o $(abs_obj_dir)/efidoslib_assert.o
 	$(EFI_LD_SO) $(LDFLAGS) $^ -o $@ $(LDFLAGS_POST)
 
 $(abs_obj_dir)/printf.o: printf.c
 	$(EFI_CC) $(CFLAGS) -c -o $@ $^
 
 
+$(abs_obj_dir)/efidoslib_assert.o: efidoslib_assert.c
+	$(EFI_CC) $(CFLAGS) -c -o $@ $^
+
+$(abs_obj_dir)/efidoslib_printf.o: efidoslib_printf.c
+	$(EFI_CC) $(CFLAGS) -c -o $@ $^
+
 $(abs_obj_dir)/efidoslib_base.o: efidoslib_base.c
+	$(EFI_CC) $(CFLAGS) -c -o $@ $^
+
+$(abs_obj_dir)/efidoslib_utf.o: efidoslib_utf.c
 	$(EFI_CC) $(CFLAGS) -c -o $@ $^
 
 
