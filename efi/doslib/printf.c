@@ -4,10 +4,10 @@
 #include <stdint.h>
 #include <efistdarg.h>
 
-#include <efi/example/efidoslib_base.h>
-#include <efi/example/efidoslib_utf.h>
-#include <efi/example/efidoslib_printf.h>
-#include <efi/example/efidoslib_assert.h>
+#include <efi/doslib/efidoslib_base.h>
+#include <efi/doslib/efidoslib_utf.h>
+#include <efi/doslib/efidoslib_printf.h>
+#include <efi/doslib/efidoslib_assert.h>
 
 EFI_STATUS EFIAPI efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable) {
 	InitializeLib(ImageHandle,SystemTable);
