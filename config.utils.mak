@@ -93,6 +93,15 @@ ifeq ($(ENABLE_windows_nt),1)
  BUILD_enabled_windows += nt
 endif
 
+# EFI targets
+BUILD_efi=
+ifeq ($(ENABLE_efi_ia32),1)
+ BUILD_efi += ia32
+endif
+ifeq ($(ENABLE_efi_x64),1)
+ BUILD_efi += x64
+endif
+
 # list target subdirs
 BUILD_targets=
 
@@ -122,6 +131,10 @@ include $(abs_top_builddir)/targets/auto.win32.mak
 
 # linux-host
 include $(abs_top_builddir)/targets/auto.linuxhost.mak
+
+# efi
+include $(abs_top_builddir)/targets/auto.efi.ia32.mak
+include $(abs_top_builddir)/targets/auto.efi.x64.mak
 
 ifneq ($(target_subdir),)
 # Yes, I'm aware $(target_subdir) usually takes the form dos16r/086c

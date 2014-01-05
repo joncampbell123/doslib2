@@ -159,6 +159,8 @@ ISP_AUTO_OPTION_ENABLED([windows-31],        [windows_31],       [Windows 3.1 ta
 ISP_AUTO_OPTION_ENABLED([windows-30],        [windows_30],       [Windows 3.0 targets])
 ISP_AUTO_OPTION_DISABLED([windows-20],       [windows_20],       [Windows 2.0 targets])
 ISP_AUTO_OPTION_DISABLED([windows-10],       [windows_10],       [Windows 1.0 targets])
+ISP_AUTO_OPTION_DISABLED([efi-ia32],         [efi_ia32],         [EFI 32-bit builds (Extensible Firmware Interface)])
+ISP_AUTO_OPTION_DISABLED([efi-x64],          [efi_x64],          [EFI 64-bit builds (Extensible Firmware Interface)])
 
 AC_CONFIG_FILES(Makefile)
 AC_CONFIG_FILES(dos/Makefile)

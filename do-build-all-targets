@@ -5,5 +5,5 @@ x=`uname -m`
 LIB=
 
 if [ x"$x" == x"x86_64" ]; then LIB="--libdir=/usr/lib64"; fi
-./configure --prefix=/usr --disable-debug --disable-cpuonly --disable-extlib --enable-mm-compact --enable-mm-small --enable-mm-medium --enable-mm-large --enable-mm-huge --enable-mm-flat --enable-dos16r --enable-dos32p --enable-win16r --enable-win16p --enable-win16b --enable-win386 --enable-win32s --enable-win32 --enable-linux-host --enable-cpu-8086 --enable-cpu-286 --enable-cpu-386 --enable-cpu-486 --enable-cpu-586 --enable-cpu-686 --enable-windows-nt --enable-windows-me --enable-windows-98 --enable-windows-95 --enable-windows-31 --enable-windows-30 --enable-windows-20 --enable-windows-10 $LIB || exit 1
+./configure --prefix=/usr --disable-debug --disable-cpuonly --disable-extlib --enable-mm-compact --enable-mm-small --enable-mm-medium --enable-mm-large --enable-mm-huge --enable-mm-flat --enable-dos16r --enable-dos32p --enable-win16r --enable-win16p --enable-win16b --enable-win386 --enable-win32s --enable-win32 --enable-linux-host --enable-cpu-8086 --enable-cpu-286 --enable-cpu-386 --enable-cpu-486 --enable-cpu-586 --enable-cpu-686 --enable-windows-nt --enable-windows-me --enable-windows-98 --enable-windows-95 --enable-windows-31 --enable-windows-30 --enable-windows-20 --enable-windows-10 --enable-efi-ia32 --enable-efi-x64 $LIB || exit 1
 

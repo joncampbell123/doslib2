@@ -253,13 +253,39 @@ Form: win32/<V>_<N>86<M>[...]
  #define TARGET_WINDOWS_NT      1      if nt only build
  #define TARGET_WINDOWS_VERSION
 
-Linux (the host this is compiled on)
-------------------------------------
+32-bit Linux (the host this is compiled on)
+-------------------------------------------
 
-Form: linux/host[...]
+Form: linux/i686 (second half depends on your system's uname -m response)
 
- #define TARGET_BITS            32        /* if host is 32-bit */
- #define TARGET_BITS            64        /* if host is 64-bit */
+ #define TARGET_BITS            32
+ #define TARGET_LINUX           1
+ #define TARGET_PROTMODE        1
+
+64-bit Linux (the host this is compiled on)
+-------------------------------------------
+
+Form: linux/x86_64 (second half depends on your system's uname -m response)
+
+ #define TARGET_BITS            64
+ #define TARGET_LINUX           1
+ #define TARGET_PROTMODE        1
+
+32-bit EFI (Extensible Firmware Interface)
+------------------------------------------
+
+Form: efi/ia32
+
+ #define TARGET_BITS            32
+ #define TARGET_LINUX           1
+ #define TARGET_PROTMODE        1
+
+64-bit EFI (Extensible Firmware Interface)
+------------------------------------------
+
+Form: efi/x64
+
+ #define TARGET_BITS            64
  #define TARGET_LINUX           1
  #define TARGET_PROTMODE        1
 
