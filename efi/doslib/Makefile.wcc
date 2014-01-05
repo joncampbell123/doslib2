@@ -12,11 +12,15 @@ lib_efi_efidoslib_libefidoslib=$(abs_lib_dir)/libefidoslib$(lib_suffix)
 lib_efi_efidoslib_libefidoslib_wlink=library $(lib_efi_efidoslib_libefidoslib)
 lib_efi_efidoslib_libefidoslib_dependencies=
 
+$(lib_efi_efidoslib_libefidoslib): $(abs_obj_dir)/efidoslib_base.o $(abs_obj_dir)/efidoslib_utf.o $(abs_obj_dir)/efidoslib_printf.o $(abs_obj_dir)/efidoslib_assert.o
+	$(AR) r $@ $^
+
+
 
 $(abs_exe_dir)/printf.efi: $(abs_obj_dir)/printf.so
 	$(EFI_LD_OBJCOPY) $^ $@
 
-$(abs_obj_dir)/printf.so: $(abs_obj_dir)/printf.o $(abs_obj_dir)/efidoslib_base.o $(abs_obj_dir)/efidoslib_utf.o $(abs_obj_dir)/efidoslib_printf.o $(abs_obj_dir)/efidoslib_assert.o
+$(abs_obj_dir)/printf.so: $(abs_obj_dir)/printf.o $(lib_efi_efidoslib_libefidoslib)
 	$(EFI_LD_SO) $(LDFLAGS) $^ -o $@ $(LDFLAGS_POST)
 
 $(abs_obj_dir)/printf.o: printf.c
