@@ -26,7 +26,7 @@ EFI_LD_SO=ld
 EFI_IA32_LDFLAGS=--no-undefined -shared -static -Bsymbolic -nostdlib -znow -znocombreloc -L/usr/lib -T /usr/lib/elf_ia32_efi.lds /usr/lib/crt0-efi-ia32.o -lgnuefi -lefi $(LD_LIBGCC)
 EFI_IA32_LDFLAGS_POST=-lgnuefi -lefi $(LD_LIBGCC)
 EFI_CC=gcc
-EFI_IA32_CFLAGS += -DTARGET_BITS=32 -DMMODE=$(W_MMODE) -DCPUONLY=$(TARGET_CPUONLY) -DEXTLIB=$(TARGET_EXTLIB) -D_DEBUG=$(TARGET_DEBUG) -DTARGET_CPU=$(W_CPULEVEL) -I/usr/include/efi -I/usr/include/efi/ia32 -I/usr/include/efi/protocol -fno-stack-protector -fshort-wchar -mno-red-zone -Wall -march=i686 -nostdinc -fpic
+EFI_IA32_CFLAGS += -DTARGET_BITS=32 -DMMODE=$(W_MMODE) -DCPUONLY=$(TARGET_CPUONLY) -DEXTLIB=$(TARGET_EXTLIB) -D_DEBUG=$(TARGET_DEBUG) -DTARGET_CPU=$(W_CPULEVEL) -I/usr/include/efi -I/usr/include/efi/ia32 -I/usr/include/efi/protocol -fno-stack-protector -fshort-wchar -mno-red-zone -Wall -march=i686 -fpic -I$(abs_top_builddir)
 NASMFLAGS += -DTARGET_BITS=32
 NASMFORMAT=elf32
 

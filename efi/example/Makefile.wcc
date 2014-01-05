@@ -4,8 +4,10 @@ ifdef target_subdir
 all-targets-abs-dirs: $(abs_exe_dir) $(abs_lib_dir) $(abs_obj_dir)
 
 all_programs  = $(abs_exe_dir)/hello.efi
+all_programs += $(abs_exe_dir)/printf.efi
 
 all-programs: $(all_programs)
+
 
 $(abs_exe_dir)/hello.efi: $(abs_obj_dir)/hello.so
 	$(EFI_LD_OBJCOPY) $^ $@
@@ -15,6 +17,21 @@ $(abs_obj_dir)/hello.so: $(abs_obj_dir)/hello.o
 
 $(abs_obj_dir)/hello.o: hello.c
 	$(EFI_CC) $(CFLAGS) -c -o $@ $^
+
+
+$(abs_exe_dir)/printf.efi: $(abs_obj_dir)/printf.so
+	$(EFI_LD_OBJCOPY) $^ $@
+
+$(abs_obj_dir)/printf.so: $(abs_obj_dir)/printf.o $(abs_obj_dir)/efidoslib_base.o
+	$(EFI_LD_SO) $(LDFLAGS) $^ -o $@ $(LDFLAGS_POST)
+
+$(abs_obj_dir)/printf.o: printf.c
+	$(EFI_CC) $(CFLAGS) -c -o $@ $^
+
+
+$(abs_obj_dir)/efidoslib_base.o: efidoslib_base.c
+	$(EFI_CC) $(CFLAGS) -c -o $@ $^
+
 
 all-targets: all-targets-abs-dirs all-programs
 	@true
