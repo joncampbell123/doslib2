@@ -6,7 +6,7 @@
 #include <efi/doslib/efidoslib_base.h>
 
 void _assert(int c,const char *c_str) {
-	if (1 || c == 0) {
+	if (c == 0) {
 		CHAR16 tmp[2];
 
 		/* NTS: If VirtualBox is any indication StdErr isn't really hooked up at all... :( */

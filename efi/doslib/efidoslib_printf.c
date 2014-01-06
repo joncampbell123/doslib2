@@ -6,6 +6,7 @@
 #include <efi/doslib/efidoslib_base.h>
 #include <efi/doslib/efidoslib_utf.h>
 #include <efi/doslib/efidoslib_printf.h>
+#include <efi/doslib/efidoslib_assert.h>
 
 int _ofputs(int (*_oc)(int,_printf_t*),_printf_t *t,const char *str) {
 	int uchar;
@@ -18,8 +19,8 @@ int _ofputs(int (*_oc)(int,_printf_t*),_printf_t *t,const char *str) {
 }
 
 int _printf(int (*_oc)(int,_printf_t*),_printf_t *t,const char *format,va_list va) {
-	int ret = 0;
-	int uchar; /* <- TODO: Eventually parse format as UTF-8 */
+	int uchar;
+	int ret=0;
 
 	while ((uchar=utf8_decode(&format,format+16)) > 0) {
 		if (uchar == '%') {
@@ -46,7 +47,7 @@ int _printf(int (*_oc)(int,_printf_t*),_printf_t *t,const char *format,va_list v
 }
 
 int _fprint(int c,_printf_t *t) {
-	CHAR16 tmp[3]; /* large enough for UTF-16 surrogate pairs + NUL */
+	CHAR16 tmp[4]; /* large enough for UTF-16 surrogate pairs + NUL */
 	int sz;
 
 	{
@@ -55,8 +56,11 @@ int _fprint(int c,_printf_t *t) {
 		if (utf16le_encode(&d,(char*)tmp+sizeof(tmp),(uint32_t)c) != 0)
 			return 0;
 
-		*d = 0;
-		sz = (int)(d - (char*)tmp);
+		assert(d >= (char*)tmp);
+		assert(d <= ((char*)tmp + sizeof(tmp)));
+		sz = (int)(d - ((char*)tmp)); /* FIXME: Apparently we're getting weird values out of this? */
+		*d++ = 0;
+		*d++ = 0;
 	}
 
 	t->eftop->OutputString(t->eftop,tmp);
