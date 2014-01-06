@@ -1,7 +1,6 @@
 
 #include <efi.h>
 #include <efilib.h>
-#include <stdint.h>
 #include <efistdarg.h>
 
 extern EFI_SYSTEM_TABLE*				doslib_efisys;

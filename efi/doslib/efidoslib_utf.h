@@ -1,7 +1,6 @@
 
 #include <efi.h>
 #include <efilib.h>
-#include <stdint.h>
 #include <efistdarg.h>
 
 enum {

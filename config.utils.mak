@@ -12,6 +12,13 @@ ifeq ($(target_subdir),linux/x86_64)
 target_subdir_is_linux=1
 endif
 
+ifeq ($(target_subdir),efi/ia32)
+target_subdir_is_efi=1
+endif
+ifeq ($(target_subdir),efi/x64)
+target_subdir_is_efi=1
+endif
+
 linux_host_mach=$(shell uname -m)
 
 $(abs_exe_dir):

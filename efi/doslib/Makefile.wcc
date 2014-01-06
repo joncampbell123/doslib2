@@ -13,7 +13,7 @@ lib_efi_efidoslib_libefidoslib_wlink=library $(lib_efi_efidoslib_libefidoslib)
 lib_efi_efidoslib_libefidoslib_dependencies=
 
 $(lib_efi_efidoslib_libefidoslib): $(abs_obj_dir)/efidoslib_base.o $(abs_obj_dir)/efidoslib_utf.o $(abs_obj_dir)/efidoslib_printf.o $(abs_obj_dir)/efidoslib_assert.o
-	$(AR) r $@ $^
+	$(EFI_LD_AR) r $@ $^
 
 
 
