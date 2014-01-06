@@ -1,4 +1,5 @@
 
+BUILD_efi_x64=1
 BUILD_efi_ia32=1
 
 -include ../../config.mak
