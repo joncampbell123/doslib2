@@ -139,6 +139,8 @@
    setpidm.com        Like setpid.com, but directly     [MS-DOS 2.0+]
                       modifies the MCB block to assign
                       ownership.
+   indos.com          Show the address of the INDOS     [MS-DOS 3.1+]
+                      and critical error flags.
 * Windows 95 Long File Names
    lfnmkdir.com       Long filename mkdir               [MS-DOS 7.0+/Windows 95,98,ME]
    lfnrmdir.com       Long filename rmdir               [MS-DOS 7.0+/Windows 95,98,ME]

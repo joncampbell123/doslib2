@@ -124,6 +124,7 @@ all_programs += $(abs_exe_dir)/win31ver.com
 all_programs += $(abs_exe_dir)/winolver.com
 all_programs += $(abs_exe_dir)/w95sysrg.com
 all_programs += $(abs_exe_dir)/w95sysrs.com
+all_programs += $(abs_exe_dir)/indos.com
 
 all-programs: $(all_programs)
 
@@ -488,6 +489,9 @@ $(abs_exe_dir)/w95sysrg.com: w95sysrg.asm
 	$(NASM) -o $@ -f bin $(NASMFLAGS) $^
 
 $(abs_exe_dir)/w95sysrs.com: w95sysrs.asm
+	$(NASM) -o $@ -f bin $(NASMFLAGS) $^
+
+$(abs_exe_dir)/indos.com: indos.asm
 	$(NASM) -o $@ -f bin $(NASMFLAGS) $^
 
 all-txt: $(abs_exe_dir)/emm.txt $(abs_exe_dir)/list.txt
