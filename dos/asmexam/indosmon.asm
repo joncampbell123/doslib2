@@ -46,6 +46,10 @@
 		call	puts
 
 ; EXIT as TSR
+		mov	dx,ENDOFIMAGE
+		add	dx,0xF
+		mov	cl,4
+		shr	dx,cl		; DX = size of this image in paragraphs
 		mov	ax,0x3100	; exit to DOS and stay resident
 		int	21h
 
@@ -101,6 +105,9 @@ ptr_criterr:	dd	0
 old_int8:	dd	0
 
 str_resident:	db	'I am now resident',13,10,'$'
+
+;-----------------------------------
+ENDOFIMAGE:	db	1		; this offset is used by the program to know how large it is
 
 		segment .bss
 
