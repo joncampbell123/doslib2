@@ -141,6 +141,8 @@
                       ownership.
    indos.com          Show the address of the INDOS     [MS-DOS 3.1+]
                       and critical error flags.
+   indosmon.com       Show live status of INDOS and     [MS-DOS 3.1+]
+                      critical error flag (TSR).
 * Windows 95 Long File Names
    lfnmkdir.com       Long filename mkdir               [MS-DOS 7.0+/Windows 95,98,ME]
    lfnrmdir.com       Long filename rmdir               [MS-DOS 7.0+/Windows 95,98,ME]

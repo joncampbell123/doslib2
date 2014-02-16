@@ -16,7 +16,7 @@
 		call	puts
 
 		xor	ax,ax
-		mov	es,ax		; HACK: Set ES:BX prior to call to detect cases where DOS fails to implement (such as DOSBox)
+		mov	es,ax
 		mov	bx,ax
 		mov	ah,34h		; get address of INDOS flag
 		int	21h
@@ -112,10 +112,4 @@ str_criterr:	db	'CritErr: $'
 crlf:		db	13,10,'$'
 
 		segment .bss
-
-block1:		resw	1
-block2:		resw	1
-
-;-----------------------------------
-ENDOFIMAGE:	resb	1		; this offset is used by the program to know how large it is
 
