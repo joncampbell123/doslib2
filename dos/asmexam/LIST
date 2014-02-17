@@ -162,6 +162,7 @@
                       show that setting the bit is
                       required to get FAT32 4GB support
    lfnsname.com       Create short name from long       [MS-DOS 7.0+/Windows 95,98,ME]
+   gettime.com        Get system time                   [MS-DOS 1.0+]
 * Non DOS specific
    32div16.com        Printing a 32-bit unsigned int    [MS-DOS 1.0+]
                         using only 16-bit 8086
