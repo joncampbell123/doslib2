@@ -34,6 +34,10 @@
 
 		mov	ah,0x2C		; get system time
 		int	21h		; returns CH=hour  CL=minute  DH=second  DL=1/100 seconds
+					;   CH=hour (0-23)
+					;   CL=minute (0-59)
+					;   DH=second (0-59)
+					;   DK=centisecond (0-99) some systems may just return 0
 
 		xor	ah,ah
 		mov	al,ch
