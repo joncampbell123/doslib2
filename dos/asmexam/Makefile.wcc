@@ -127,6 +127,7 @@ all_programs += $(abs_exe_dir)/winolver.com
 all_programs += $(abs_exe_dir)/w95sysrg.com
 all_programs += $(abs_exe_dir)/w95sysrs.com
 all_programs += $(abs_exe_dir)/indosmon.com
+all_programs += $(abs_exe_dir)/devprefx.com
 all_programs += $(abs_exe_dir)/indos.com
 
 all-programs: $(all_programs)
@@ -501,6 +502,9 @@ $(abs_exe_dir)/settimex.com: settimex.asm
 	$(NASM) -o $@ -f bin $(NASMFLAGS) $^
 
 $(abs_exe_dir)/indosmon.com: indosmon.asm
+	$(NASM) -o $@ -f bin $(NASMFLAGS) $^
+
+$(abs_exe_dir)/devprefx.com: devprefx.asm
 	$(NASM) -o $@ -f bin $(NASMFLAGS) $^
 
 $(abs_exe_dir)/indos.com: indos.asm
