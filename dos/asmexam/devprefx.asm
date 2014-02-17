@@ -6,6 +6,9 @@
 ; \DEV\ prefix in the path to access devices. MS-DOS 4.0 and higher ignore the set
 ; function and signal optional at all times.
 ;
+; Hm... well actually it turns out MS-DOS 3.3 does NOT support this. Does the Ralph
+; Brown interrupt list mean PC-DOS 3.3?
+;
 ; It's interesting to note that playing with PC-DOS 2.1, setting the \DEV\ flag to 0
 ; (mantatory) does not prevent the COPY command from "seeing" the "CON" device, it just
 ; prevents the copy operation from getting any data.
