@@ -5,6 +5,10 @@
 ; MS-DOS 2.0 to 3.3 supported a system-wide setting to determine whether to require a
 ; \DEV\ prefix in the path to access devices. MS-DOS 4.0 and higher ignore the set
 ; function and signal optional at all times.
+;
+; It's interesting to note that playing with PC-DOS 2.1, setting the \DEV\ flag to 0
+; (mantatory) does not prevent the COPY command from "seeing" the "CON" device, it just
+; prevents the copy operation from getting any data.
 ;--------------------------------------------------------------------------------------
 		bits 16			; 16-bit real mode
 		org 0x100		; DOS .COM executable starts at 0x100 in memory
