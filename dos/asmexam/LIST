@@ -144,6 +144,8 @@
    indosmon.com       Show live status of INDOS and     [MS-DOS 3.1+]
                       critical error flag (TSR).
    devprefx.com       Get/Set \DEV\ prefix use          [MS-DOS 2.0+]
+   allocid.com        Get default drive allocation info [MS-DOS 1.0+]
+   allocis.com        Get drive allocation info         [MS-DOS 1.0+]
 * Windows 95 Long File Names
    lfnmkdir.com       Long filename mkdir               [MS-DOS 7.0+/Windows 95,98,ME]
    lfnrmdir.com       Long filename rmdir               [MS-DOS 7.0+/Windows 95,98,ME]

@@ -128,6 +128,8 @@ all_programs += $(abs_exe_dir)/w95sysrg.com
 all_programs += $(abs_exe_dir)/w95sysrs.com
 all_programs += $(abs_exe_dir)/indosmon.com
 all_programs += $(abs_exe_dir)/devprefx.com
+all_programs += $(abs_exe_dir)/allocid.com
+all_programs += $(abs_exe_dir)/allocis.com
 all_programs += $(abs_exe_dir)/indos.com
 
 all-programs: $(all_programs)
@@ -505,6 +507,12 @@ $(abs_exe_dir)/indosmon.com: indosmon.asm
 	$(NASM) -o $@ -f bin $(NASMFLAGS) $^
 
 $(abs_exe_dir)/devprefx.com: devprefx.asm
+	$(NASM) -o $@ -f bin $(NASMFLAGS) $^
+
+$(abs_exe_dir)/allocid.com: allocid.asm
+	$(NASM) -o $@ -f bin $(NASMFLAGS) $^
+
+$(abs_exe_dir)/allocis.com: allocis.asm
 	$(NASM) -o $@ -f bin $(NASMFLAGS) $^
 
 $(abs_exe_dir)/indos.com: indos.asm
