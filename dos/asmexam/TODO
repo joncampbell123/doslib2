@@ -1,5 +1,7 @@
 TODO: Additional undocumented commands
 
+INT 21h AH=0x23 Get File Size for FCB
+
 INT 21h AH=0x26 Create New Program Segment Prefix
 
 Example using INT 21h AH=0x26 to exec to COMMAND.COM in DOS 1.x
