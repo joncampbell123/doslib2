@@ -5,6 +5,10 @@
 ; INT 21h AH=0x1C. Returns DS:BX which is a pointer to a media ID byte.
 ; It is said that in DOS 1.x DS:BX points to an actual copy of the FAT (where the first
 ; byte is the media ID)
+;
+; NTS: This is not noted by Ralph Brown's interrupt list, but PC-DOS 1.0 does not
+;      support INT 21h AH=0x1C. The system call does not exist until PC-DOS 1.1.
+;      If PC-DOS 1.0 compatability matters, use INT 21h AH=0x1B.
 ;--------------------------------------------------------------------------------------
 		bits 16			; 16-bit real mode
 		org 0x100		; DOS .COM executable starts at 0x100 in memory
