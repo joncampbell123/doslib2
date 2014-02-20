@@ -130,7 +130,9 @@ all_programs += $(abs_exe_dir)/indosmon.com
 all_programs += $(abs_exe_dir)/devprefx.com
 all_programs += $(abs_exe_dir)/allocid.com
 all_programs += $(abs_exe_dir)/allocis.com
+all_programs += $(abs_exe_dir)/drvdis.com
 all_programs += $(abs_exe_dir)/indos.com
+all_programs += $(abs_exe_dir)/drven.com
 
 all-programs: $(all_programs)
 
@@ -515,7 +517,13 @@ $(abs_exe_dir)/allocid.com: allocid.asm
 $(abs_exe_dir)/allocis.com: allocis.asm
 	$(NASM) -o $@ -f bin $(NASMFLAGS) $^
 
+$(abs_exe_dir)/drvdis.com: drvdis.asm
+	$(NASM) -o $@ -f bin $(NASMFLAGS) $^
+
 $(abs_exe_dir)/indos.com: indos.asm
+	$(NASM) -o $@ -f bin $(NASMFLAGS) $^
+
+$(abs_exe_dir)/drven.com: drven.asm
 	$(NASM) -o $@ -f bin $(NASMFLAGS) $^
 
 all-txt: $(abs_exe_dir)/emm.txt $(abs_exe_dir)/list.txt

@@ -146,6 +146,8 @@
    devprefx.com       Get/Set \DEV\ prefix use          [MS-DOS 2.0+]
    allocid.com        Get default drive allocation info [MS-DOS 1.0+]
    allocis.com        Get drive allocation info         [MS-DOS 1.0+]
+   drvdis.com         Disable drive                     [MS-DOS 5.0+]
+   drven.com          Enable drive                      [MS-DOS 5.0+]
 * Windows 95 Long File Names
    lfnmkdir.com       Long filename mkdir               [MS-DOS 7.0+/Windows 95,98,ME]
    lfnrmdir.com       Long filename rmdir               [MS-DOS 7.0+/Windows 95,98,ME]
