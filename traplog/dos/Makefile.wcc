@@ -10,7 +10,7 @@ all_programs += $(abs_exe_dir)/tfl8086d.com
 all_programs += $(abs_exe_dir)/tfl8086i.com
 all_programs += $(abs_exe_dir)/tfl8086q.com
 
-all_programs += $(abs_exe_dir)/tflogdump
+all_programs += $(abs_exe_dir)/tflogdump$(exe_suffix)
 
 all_programs += $(abs_exe_dir)/sanity1.com
 all_programs += $(abs_exe_dir)/sanity2.com
@@ -19,8 +19,20 @@ all_programs += $(abs_exe_dir)/sanity4.com
 
 all-programs: $(all_programs)
 
-$(abs_exe_dir)/tflogdump: tflogdump.c
-	gcc -o $@ $<
+$(abs_obj_dir)/tflogdump$(obj_suffix): tflogdump.c
+ifeq ($(target_subdir_is_linux),1)
+	$(CC) $(CFLAGS_CONSOLE) -I.. -I../.. -c -o $@ $(filter %.c,$^)
+else
+	$(WCC) $(WCCFLAGS_CONSOLE) -fo=$(abs_obj_dir)/.obj -i=.. -i=../.. $(filter %.c,$^)
+endif
+
+$(abs_exe_dir)/tflogdump$(exe_suffix): $(obj_win32s_compat) $(abs_obj_dir)/tflogdump$(obj_suffix) $(lib_windows_winfcon) $(lib_windows_winfcon_dependencies) $(lib_hw_cpu_libcpu) $(lib_hw_cpu_libcpu_dependencies) $(lib_hw_cpu_libcpusse) $(lib_hw_cpu_libcpusse_dependencies)
+ifeq ($(target_subdir_is_linux),1)
+	$(CC) $(LDFLAGS) -o $@ $^
+else
+	@echo option quiet system $(WLINK_SYSTEM) $(WLINKFLAGS) $(WLINK_SEGMENTS) $(foreach x,$(filter %$(obj_suffix),$^),file "$(x)") $(lib_windows_winfcon_wlink) $(lib_hw_cpu_libcpu_wlink) $(lib_hw_cpu_libcpusse_wlink) option map=$(abs_obj_dir)/test1.map name $@ >$(abs_obj_dir)/test1.cmd
+	$(WLINK) @$(abs_obj_dir)/test1.cmd
+endif
 
 $(abs_exe_dir)/tfl8086d.com: tfl8086.asm
 	$(NASM) -o $@ -l $@.lst -f bin $(NASMFLAGS) -DPLACEBO=1 $^
