@@ -16,6 +16,7 @@
 static const char str_spc[] = " ";
 static const char str_ast[] = "\x1B[33m*\x1B[0m";
 
+#pragma pack(push,1)
 typedef struct tf8086_record {
 	uint16_t			r_recid;
 	uint16_t			r_reclen;
@@ -35,12 +36,16 @@ typedef struct tf8086_record {
 	uint16_t			r_es;
 	unsigned char			r_csip_capture[4];
 	unsigned char			r_sssp_capture[4];
-} __attribute__((packed)) tf8086_record; /* 36 bytes */
+} tf8086_record; /* 36 bytes */
+#pragma pack(pop)
+
+static unsigned char buffer[512];
 
 int main(int argc,char **argv) {
 	struct tf8086_record *rec,prec;
-	unsigned char buffer[512];
 	int fd,rd;
+
+	assert(sizeof(*rec) == 40);
 
 	if (argc < 2) {
 		fprintf(stderr,"tflogdump <file>\n");
@@ -54,7 +59,6 @@ int main(int argc,char **argv) {
 	}
 
 	memset(&prec,0xFF,sizeof(prec));
-	assert(sizeof(*rec) == 40);
 
 	while ((rd=read(fd,buffer,4)) == 4) {
 		rec = (struct tf8086_record*)buffer;
