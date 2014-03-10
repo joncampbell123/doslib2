@@ -9,8 +9,8 @@
 #include <string.h>
 #include <stdint.h>
 #include <unistd.h>
-#include <hw/cpu/cpu.h>
 #include <misc/useful.h>
+#include <hw/cpu/lib/cpu.h>
 
 struct cpu_info_t cpu_info = {
 	-1,		/* cpu basic level */

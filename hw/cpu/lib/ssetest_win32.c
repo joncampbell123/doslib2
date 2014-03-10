@@ -8,8 +8,8 @@
 #   include <stdlib.h>
 #   include <string.h>
 #   include <stdint.h>
-#   include <hw/cpu/cpu.h>
-#   include <hw/cpu/cpusse.h>
+#   include <hw/cpu/lib/cpu.h>
+#   include <hw/cpu/lib/cpusse.h>
 #   include <misc/useful.h>
 
 unsigned int _win32_test_sse() {

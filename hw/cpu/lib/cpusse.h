@@ -11,8 +11,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdint.h>
-#include <hw/cpu/cpu.h>
 #include <misc/useful.h>
+#include <hw/cpu/lib/cpu.h>
 
 #define CPU_SSE_SUPPORTED		0x01
 #define CPU_SSE_ENABLED			0x02

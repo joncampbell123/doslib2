@@ -13,10 +13,10 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdint.h>
-#include <hw/cpu/cpu.h>
-#include <hw/cpu/cpusse.h>
 #include <misc/useful.h>
-#include <hw/cpu/dpmi.h>
+#include <hw/cpu/lib/cpu.h>
+#include <hw/cpu/lib/cpusse.h>
+#include <hw/cpu/lib/dpmi.h>
 
 /*DEBUG: Force the SSE test to execute even if CPUID is missing or CPUID indicates lack of SSE.
  *       You would enable this to test how well our exception handlers work in environments where

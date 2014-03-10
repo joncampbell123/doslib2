@@ -63,37 +63,37 @@ $(abs_obj_dir)/ssetest_wintoolhelp386$(obj_suffix): ssetest_wintoolhelp386.asm
 
 $(abs_obj_dir)/cpu$(obj_suffix): cpu.c
 ifeq ($(target_subdir_is_linux),1)
-	$(CC) $(CFLAGS) -I.. -I../.. -c -o $@ $^
+	$(CC) $(CFLAGS) -I.. -I../../.. -c -o $@ $^
 else
-	$(WCC) $(WCCFLAGS) -fo=$(abs_obj_dir)/.obj -i=.. -i=../.. $^
+	$(WCC) $(WCCFLAGS) -fo=$(abs_obj_dir)/.obj -i=.. -i=../../.. $^
 endif
 
 $(abs_obj_dir)/dpmi$(obj_suffix): dpmi.c
 ifeq ($(target_subdir_is_linux),1)
-	$(CC) $(CFLAGS) -I.. -I../.. -c -o $@ $^
+	$(CC) $(CFLAGS) -I.. -I../../.. -c -o $@ $^
 else
-	$(WCC) $(WCCFLAGS) -fo=$(abs_obj_dir)/.obj -i=.. -i=../.. $^
+	$(WCC) $(WCCFLAGS) -fo=$(abs_obj_dir)/.obj -i=.. -i=../../.. $^
 endif
 
 $(abs_obj_dir)/cpusse$(obj_suffix): cpusse.c
 ifeq ($(target_subdir_is_linux),1)
-	$(CC) $(CFLAGS) -I.. -I../.. -c -o $@ $^
+	$(CC) $(CFLAGS) -I.. -I../../.. -c -o $@ $^
 else
-	$(WCC) $(WCCFLAGS) -fo=$(abs_obj_dir)/.obj -i=.. -i=../.. $^
+	$(WCC) $(WCCFLAGS) -fo=$(abs_obj_dir)/.obj -i=.. -i=../../.. $^
 endif
 
 $(abs_obj_dir)/ssetest_win32$(obj_suffix): ssetest_win32.c
 ifeq ($(target_subdir_is_linux),1)
-	$(CC) $(CFLAGS) -I.. -I../.. -c -o $@ $^
+	$(CC) $(CFLAGS) -I.. -I../../.. -c -o $@ $^
 else
-	$(WCC) $(WCCFLAGS) -fo=$(abs_obj_dir)/.obj -i=.. -i=../.. $^
+	$(WCC) $(WCCFLAGS) -fo=$(abs_obj_dir)/.obj -i=.. -i=../../.. $^
 endif
 
 $(abs_obj_dir)/ssetest_linux$(obj_suffix): ssetest_linux.c
 ifeq ($(target_subdir_is_linux),1)
-	$(CC) $(CFLAGS) -I.. -I../.. -c -o $@ $^
+	$(CC) $(CFLAGS) -I.. -I../../.. -c -o $@ $^
 else
-	$(WCC) $(WCCFLAGS) -fo=$(abs_obj_dir)/.obj -i=.. -i=../.. $^
+	$(WCC) $(WCCFLAGS) -fo=$(abs_obj_dir)/.obj -i=.. -i=../../.. $^
 endif
 
 all_programs=$(abs_exe_dir)/test1$(exe_suffix)
@@ -141,17 +141,17 @@ $(abs_exe_dir)/test1c$(exe_suffix): $(obj_win32s_compat) $(abs_obj_dir)/test1c$(
 
 $(abs_obj_dir)/test1c$(obj_suffix): test1c.c $(abs_obj_dir)/test1$(obj_suffix)
  ifeq ($(target_subdir_is_linux),1)
-	$(CC) $(CFLAGS_CONSOLE) -I.. -I../.. -c -o $@ $(filter %.c,$^)
+	$(CC) $(CFLAGS_CONSOLE) -I.. -I../../.. -c -o $@ $(filter %.c,$^)
  else
-	$(WCC) $(WCCFLAGS_CONSOLE) -fo=$(abs_obj_dir)/.obj -i=.. -i=../.. $(filter %.c,$^)
+	$(WCC) $(WCCFLAGS_CONSOLE) -fo=$(abs_obj_dir)/.obj -i=.. -i=../../.. $(filter %.c,$^)
  endif
 endif
 
 $(abs_obj_dir)/test1$(obj_suffix): test1.c
 ifeq ($(target_subdir_is_linux),1)
-	$(CC) $(CFLAGS) -I.. -I../.. -c -o $@ $^
+	$(CC) $(CFLAGS) -I.. -I../../.. -c -o $@ $^
 else
-	$(WCC) $(WCCFLAGS) -fo=$(abs_obj_dir)/.obj -i=.. -i=../.. $^
+	$(WCC) $(WCCFLAGS) -fo=$(abs_obj_dir)/.obj -i=.. -i=../../.. $^
 endif
 
 all-targets: all-targets-abs-dirs all-programs
