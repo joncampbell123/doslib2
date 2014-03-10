@@ -70,26 +70,64 @@ typedef struct tf286_record {
 
 static unsigned char buffer[512];
 
-int main(int argc,char **argv) {
-	struct tf8086_record *rec,prec;
-	int fd,rd;
-
-	assert(sizeof(*rec) == 40);
-	assert(sizeof(struct tf286_record) == 42);
-
-	if (argc < 2) {
-		fprintf(stderr,"tflogdump <file>\n");
-		return 1;
-	}
-
-	fd = open(argv[1],O_RDONLY|O_BINARY);
-	if (fd < 0) {
-		fprintf(stderr,"Cannot open for reading %s, %s\n",argv[1],strerror(errno));
-		return 1;
-	}
+static void dump_286(int fd) {
+	struct tf286_record *rec,prec;
+	int rd;
 
 	memset(&prec,0xFF,sizeof(prec));
+	while ((rd=read(fd,buffer,4)) == 4) {
+		rec = (struct tf286_record*)buffer;
 
+		if (rec->r_reclen < 4) {
+			fprintf(stderr,"Invalid record type=0x%04x length=0x%04x\n",rec->r_recid,rec->r_reclen);
+			break;
+		}
+
+		if (rec->r_recid == 0x8286) {
+			if (rec->r_reclen != 42) {
+				fprintf(stderr,"WARNING: Invalid 286 record len=0x%04x\n",rec->r_reclen);
+				lseek(fd,rec->r_reclen-4,SEEK_CUR);
+				continue;
+			}
+
+			read(fd,buffer+4,42-4);
+			printf("[286] CS:IP 0x%04x%s:0x%04x%s [0x%02x 0x%02x 0x%02x 0x%02x] FLAGS=0x%04x%s\n",
+					rec->r_cs,	(rec->r_cs == prec.r_cs)?str_spc:str_ast,
+					rec->r_ip,	(rec->r_ip == prec.r_ip)?str_spc:str_ast,
+					rec->r_csip_capture[0],rec->r_csip_capture[1],
+					rec->r_csip_capture[2],rec->r_csip_capture[3],
+					rec->r_flags,	(rec->r_flags == prec.r_flags)?str_spc:str_ast);
+			printf("       AX=%04x%s BX=%04x%s CX=%04x%s DX=%04x%s SI=%04x%s DI=%04x%s BP=%04x%s\n",
+					rec->r_ax,	(rec->r_ax == prec.r_ax)?str_spc:str_ast,
+					rec->r_bx,	(rec->r_bx == prec.r_bx)?str_spc:str_ast,
+					rec->r_cx,	(rec->r_cx == prec.r_cx)?str_spc:str_ast,
+					rec->r_dx,	(rec->r_dx == prec.r_dx)?str_spc:str_ast,
+					rec->r_si,	(rec->r_si == prec.r_si)?str_spc:str_ast,
+					rec->r_di,	(rec->r_di == prec.r_di)?str_spc:str_ast,
+					rec->r_bp,	(rec->r_bp == prec.r_bp)?str_spc:str_ast);
+			printf("       DS=%04x%s ES=%04x%s MSW=0x%04x SS:SP 0x%04x%s:%04x%s [0x%02x 0x%02x 0x%02x 0x%02x]\n",
+					rec->r_ds,	(rec->r_ds == prec.r_ds)?str_spc:str_ast,
+					rec->r_es,	(rec->r_es == prec.r_es)?str_spc:str_ast,
+					rec->r_msw,
+					rec->r_ss,	(rec->r_ss == prec.r_ss)?str_spc:str_ast,
+					rec->r_sp,	(rec->r_sp == prec.r_sp)?str_spc:str_ast,
+					rec->r_sssp_capture[0],rec->r_sssp_capture[1],
+					rec->r_sssp_capture[2],rec->r_sssp_capture[3]);
+
+			prec = *rec;
+		}
+		else {
+			fprintf(stderr,"WARNING: Unknown record type=0x%04x len=0x%04x\n",rec->r_recid,rec->r_reclen);
+			lseek(fd,rec->r_reclen-4,SEEK_CUR);
+		}
+	}
+}
+
+static void dump_8086(int fd) {
+	struct tf8086_record *rec,prec;
+	int rd;
+
+	memset(&prec,0xFF,sizeof(prec));
 	while ((rd=read(fd,buffer,4)) == 4) {
 		rec = (struct tf8086_record*)buffer;
 
@@ -107,26 +145,26 @@ int main(int argc,char **argv) {
 
 			read(fd,buffer+4,40-4);
 			printf("[8086] CS:IP 0x%04x%s:0x%04x%s [0x%02x 0x%02x 0x%02x 0x%02x] FLAGS=0x%04x%s\n",
-				rec->r_cs,	(rec->r_cs == prec.r_cs)?str_spc:str_ast,
-				rec->r_ip,	(rec->r_ip == prec.r_ip)?str_spc:str_ast,
-				rec->r_csip_capture[0],rec->r_csip_capture[1],
-				rec->r_csip_capture[2],rec->r_csip_capture[3],
-				rec->r_flags,	(rec->r_flags == prec.r_flags)?str_spc:str_ast);
+					rec->r_cs,	(rec->r_cs == prec.r_cs)?str_spc:str_ast,
+					rec->r_ip,	(rec->r_ip == prec.r_ip)?str_spc:str_ast,
+					rec->r_csip_capture[0],rec->r_csip_capture[1],
+					rec->r_csip_capture[2],rec->r_csip_capture[3],
+					rec->r_flags,	(rec->r_flags == prec.r_flags)?str_spc:str_ast);
 			printf("       AX=%04x%s BX=%04x%s CX=%04x%s DX=%04x%s SI=%04x%s DI=%04x%s BP=%04x%s\n",
-				rec->r_ax,	(rec->r_ax == prec.r_ax)?str_spc:str_ast,
-				rec->r_bx,	(rec->r_bx == prec.r_bx)?str_spc:str_ast,
-				rec->r_cx,	(rec->r_cx == prec.r_cx)?str_spc:str_ast,
-				rec->r_dx,	(rec->r_dx == prec.r_dx)?str_spc:str_ast,
-				rec->r_si,	(rec->r_si == prec.r_si)?str_spc:str_ast,
-				rec->r_di,	(rec->r_di == prec.r_di)?str_spc:str_ast,
-				rec->r_bp,	(rec->r_bp == prec.r_bp)?str_spc:str_ast);
+					rec->r_ax,	(rec->r_ax == prec.r_ax)?str_spc:str_ast,
+					rec->r_bx,	(rec->r_bx == prec.r_bx)?str_spc:str_ast,
+					rec->r_cx,	(rec->r_cx == prec.r_cx)?str_spc:str_ast,
+					rec->r_dx,	(rec->r_dx == prec.r_dx)?str_spc:str_ast,
+					rec->r_si,	(rec->r_si == prec.r_si)?str_spc:str_ast,
+					rec->r_di,	(rec->r_di == prec.r_di)?str_spc:str_ast,
+					rec->r_bp,	(rec->r_bp == prec.r_bp)?str_spc:str_ast);
 			printf("       DS=%04x%s ES=%04x%s SS:SP 0x%04x%s:%04x%s [0x%02x 0x%02x 0x%02x 0x%02x]\n",
-				rec->r_ds,	(rec->r_ds == prec.r_ds)?str_spc:str_ast,
-				rec->r_es,	(rec->r_es == prec.r_es)?str_spc:str_ast,
-				rec->r_ss,	(rec->r_ss == prec.r_ss)?str_spc:str_ast,
-				rec->r_sp,	(rec->r_sp == prec.r_sp)?str_spc:str_ast,
-				rec->r_sssp_capture[0],rec->r_sssp_capture[1],
-				rec->r_sssp_capture[2],rec->r_sssp_capture[3]);
+					rec->r_ds,	(rec->r_ds == prec.r_ds)?str_spc:str_ast,
+					rec->r_es,	(rec->r_es == prec.r_es)?str_spc:str_ast,
+					rec->r_ss,	(rec->r_ss == prec.r_ss)?str_spc:str_ast,
+					rec->r_sp,	(rec->r_sp == prec.r_sp)?str_spc:str_ast,
+					rec->r_sssp_capture[0],rec->r_sssp_capture[1],
+					rec->r_sssp_capture[2],rec->r_sssp_capture[3]);
 
 			prec = *rec;
 		}
@@ -135,6 +173,37 @@ int main(int argc,char **argv) {
 			lseek(fd,rec->r_reclen-4,SEEK_CUR);
 		}
 	}
+}
+
+int main(int argc,char **argv) {
+	struct tf8086_record *rec;
+	int fd,rd;
+
+	assert(sizeof(*rec) == 40);
+	assert(sizeof(struct tf286_record) == 42);
+
+	if (argc < 2) {
+		fprintf(stderr,"tflogdump <file>\n");
+		return 1;
+	}
+
+	fd = open(argv[1],O_RDONLY|O_BINARY);
+	if (fd < 0) {
+		fprintf(stderr,"Cannot open for reading %s, %s\n",argv[1],strerror(errno));
+		return 1;
+	}
+
+	rec = (struct tf8086_record*)buffer;
+	if ((rd=read(fd,buffer,4)) != 4)
+		return 1;
+
+	lseek(fd,0,SEEK_SET);
+	if (rec->r_recid == 0x8086)
+		dump_8086(fd);
+	else if (rec->r_recid == 0x8286)
+		dump_286(fd);
+	else
+		fprintf(stderr,"Unknown record type 0x%04x\n",rec->r_recid);
 
 	close(fd);
 	return 0;
