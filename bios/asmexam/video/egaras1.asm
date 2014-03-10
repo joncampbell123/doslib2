@@ -13,9 +13,12 @@
 		mov	ax,16		; mode 0x10 EGA 640x350x16
 		int	10h
 
+; clear interrupts for the program, empty keyboard
+		cli
+		call	eat_keyboard
+
 ; wait for vblank (and end)
-loop1:		cli
-		call	vblank
+loop1:		call	vblank
 
 		mov	si,[scancount]
 		inc	word [scancount]
@@ -23,9 +26,7 @@ loop1:		cli
 
 ; as the raster scan runs down the screen, hack the 0th palette entry
 ; to make a smooth gradient
-hscan:		call	hblank		; wait for hsync
-
-		mov	dx,0x3C0
+hscan:		mov	dx,0x3C0
 		mov	al,0
 		out	dx,al		; attribute controller palette index 0
 
@@ -38,21 +39,22 @@ hscan:		call	hblank		; wait for hsync
 		out	dx,al
 
 		inc	si
+		call	hblank		; wait for hsync
 		loop	hscan
-		sti
 
 ; if keyboard input, then exit
-		mov	ah,1
-		int	16h
-		jz	loop1
+		in	al,64h
+		test	al,1
+		jz	loop1		; no data, keep looping
+		in	al,60h
+		cmp	al,0x81		; escape (keyup)?
+		jnz	loop1
+		call	eat_keyboard
 
-; eat keyboard input
-		xor	ax,ax
-		int	16h
-
-; restore text mode
+; restore text mode and interrupts
 		mov	ax,3
 		int	10h
+		sti
 
 ; exit
 		mov	ax,0x4C00
@@ -88,6 +90,16 @@ vblank:		; first wait for vblank
 		test	al,0x08
 		jnz	.l2
 		
+		ret
+
+;-----------------------------------
+
+eat_keyboard:	in	al,60h		; eat the data
+		nop			; IODELAY
+		nop			; IODELAY
+		in	al,64h
+		test	al,1
+		jnz	eat_keyboard
 		ret
 
 		segment .data
