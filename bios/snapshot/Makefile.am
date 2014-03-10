@@ -4,7 +4,7 @@ BUILD_dos16r_mm=compact
 BUILD_linux_host=1
 BUILD_win32=1
 
--include ../../../config.mak
+-include ../../config.mak
 -include Makefile.wcc
 
 debugme:
