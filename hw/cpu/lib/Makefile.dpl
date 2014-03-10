@@ -1,5 +1,5 @@
 
-lib_hw_cpu_libcpu=$(abs_top_srcdir)/build/hw/cpu/$(target_subdir)/lib/libcpu$(lib_suffix)
+lib_hw_cpu_libcpu=$(abs_top_srcdir)/build/hw/cpu/lib/$(target_subdir)/lib/libcpu$(lib_suffix)
 lib_hw_cpu_libcpu_wlink=library $(lib_hw_cpu_libcpu)
 lib_hw_cpu_libcpu_dependencies=
 
@@ -8,7 +8,7 @@ $(lib_hw_cpu_libcpu):
 	$(MAKE) -C $(abs_top_srcdir)/hw/cpu --no-print-directory -$(MAKEFLAGS) all-targets
 endif
 
-lib_hw_cpu_libcpusse=$(abs_top_srcdir)/build/hw/cpu/$(target_subdir)/lib/libcpusse$(lib_suffix)
+lib_hw_cpu_libcpusse=$(abs_top_srcdir)/build/hw/cpu/lib/$(target_subdir)/lib/libcpusse$(lib_suffix)
 lib_hw_cpu_libcpusse_wlink=library $(lib_hw_cpu_libcpu) library $(lib_hw_cpu_libcpusse)
 lib_hw_cpu_libcpusse_dependencies=$(lib_hw_cpu_libcpu)
 
