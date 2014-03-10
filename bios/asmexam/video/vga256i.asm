@@ -1,11 +1,12 @@
 ;--------------------------------------------------------------------------------------
 ; VGA256I.COM
 ; 
-; Setup VGA 320x340x256 and display a bitmap. This is done (as usual) by setting
-; 320x200x256 mode then tweaking the "maximum scan line" register on VGA hardware.
-; This trick is so common, even Microsoft uses it internally in Windows 95 (both for
-; the boot logo and within DISPDIB.DLL to provide 320x350x256 fullscreen modes for
-; Windows such as when playing an AVI full screen).
+; Setup VGA 320x350x256 and display a bitmap. This is done (as usual) by setting
+; 320x200x256 mode then tweaking the "maximum scan line" register on VGA hardware,
+; then reprogramming VGA timing to get 350 vertical scan lines.
+;
+; FIXME: This does not reliably work on VGA hardware. On most hardware in fact, the
+;        vga vertical retrace loop gets stuck.
 ;
 ; This version uses the more common unchained "mode x" method.
 ;--------------------------------------------------------------------------------------
