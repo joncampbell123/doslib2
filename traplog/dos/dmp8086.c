@@ -13,8 +13,13 @@
 #define O_BINARY 0
 #endif
 
+#ifdef TARGET_LINUX
 static const char str_spc[] = " ";
 static const char str_ast[] = "\x1B[33m*\x1B[0m";
+#else
+static const char str_spc[] = " ";
+static const char str_ast[] = "*";
+#endif
 
 #pragma pack(push,1)
 typedef struct tf8086_record {
