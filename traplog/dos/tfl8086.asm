@@ -40,13 +40,22 @@
 		bits 16			; 16-bit real mode
 		org 0x100		; DOS .COM executable starts at 0x100 in memory
 
+%ifndef CPU286
+%define CPU286 0
+%endif
+
 ; structs
 
-REC_8086	EQU			0x8086
+%if CPU286
+REC_CPU_ID	EQU			0x8286
+REC_LENGTH	EQU			42
+%else
+REC_CPU_ID	EQU			0x8086
 REC_LENGTH	EQU			40
+%endif
 
 		struc cpu_state_record_8086
-			.r_recid	resw	1		; record ID. set to REC_8086
+			.r_recid	resw	1		; record ID. set to REC_CPU_ID
 			.r_reclen	resw	1		; record length
 			.r_di		resw	1
 			.r_si		resw	1
@@ -64,7 +73,12 @@ REC_LENGTH	EQU			40
 			.r_es		resw	1
 			.r_csip_capture	resd	1		; snapshot of the first 4 bytes at CS:IP
 			.r_sssp_capture	resd	1		; snapshot of the first 4 bytes at SS:IP
-		endstruc ; =40 bytes
+%if CPU286
+			.r_msw		resw	1		; machine status word
+%endif
+		endstruc
+		; 8086 =40 bytes
+		;  286 =42 bytes
 
 ; code
 
@@ -365,7 +379,7 @@ on_int1_trap:	cli
 ; record CPU state
 		mov	bx,[record_buf_write]
 		lea	di,[record_buf+bx]
-		mov	word [di + cpu_state_record_8086.r_recid],REC_8086
+		mov	word [di + cpu_state_record_8086.r_recid],REC_CPU_ID
 		mov	word [di + cpu_state_record_8086.r_reclen],REC_LENGTH
 		mov	ax,[bp+0]
 		mov	word [di + cpu_state_record_8086.r_es],ax
@@ -397,6 +411,11 @@ on_int1_trap:	cli
 		mov	word [di + cpu_state_record_8086.r_flags],ax
 		mov	ax,word [intstack_save+2]		; caller's SS
 		mov	word [di + cpu_state_record_8086.r_ss],ax
+
+%if CPU286
+		smsw	ax
+		mov	word [di + cpu_state_record_8086.r_msw],ax
+%endif
 
 		push	ds
 		mov	bx,word [es:si]				; BX = IP
@@ -540,7 +559,11 @@ str_ok_exit:	db	'Exec OK. Sub-program terminated normally.',13,10,'$'
 str_need_param:	db	'Need a program to run'
 crlf:		db	13,10,'$'
 
+%if CPU286
+logfilename:	db	'TF286.LOG',0
+%else
 logfilename:	db	'TF8086.LOG',0
+%endif
 
 		segment .bss
 

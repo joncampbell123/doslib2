@@ -41,7 +41,31 @@ typedef struct tf8086_record {
 	uint16_t			r_es;
 	unsigned char			r_csip_capture[4];
 	unsigned char			r_sssp_capture[4];
-} tf8086_record; /* 36 bytes */
+} tf8086_record; /* 40 bytes */
+#pragma pack(pop)
+
+#pragma pack(push,1)
+typedef struct tf286_record {
+	uint16_t			r_recid;
+	uint16_t			r_reclen;
+	uint16_t			r_di;
+	uint16_t			r_si;
+	uint16_t			r_bp;
+	uint16_t			r_sp;
+	uint16_t			r_bx;
+	uint16_t			r_dx;
+	uint16_t			r_cx;
+	uint16_t			r_ax;
+	uint16_t			r_flags;
+	uint16_t			r_ip;
+	uint16_t			r_cs;
+	uint16_t			r_ss;
+	uint16_t			r_ds;
+	uint16_t			r_es;
+	unsigned char			r_csip_capture[4];
+	unsigned char			r_sssp_capture[4];
+	uint16_t			r_msw;
+} tf286_record; /* 42 bytes */
 #pragma pack(pop)
 
 static unsigned char buffer[512];
@@ -51,6 +75,7 @@ int main(int argc,char **argv) {
 	int fd,rd;
 
 	assert(sizeof(*rec) == 40);
+	assert(sizeof(struct tf286_record) == 42);
 
 	if (argc < 2) {
 		fprintf(stderr,"tflogdump <file>\n");

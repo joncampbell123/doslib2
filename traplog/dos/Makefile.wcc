@@ -10,6 +10,13 @@ all_programs += $(abs_exe_dir)/tfl8086d.com
 all_programs += $(abs_exe_dir)/tfl8086i.com
 all_programs += $(abs_exe_dir)/tfl8086q.com
 
+all_programs += $(abs_exe_dir)/tfl286.com
+all_programs += $(abs_exe_dir)/tfl286p.com
+all_programs += $(abs_exe_dir)/tfl286e.com
+all_programs += $(abs_exe_dir)/tfl286d.com
+all_programs += $(abs_exe_dir)/tfl286i.com
+all_programs += $(abs_exe_dir)/tfl286q.com
+
 all_programs += $(abs_exe_dir)/tfldump$(exe_suffix)
 
 all_programs += $(abs_exe_dir)/sanity1.com
@@ -34,6 +41,25 @@ else
 	$(WLINK) @$(abs_obj_dir)/test1.cmd
 endif
 
+$(abs_exe_dir)/tfl286d.com: tfl8086.asm
+	$(NASM) -o $@ -l $@.lst -f bin $(NASMFLAGS) -DPLACEBO=1 -DCPU286=1 $^
+
+$(abs_exe_dir)/tfl286e.com: tfl8086.asm
+	$(NASM) -o $@ -l $@.lst -f bin $(NASMFLAGS) -DEVERYTHING=1 -DCPU286=1 -DTF_INTERRUPT=1 $^
+
+$(abs_exe_dir)/tfl286p.com: tfl8086.asm
+	$(NASM) -o $@ -l $@.lst -f bin $(NASMFLAGS) -DPARANOID=1 -DCPU286=1 $^
+
+$(abs_exe_dir)/tfl286q.com: tfl8086.asm
+	$(NASM) -o $@ -l $@.lst -f bin $(NASMFLAGS) -DPARANOID=1 -DCPU286=1 -DTF_INTERRUPT=1 $^
+
+$(abs_exe_dir)/tfl286i.com: tfl8086.asm
+	$(NASM) -o $@ -l $@.lst -f bin $(NASMFLAGS) -DPARANOID=1 -DCPU286=1 -DTF_INTERRUPT=1 $^
+
+$(abs_exe_dir)/tfl286.com: tfl8086.asm
+	$(NASM) -o $@ -l $@.lst -f bin $(NASMFLAGS) -DCPU286=1 $^
+
+
 $(abs_exe_dir)/tfl8086d.com: tfl8086.asm
 	$(NASM) -o $@ -l $@.lst -f bin $(NASMFLAGS) -DPLACEBO=1 $^
 
@@ -51,6 +77,7 @@ $(abs_exe_dir)/tfl8086i.com: tfl8086.asm
 
 $(abs_exe_dir)/tfl8086.com: tfl8086.asm
 	$(NASM) -o $@ -l $@.lst -f bin $(NASMFLAGS) $^
+
 
 $(abs_exe_dir)/sanity1.com: sanity1.asm
 	$(NASM) -o $@ -l $@.lst -f bin $(NASMFLAGS) $^
