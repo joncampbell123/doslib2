@@ -1,6 +1,6 @@
 -include ../config.mak
 
-SUBDIRS = video rombios
+SUBDIRS = video
 ACLOCAL_AMFLAGS = 
 
 library_includedir = $(includedir)/doslib2/test
