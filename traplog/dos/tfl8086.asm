@@ -49,7 +49,6 @@
 %endif
 
 ; structs
-
 %if CPU386
 REC_CPU_ID	EQU			0x8386
 REC_LENGTH	EQU			118
@@ -59,6 +58,13 @@ REC_LENGTH	EQU			56
 %else
 REC_CPU_ID	EQU			0x8086
 REC_LENGTH	EQU			40
+%endif
+
+; trap LMSW
+%if CPU386
+ %define TF_LMSW
+%elif CPU286
+ %define TF_LMSW
 %endif
 
 		struc cpu_state_record_8086
@@ -598,6 +604,21 @@ on_int1_trap:	cli
 		cmp	al,0xCD					; INT xx    0xCD 0xxx
 		jz	.op_int_xx
 %endif
+		cmp	ax,0x010F				; 0x0F 0x01
+		jz	.op_010F
+		jmp	.finish_opcode
+
+.op_010F:	mov	al,[bx+2]				; load the 3rd byte
+		and	al,(7 << 3)				; we want "reg" of mod/reg/rm
+		cmp	al,(6 << 3)				; LMSW /6 ?
+		jz	.op_lmsw
+		jmp	.finish_opcode
+
+.op_lmsw:	
+%ifdef TF_LMSW
+		call	flush_record				; any attempt to call LMSW means we must flush buffers
+		call	disable_tf				; and stop tracing. this code does not yet support protected mode.
+%endif
 		jmp	.finish_opcode
 
 %ifdef TF_INTERRUPT
@@ -692,6 +713,12 @@ on_int1_trap:	cli
 		mov	sp,word [cs:intstack_save]
 		iret
 %endif
+
+; disable TF flag (assuming we're within the trap handler)
+disable_tf:	mov	es,word [cs:intstack_save+2]	; our ES = caller's SS
+		mov	si,word [cs:intstack_save]	; our SI = caller's SP
+		and	word [es:si+4],~0x100		; clear TF in the FLAGS image on the stack
+		ret
 
 ; write record to disk
 flush_record:	cmp	word [record_buf_write],0
