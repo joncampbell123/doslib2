@@ -126,43 +126,43 @@ static void dump_386(int fd) {
 			}
 
 			read(fd,buffer+4,104-4);
-			printf("[386] CS:EIP %04x%s:%08lx%s [0x%02x 0x%02x 0x%02x 0x%02x] EFLAGS=%08x%s\n",
+			printf("[386] CS:EIP %04x%s:%08lx%s [0x%02x 0x%02x 0x%02x 0x%02x] EFLAGS=%08lx%s\n",
 					rec->r_cs,			(rec->r_cs == prec.r_cs)?str_spc:str_ast,
 					(unsigned long)rec->r_eip,	(rec->r_eip == prec.r_eip)?str_spc:str_ast,
 					rec->r_csip_capture[0],rec->r_csip_capture[1],
 					rec->r_csip_capture[2],rec->r_csip_capture[3],
 					(unsigned long)rec->r_eflags,	(rec->r_eflags == prec.r_eflags)?str_spc:str_ast);
-			printf("       EAX=%08x%s EBX=%08x%s ECX=%08x%s EDX=%08x%s\n",
-					rec->r_eax,	(rec->r_eax == prec.r_eax)?str_spc:str_ast,
-					rec->r_ebx,	(rec->r_ebx == prec.r_ebx)?str_spc:str_ast,
-					rec->r_ecx,	(rec->r_ecx == prec.r_ecx)?str_spc:str_ast,
-					rec->r_edx,	(rec->r_edx == prec.r_edx)?str_spc:str_ast);
-			printf("       ESI=%08x%s EDI=%08x%s EBP=%08x%s DS=%04x%s\n",
-					rec->r_esi,	(rec->r_esi == prec.r_esi)?str_spc:str_ast,
-					rec->r_edi,	(rec->r_edi == prec.r_edi)?str_spc:str_ast,
-					rec->r_ebp,	(rec->r_ebp == prec.r_ebp)?str_spc:str_ast,
+			printf("       EAX=%08lx%s EBX=%08lx%s ECX=%08lx%s EDX=%08lx%s\n",
+					(unsigned long)rec->r_eax,	(rec->r_eax == prec.r_eax)?str_spc:str_ast,
+					(unsigned long)rec->r_ebx,	(rec->r_ebx == prec.r_ebx)?str_spc:str_ast,
+					(unsigned long)rec->r_ecx,	(rec->r_ecx == prec.r_ecx)?str_spc:str_ast,
+					(unsigned long)rec->r_edx,	(rec->r_edx == prec.r_edx)?str_spc:str_ast);
+			printf("       ESI=%08lx%s EDI=%08lx%s EBP=%08lx%s DS=%04x%s\n",
+					(unsigned long)rec->r_esi,	(rec->r_esi == prec.r_esi)?str_spc:str_ast,
+					(unsigned long)rec->r_edi,	(rec->r_edi == prec.r_edi)?str_spc:str_ast,
+					(unsigned long)rec->r_ebp,	(rec->r_ebp == prec.r_ebp)?str_spc:str_ast,
 					rec->r_ds,	(rec->r_ds == prec.r_ds)?str_spc:str_ast);
-			printf("       ES=%04x%s SS:ESP %04x%s:%08x%s [0x%02x 0x%02x 0x%02x 0x%02x]\n",
+			printf("       ES=%04x%s SS:ESP %04x%s:%08lx%s [0x%02x 0x%02x 0x%02x 0x%02x]\n",
 					rec->r_es,	(rec->r_es == prec.r_es)?str_spc:str_ast,
 					rec->r_ss,	(rec->r_ss == prec.r_ss)?str_spc:str_ast,
-					rec->r_esp,	(rec->r_esp == prec.r_esp)?str_spc:str_ast,
+					(unsigned long)rec->r_esp,	(rec->r_esp == prec.r_esp)?str_spc:str_ast,
 					rec->r_sssp_capture[0],rec->r_sssp_capture[1],
 					rec->r_sssp_capture[2],rec->r_sssp_capture[3]);
-			printf("       FS=%04x%s GS=%04x%s CR0=%08x%s CR2=%08x%s CR3=%08x%s\n",
+			printf("       FS=%04x%s GS=%04x%s CR0=%08lx%s CR2=%08lx%s CR3=%08lx%s\n",
 					rec->r_fs,	(rec->r_fs == prec.r_fs)?str_spc:str_ast,
 					rec->r_gs,	(rec->r_gs == prec.r_gs)?str_spc:str_ast,
-					rec->r_cr0,	(rec->r_cr0 == prec.r_cr0)?str_spc:str_ast,
-					rec->r_cr2,	(rec->r_cr2 == prec.r_cr2)?str_spc:str_ast,
-					rec->r_cr3,	(rec->r_cr3 == prec.r_cr3)?str_spc:str_ast);
-			printf("       CR4=%08x%s DR0=%08x%s DR1=%08x%s DR2=%08x%s\n",
-					rec->r_cr4,	(rec->r_cr4 == prec.r_cr4)?str_spc:str_ast,
-					rec->r_dr0,	(rec->r_dr0 == prec.r_dr0)?str_spc:str_ast,
-					rec->r_dr1,	(rec->r_dr1 == prec.r_dr1)?str_spc:str_ast,
-					rec->r_dr2,	(rec->r_dr2 == prec.r_dr2)?str_spc:str_ast);
-			printf("       DR3=%08x%s DR6=%08x%s DR7=%08x%s\n",
-					rec->r_dr3,	(rec->r_dr3 == prec.r_dr3)?str_spc:str_ast,
-					rec->r_dr6,	(rec->r_dr6 == prec.r_dr6)?str_spc:str_ast,
-					rec->r_dr7,	(rec->r_dr7 == prec.r_dr7)?str_spc:str_ast);
+					(unsigned long)rec->r_cr0,	(rec->r_cr0 == prec.r_cr0)?str_spc:str_ast,
+					(unsigned long)rec->r_cr2,	(rec->r_cr2 == prec.r_cr2)?str_spc:str_ast,
+					(unsigned long)rec->r_cr3,	(rec->r_cr3 == prec.r_cr3)?str_spc:str_ast);
+			printf("       CR4=%08lx%s DR0=%08lx%s DR1=%08lx%s DR2=%08lx%s\n",
+					(unsigned long)rec->r_cr4,	(rec->r_cr4 == prec.r_cr4)?str_spc:str_ast,
+					(unsigned long)rec->r_dr0,	(rec->r_dr0 == prec.r_dr0)?str_spc:str_ast,
+					(unsigned long)rec->r_dr1,	(rec->r_dr1 == prec.r_dr1)?str_spc:str_ast,
+					(unsigned long)rec->r_dr2,	(rec->r_dr2 == prec.r_dr2)?str_spc:str_ast);
+			printf("       DR3=%08lx%s DR6=%08lx%s DR7=%08lx%s\n",
+					(unsigned long)rec->r_dr3,	(rec->r_dr3 == prec.r_dr3)?str_spc:str_ast,
+					(unsigned long)rec->r_dr6,	(rec->r_dr6 == prec.r_dr6)?str_spc:str_ast,
+					(unsigned long)rec->r_dr7,	(rec->r_dr7 == prec.r_dr7)?str_spc:str_ast);
 
 			prec = *rec;
 		}
