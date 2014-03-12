@@ -485,6 +485,26 @@ on_int1_trap:	cli
 		mov	dword [di + cpu_state_record_8086.r_eflags],eax
 		mov	ax,word [intstack_save+2]		; caller's SS
 		mov	word [di + cpu_state_record_8086.r_ss],ax
+		mov	eax,cr0
+		mov	dword [di + cpu_state_record_8086.r_cr0],eax
+		mov	eax,cr2
+		mov	dword [di + cpu_state_record_8086.r_cr2],eax
+		mov	eax,cr3
+		mov	dword [di + cpu_state_record_8086.r_cr3],eax
+		mov	eax,cr4
+		mov	dword [di + cpu_state_record_8086.r_cr4],eax
+		mov	eax,dr0
+		mov	dword [di + cpu_state_record_8086.r_dr0],eax
+		mov	eax,dr1
+		mov	dword [di + cpu_state_record_8086.r_dr1],eax
+		mov	eax,dr2
+		mov	dword [di + cpu_state_record_8086.r_dr2],eax
+		mov	eax,dr3
+		mov	dword [di + cpu_state_record_8086.r_dr3],eax
+		mov	eax,dr6
+		mov	dword [di + cpu_state_record_8086.r_dr6],eax
+		mov	eax,dr7
+		mov	dword [di + cpu_state_record_8086.r_dr7],eax
 %else
 		mov	ax,[bp+0]
 		mov	word [di + cpu_state_record_8086.r_es],ax
