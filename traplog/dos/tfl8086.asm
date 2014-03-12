@@ -631,6 +631,32 @@ on_int1_trap:	cli
 
 ; now return
 %if CPU386
+		; before we return, we need to convert the 16-bit IRET stack
+		; frame to a 32-bit IRETD stack frame. else, some non-Intel
+		; CPUs and emulators (like DOSBox) will zero the upper 16 bits
+		; of EFLAGS and lose some state.
+		cli
+		mov	ds,word [cs:intstack_save+2]
+		mov	si,word [cs:intstack_save]
+
+		; load 16-bit IRET frame
+		movzx	eax,word [si]	; IP
+		movzx	ebx,word [si+2]	; CS
+		pushfd
+		pop	ecx
+		mov	cx,[si+4]	; EFLAGS (upper 16 bits) + host program FLAGS
+
+		; make more space on the stack
+		sub	si,6		; 6 additional bytes
+
+		; write 32-bit IRET frame
+		mov	dword [si],eax	; EIP
+		mov	dword [si+4],ebx; CS
+		mov	dword [si+8],ecx; EFLAGS
+
+		; update SP
+		mov	word [cs:intstack_save],si
+
 		pop	gs
 		pop	fs
 		pop	es
@@ -642,6 +668,11 @@ on_int1_trap:	cli
 		pop	ecx
 		pop	ebx
 		pop	eax
+
+		cli
+		mov	ss,word [cs:intstack_save+2]
+		mov	sp,word [cs:intstack_save]
+		iretd
 %else
 		pop	es
 		pop	ds
@@ -652,12 +683,12 @@ on_int1_trap:	cli
 		pop	cx
 		pop	bx
 		pop	ax
-%endif
 
 		cli
 		mov	ss,word [cs:intstack_save+2]
 		mov	sp,word [cs:intstack_save]
 		iret
+%endif
 
 ; write record to disk
 flush_record:	cmp	word [record_buf_write],0
