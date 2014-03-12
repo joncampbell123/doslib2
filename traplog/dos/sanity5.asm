@@ -28,6 +28,15 @@
 		mov	esp,[tmp]
 
 ; make sure we can see EFLAGS by toggling bit 21 harmlessly
+; NTS: Some emulators, including DOSBox, do not correctly restore
+;      32-bit EFLAGS from the INT 1 trap interrupt and therefore
+;      will lose the upper 16 bits on the next trap interrupt.
+;      It's reasonable to assume there may be some non-Intel
+;      processors that make the same mistake.
+;
+;      Note that because of this, the 386 builds of TFL8086.ASM
+;      are written to overwrite the stack frame with a 32-bit
+;      IRETD to ensure EFLAGS is restored properly.
 		pushfd
 
 		pushfd
