@@ -32,6 +32,7 @@ all_programs += $(abs_exe_dir)/sanity3.com
 all_programs += $(abs_exe_dir)/sanity4.com
 all_programs += $(abs_exe_dir)/sanity5.com
 all_programs += $(abs_exe_dir)/sanity6.com
+all_programs += $(abs_exe_dir)/sanity7.com
 
 all-programs: $(all_programs)
 
@@ -123,6 +124,9 @@ $(abs_exe_dir)/sanity5.com: sanity5.asm
 	$(NASM) -o $@ -l $@.lst -f bin $(NASMFLAGS) $^
 
 $(abs_exe_dir)/sanity6.com: sanity6.asm
+	$(NASM) -o $@ -l $@.lst -f bin $(NASMFLAGS) $^
+
+$(abs_exe_dir)/sanity7.com: sanity7.asm
 	$(NASM) -o $@ -l $@.lst -f bin $(NASMFLAGS) $^
 
 all-targets: all-targets-abs-dirs all-programs

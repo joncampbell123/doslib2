@@ -67,6 +67,11 @@ REC_LENGTH	EQU			40
  %define TF_LMSW
 %endif
 
+; trap MOV CR0,...
+%if CPU386
+ %define TF_MOV_CR0
+%endif
+
 		struc cpu_state_record_8086
 %if CPU386
 			.r_recid	resw	1		; record ID. set to REC_CPU_ID
@@ -606,12 +611,27 @@ on_int1_trap:	cli
 %endif
 		cmp	ax,0x010F				; 0x0F 0x01
 		jz	.op_010F
+		cmp	ax,0x220F				; 0x0F 0x22 (load register to control register)
+		jz	.op_220F
 		jmp	.finish_opcode
 
 .op_010F:	mov	al,[bx+2]				; load the 3rd byte
 		and	al,(7 << 3)				; we want "reg" of mod/reg/rm
 		cmp	al,(6 << 3)				; LMSW /6 ?
 		jz	.op_lmsw
+		jmp	.finish_opcode
+
+.op_220F:	mov	al,[bx+2]				; load 3rd byte
+		and	al,0xF8					; out of mod/reg/rm mask off rm (general register to load from)
+		cmp	al,0xC0					; is it CR0?
+		jz	.op_mov_cr0
+		jmp	.finish_opcode
+
+.op_mov_cr0:
+%ifdef TF_MOV_CR0
+		call	flush_record				; any attempt to call LMSW means we must flush buffers
+		call	disable_tf				; and stop tracing. this code does not yet support protected mode.
+%endif
 		jmp	.finish_opcode
 
 .op_lmsw:	
