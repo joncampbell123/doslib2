@@ -442,19 +442,6 @@ on_int1_trap:	cli
 		mov	word [di + cpu_state_record_8086.r_recid],REC_CPU_ID
 		mov	word [di + cpu_state_record_8086.r_reclen],REC_LENGTH
 %if CPU386
- %if 0
-		push	eax		; +0x20
-		push	ebx		; +0x1C
-		push	ecx		; +0x18
-		push	edx		; +0x14
-		push	esi		; +0x10
-		push	edi		; +0x0C
-		push	ebp		; +0x08
-		push	ds		; +0x06
-		push	es		; +0x04
-		push	fs		; +0x02
-		push	gs		; +0x00
- %endif
 		mov	ax,[bp+0]
 		mov	word [di + cpu_state_record_8086.r_gs],ax
 		mov	ax,[bp+2]
