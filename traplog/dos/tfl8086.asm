@@ -52,7 +52,7 @@
 
 %if CPU386
 REC_CPU_ID	EQU			0x8386
-REC_LENGTH	EQU			104
+REC_LENGTH	EQU			118
 %elif CPU286
 REC_CPU_ID	EQU			0x8286
 REC_LENGTH	EQU			42
@@ -91,6 +91,9 @@ REC_LENGTH	EQU			40
 			.r_es		resw	1
 			.r_fs		resw	1
 			.r_gs		resw	1
+			.r_gdtr		resw	3
+			.r_idtr		resw	3
+			.r_ldtr		resw	1
 			.r_csip_capture	resd	1		; snapshot of the first 4 bytes at CS:IP
 			.r_sssp_capture	resd	1		; snapshot of the first 4 bytes at SS:IP
 %else
@@ -505,6 +508,11 @@ on_int1_trap:	cli
 		mov	dword [di + cpu_state_record_8086.r_dr6],eax
 		mov	eax,dr7
 		mov	dword [di + cpu_state_record_8086.r_dr7],eax
+		sgdt	[di + cpu_state_record_8086.r_gdtr]
+		sidt	[di + cpu_state_record_8086.r_idtr]
+		xor	ax,ax							; NTS: SLDT is not recognized in real mode. LDT has no meaning anyway.
+		mov	word [di + cpu_state_record_8086.r_ldtr],ax		;      Someday when this code traces protected mode
+										;      we will make use of this field.
 %else
 		mov	ax,[bp+0]
 		mov	word [di + cpu_state_record_8086.r_es],ax

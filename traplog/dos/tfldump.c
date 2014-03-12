@@ -98,9 +98,12 @@ typedef struct tf386_record {
 	uint16_t			r_es;
 	uint16_t			r_fs;
 	uint16_t			r_gs;
+	uint16_t			r_gdtr[3];
+	uint16_t			r_idtr[3];
+	uint16_t			r_ldtr;
 	unsigned char			r_csip_capture[4];
 	unsigned char			r_sssp_capture[4];
-} tf386_record; /* 104 bytes */
+} tf386_record; /* 118 bytes */
 #pragma pack(pop)
 
 static unsigned char buffer[512];
@@ -119,13 +122,13 @@ static void dump_386(int fd) {
 		}
 
 		if (rec->r_recid == 0x8386) {
-			if (rec->r_reclen != 104) {
+			if (rec->r_reclen != 118) {
 				fprintf(stderr,"WARNING: Invalid 386 record len=0x%04x\n",rec->r_reclen);
 				lseek(fd,rec->r_reclen-4,SEEK_CUR);
 				continue;
 			}
 
-			read(fd,buffer+4,104-4);
+			read(fd,buffer+4,118-4);
 			printf("[386] CS:EIP %04x%s:%08lx%s [0x%02x 0x%02x 0x%02x 0x%02x] EFLAGS=%08lx%s\n",
 					rec->r_cs,			(rec->r_cs == prec.r_cs)?str_spc:str_ast,
 					(unsigned long)rec->r_eip,	(rec->r_eip == prec.r_eip)?str_spc:str_ast,
@@ -163,6 +166,14 @@ static void dump_386(int fd) {
 					(unsigned long)rec->r_dr3,	(rec->r_dr3 == prec.r_dr3)?str_spc:str_ast,
 					(unsigned long)rec->r_dr6,	(rec->r_dr6 == prec.r_dr6)?str_spc:str_ast,
 					(unsigned long)rec->r_dr7,	(rec->r_dr7 == prec.r_dr7)?str_spc:str_ast);
+			printf("       LDTR=%04x%s GDTR=%04x,%08lx%s IDTR=%04x,%08lx%s\n",
+					rec->r_ldtr,	(rec->r_ldtr == prec.r_ldtr)?str_spc:str_ast,
+					rec->r_gdtr[0],
+					(unsigned long)(*((uint32_t*)(&rec->r_gdtr[1]))),
+					(memcmp(rec->r_gdtr,prec.r_gdtr,sizeof(prec.r_gdtr)) == 0)?str_spc:str_ast,
+					rec->r_idtr[0],
+					(unsigned long)(*((uint32_t*)(&rec->r_idtr[1]))),
+					(memcmp(rec->r_idtr,prec.r_idtr,sizeof(prec.r_idtr)) == 0)?str_spc:str_ast);
 
 			prec = *rec;
 		}
@@ -284,7 +295,7 @@ int main(int argc,char **argv) {
 
 	assert(sizeof(*rec) == 40);
 	assert(sizeof(struct tf286_record) == 42);
-	assert(sizeof(struct tf386_record) == 104);
+	assert(sizeof(struct tf386_record) == 118);
 
 	if (argc < 2) {
 		fprintf(stderr,"tflogdump <file>\n");
