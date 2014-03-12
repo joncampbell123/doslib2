@@ -65,7 +65,10 @@ typedef struct tf286_record {
 	unsigned char			r_csip_capture[4];
 	unsigned char			r_sssp_capture[4];
 	uint16_t			r_msw;
-} tf286_record; /* 42 bytes */
+	uint16_t			r_gdtr[3];
+	uint16_t			r_idtr[3];
+	uint16_t			r_ldtr;
+} tf286_record; /* 56 bytes */
 #pragma pack(pop)
 
 #pragma pack(push,1)
@@ -198,13 +201,13 @@ static void dump_286(int fd) {
 		}
 
 		if (rec->r_recid == 0x8286) {
-			if (rec->r_reclen != 42) {
+			if (rec->r_reclen != 56) {
 				fprintf(stderr,"WARNING: Invalid 286 record len=0x%04x\n",rec->r_reclen);
 				lseek(fd,rec->r_reclen-4,SEEK_CUR);
 				continue;
 			}
 
-			read(fd,buffer+4,42-4);
+			read(fd,buffer+4,56-4);
 			printf("[286] CS:IP %04x%s:%04x%s [0x%02x 0x%02x 0x%02x 0x%02x] FLAGS=%04x%s\n",
 					rec->r_cs,	(rec->r_cs == prec.r_cs)?str_spc:str_ast,
 					rec->r_ip,	(rec->r_ip == prec.r_ip)?str_spc:str_ast,
@@ -227,6 +230,14 @@ static void dump_286(int fd) {
 					rec->r_sp,	(rec->r_sp == prec.r_sp)?str_spc:str_ast,
 					rec->r_sssp_capture[0],rec->r_sssp_capture[1],
 					rec->r_sssp_capture[2],rec->r_sssp_capture[3]);
+			printf("       LDTR=%04x%s GDTR=%04x,%08lx%s IDTR=%04x,%08lx%s\n",
+					rec->r_ldtr,	(rec->r_ldtr == prec.r_ldtr)?str_spc:str_ast,
+					rec->r_gdtr[0],
+					(unsigned long)(*((uint32_t*)(&rec->r_gdtr[1]))),
+					(memcmp(rec->r_gdtr,prec.r_gdtr,sizeof(prec.r_gdtr)) == 0)?str_spc:str_ast,
+					rec->r_idtr[0],
+					(unsigned long)(*((uint32_t*)(&rec->r_idtr[1]))),
+					(memcmp(rec->r_idtr,prec.r_idtr,sizeof(prec.r_idtr)) == 0)?str_spc:str_ast);
 
 			prec = *rec;
 		}
@@ -294,7 +305,7 @@ int main(int argc,char **argv) {
 	int fd,rd;
 
 	assert(sizeof(*rec) == 40);
-	assert(sizeof(struct tf286_record) == 42);
+	assert(sizeof(struct tf286_record) == 56);
 	assert(sizeof(struct tf386_record) == 118);
 
 	if (argc < 2) {
