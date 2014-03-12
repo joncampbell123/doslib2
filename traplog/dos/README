@@ -24,8 +24,6 @@ tfl8086.com ......... Minimalist tracing for 8086/8088 processors.
                       this code will work but will only capture the
                       lower 16-bit portions of the CPU registers.
 
-TODO:
-
 tfl286.com .......... Tracing utility for 286 or higher processors.
                       Captures machine status word in addition to
                       other 16-bit registers. Also contains code to

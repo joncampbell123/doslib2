@@ -17,6 +17,13 @@ all_programs += $(abs_exe_dir)/tfl286d.com
 all_programs += $(abs_exe_dir)/tfl286i.com
 all_programs += $(abs_exe_dir)/tfl286q.com
 
+all_programs += $(abs_exe_dir)/tfl386.com
+all_programs += $(abs_exe_dir)/tfl386p.com
+all_programs += $(abs_exe_dir)/tfl386e.com
+all_programs += $(abs_exe_dir)/tfl386d.com
+all_programs += $(abs_exe_dir)/tfl386i.com
+all_programs += $(abs_exe_dir)/tfl386q.com
+
 all_programs += $(abs_exe_dir)/tfldump$(exe_suffix)
 
 all_programs += $(abs_exe_dir)/sanity1.com
@@ -40,6 +47,25 @@ else
 	@echo option quiet system $(WLINK_SYSTEM) $(WLINKFLAGS) $(WLINK_SEGMENTS) $(foreach x,$(filter %$(obj_suffix),$^),file "$(x)") $(lib_windows_winfcon_wlink) $(lib_hw_cpu_libcpu_wlink) $(lib_hw_cpu_libcpusse_wlink) option map=$(abs_obj_dir)/test1.map name $@ >$(abs_obj_dir)/test1.cmd
 	$(WLINK) @$(abs_obj_dir)/test1.cmd
 endif
+
+$(abs_exe_dir)/tfl386d.com: tfl8086.asm
+	$(NASM) -o $@ -l $@.lst -f bin $(NASMFLAGS) -DPLACEBO=1 -DCPU386=1 $^
+
+$(abs_exe_dir)/tfl386e.com: tfl8086.asm
+	$(NASM) -o $@ -l $@.lst -f bin $(NASMFLAGS) -DEVERYTHING=1 -DCPU386=1 -DTF_INTERRUPT=1 $^
+
+$(abs_exe_dir)/tfl386p.com: tfl8086.asm
+	$(NASM) -o $@ -l $@.lst -f bin $(NASMFLAGS) -DPARANOID=1 -DCPU386=1 $^
+
+$(abs_exe_dir)/tfl386q.com: tfl8086.asm
+	$(NASM) -o $@ -l $@.lst -f bin $(NASMFLAGS) -DPARANOID=1 -DCPU386=1 -DTF_INTERRUPT=1 $^
+
+$(abs_exe_dir)/tfl386i.com: tfl8086.asm
+	$(NASM) -o $@ -l $@.lst -f bin $(NASMFLAGS) -DPARANOID=1 -DCPU386=1 -DTF_INTERRUPT=1 $^
+
+$(abs_exe_dir)/tfl386.com: tfl8086.asm
+	$(NASM) -o $@ -l $@.lst -f bin $(NASMFLAGS) -DCPU386=1 $^
+
 
 $(abs_exe_dir)/tfl286d.com: tfl8086.asm
 	$(NASM) -o $@ -l $@.lst -f bin $(NASMFLAGS) -DPLACEBO=1 -DCPU286=1 $^

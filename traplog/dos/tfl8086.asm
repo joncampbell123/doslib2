@@ -44,9 +44,16 @@
 %define CPU286 0
 %endif
 
+%ifndef CPU386
+%define CPU386 0
+%endif
+
 ; structs
 
-%if CPU286
+%if CPU386
+REC_CPU_ID	EQU			0x8386
+REC_LENGTH	EQU			104
+%elif CPU286
 REC_CPU_ID	EQU			0x8286
 REC_LENGTH	EQU			42
 %else
@@ -55,6 +62,38 @@ REC_LENGTH	EQU			40
 %endif
 
 		struc cpu_state_record_8086
+%if CPU386
+			.r_recid	resw	1		; record ID. set to REC_CPU_ID
+			.r_reclen	resw	1		; record length
+			.r_edi		resd	1
+			.r_esi		resd	1
+			.r_ebp		resd	1
+			.r_esp		resd	1
+			.r_ebx		resd	1
+			.r_edx		resd	1
+			.r_ecx		resd	1
+			.r_eax		resd	1
+			.r_eflags	resd	1
+			.r_eip		resd	1
+			.r_cr0		resd	1
+			.r_cr2		resd	1
+			.r_cr3		resd	1
+			.r_cr4		resd	1
+			.r_dr0		resd	1
+			.r_dr1		resd	1
+			.r_dr2		resd	1
+			.r_dr3		resd	1
+			.r_dr6		resd	1
+			.r_dr7		resd	1
+			.r_cs		resw	1
+			.r_ss		resw	1
+			.r_ds		resw	1
+			.r_es		resw	1
+			.r_fs		resw	1
+			.r_gs		resw	1
+			.r_csip_capture	resd	1		; snapshot of the first 4 bytes at CS:IP
+			.r_sssp_capture	resd	1		; snapshot of the first 4 bytes at SS:IP
+%else
 			.r_recid	resw	1		; record ID. set to REC_CPU_ID
 			.r_reclen	resw	1		; record length
 			.r_di		resw	1
@@ -73,8 +112,9 @@ REC_LENGTH	EQU			40
 			.r_es		resw	1
 			.r_csip_capture	resd	1		; snapshot of the first 4 bytes at CS:IP
 			.r_sssp_capture	resd	1		; snapshot of the first 4 bytes at SS:IP
-%if CPU286
+ %if CPU286
 			.r_msw		resw	1		; machine status word
+ %endif
 %endif
 		endstruc
 		; 8086 =40 bytes
@@ -338,15 +378,29 @@ on_int1_trap:	cli
 		mov	ss,word [cs:intstack_seg]
 		mov	sp,intstack_end - 2
 
-		push	ax
-		push	bx
-		push	cx
-		push	dx
-		push	si
-		push	di
-		push	bp
-		push	ds
-		push	es
+%if CPU386
+		push	eax		; +0x20
+		push	ebx		; +0x1C
+		push	ecx		; +0x18
+		push	edx		; +0x14
+		push	esi		; +0x10
+		push	edi		; +0x0C
+		push	ebp		; +0x08
+		push	ds		; +0x06
+		push	es		; +0x04
+		push	fs		; +0x02
+		push	gs		; +0x00
+%else
+		push	ax		; +0x10
+		push	bx		; +0x0E
+		push	cx		; +0x0C
+		push	dx		; +0x0A
+		push	si		; +0x08
+		push	di		; +0x06
+		push	bp		; +0x04
+		push	ds		; +0x02
+		push	es		; +0x00
+%endif
 
 .check_again:
 
@@ -381,6 +435,57 @@ on_int1_trap:	cli
 		lea	di,[record_buf+bx]
 		mov	word [di + cpu_state_record_8086.r_recid],REC_CPU_ID
 		mov	word [di + cpu_state_record_8086.r_reclen],REC_LENGTH
+%if CPU386
+ %if 0
+		push	eax		; +0x20
+		push	ebx		; +0x1C
+		push	ecx		; +0x18
+		push	edx		; +0x14
+		push	esi		; +0x10
+		push	edi		; +0x0C
+		push	ebp		; +0x08
+		push	ds		; +0x06
+		push	es		; +0x04
+		push	fs		; +0x02
+		push	gs		; +0x00
+ %endif
+		mov	ax,[bp+0]
+		mov	word [di + cpu_state_record_8086.r_gs],ax
+		mov	ax,[bp+2]
+		mov	word [di + cpu_state_record_8086.r_fs],ax
+		mov	ax,[bp+4]
+		mov	word [di + cpu_state_record_8086.r_es],ax
+		mov	ax,[bp+6]
+		mov	word [di + cpu_state_record_8086.r_ds],ax
+		mov	eax,[bp+8]
+		mov	dword [di + cpu_state_record_8086.r_ebp],eax
+		mov	eax,[bp+12]
+		mov	dword [di + cpu_state_record_8086.r_edi],eax
+		mov	eax,[bp+16]
+		mov	dword [di + cpu_state_record_8086.r_esi],eax
+		mov	eax,[bp+20]
+		mov	dword [di + cpu_state_record_8086.r_edx],eax
+		mov	eax,[bp+24]
+		mov	dword [di + cpu_state_record_8086.r_ecx],eax
+		mov	eax,[bp+28]
+		mov	dword [di + cpu_state_record_8086.r_ebx],eax
+		mov	eax,[bp+32]
+		mov	dword [di + cpu_state_record_8086.r_eax],eax
+		movzx	esi,word [intstack_save]		; our SI = caller's SP
+		add	esi,6					; minus the IRET stack frame
+		mov	dword [di + cpu_state_record_8086.r_esp],esi
+		sub	esi,6
+		movzx	eax,word [es:si]
+		mov	dword [di + cpu_state_record_8086.r_eip],eax
+		mov	ax,word [es:si+2]
+		mov	dword [di + cpu_state_record_8086.r_cs],eax
+		pushfd
+		pop	eax
+		mov	ax,word [es:si+4]			; combine current EFLAGS with FLAGS saved on stack, assuming CPU does not change upper bits on trap interrupt
+		mov	dword [di + cpu_state_record_8086.r_eflags],eax
+		mov	ax,word [intstack_save+2]		; caller's SS
+		mov	word [di + cpu_state_record_8086.r_ss],ax
+%else
 		mov	ax,[bp+0]
 		mov	word [di + cpu_state_record_8086.r_es],ax
 		mov	ax,[bp+2]
@@ -412,9 +517,10 @@ on_int1_trap:	cli
 		mov	ax,word [intstack_save+2]		; caller's SS
 		mov	word [di + cpu_state_record_8086.r_ss],ax
 
-%if CPU286
+ %if CPU286
 		smsw	ax
 		mov	word [di + cpu_state_record_8086.r_msw],ax
+ %endif
 %endif
 
 		push	ds
@@ -504,6 +610,19 @@ on_int1_trap:	cli
 .finish_opcode:
 
 ; now return
+%if CPU386
+		pop	gs
+		pop	fs
+		pop	es
+		pop	ds
+		pop	ebp
+		pop	edi
+		pop	esi
+		pop	edx
+		pop	ecx
+		pop	ebx
+		pop	eax
+%else
 		pop	es
 		pop	ds
 		pop	bp
@@ -513,6 +632,7 @@ on_int1_trap:	cli
 		pop	cx
 		pop	bx
 		pop	ax
+%endif
 
 		cli
 		mov	ss,word [cs:intstack_save+2]
@@ -559,7 +679,9 @@ str_ok_exit:	db	'Exec OK. Sub-program terminated normally.',13,10,'$'
 str_need_param:	db	'Need a program to run'
 crlf:		db	13,10,'$'
 
-%if CPU286
+%if CPU386
+logfilename:	db	'TF386.LOG',0
+%elif CPU286
 logfilename:	db	'TF286.LOG',0
 %else
 logfilename:	db	'TF8086.LOG',0
