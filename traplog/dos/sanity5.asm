@@ -26,6 +26,21 @@
 		nop
 		nop
 		mov	esp,[tmp]
+
+; make sure we can see EFLAGS by toggling bit 21 harmlessly
+		pushfd
+
+		pushfd
+		pop	eax
+		xor	eax,1 << 21
+		push	eax
+		popfd
+
+		nop
+		nop
+
+		popfd
+
 		sti
 
 ; done. exit
