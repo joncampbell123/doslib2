@@ -5,6 +5,8 @@ all-targets-abs-dirs: $(abs_exe_dir) $(abs_lib_dir) $(abs_obj_dir)
 
 all_programs = $(abs_exe_dir)/tf_null.com
 
+all_programs += $(abs_exe_dir)/validate$(exe_suffix)
+
 all-programs: $(all_programs)
 
 $(abs_exe_dir)/tf_null.com: tf_null.asm
@@ -19,6 +21,23 @@ $(abs_exe_dir)/list.txt: LIST
 all-txt: $(abs_exe_dir)/list.txt $(abs_exe_dir)/runtest.bat
 
 all-util: $(abs_exe_dir)/tfl8086.com $(abs_exe_dir)/tfl8086p.com $(abs_exe_dir)/tfldump.exe $(abs_exe_dir)/qdel.com
+
+
+$(abs_obj_dir)/validate$(obj_suffix): validate.c
+ifeq ($(target_subdir_is_linux),1)
+	$(CC) $(CFLAGS_CONSOLE) -I.. -I../.. -c -o $@ $(filter %.c,$^)
+else
+	$(WCC) $(WCCFLAGS_CONSOLE) -fo=$(abs_obj_dir)/.obj -i=.. -i=../.. $(filter %.c,$^)
+endif
+
+$(abs_exe_dir)/validate$(exe_suffix): $(obj_win32s_compat) $(abs_obj_dir)/validate$(obj_suffix) $(lib_windows_winfcon) $(lib_windows_winfcon_dependencies) $(lib_hw_cpu_libcpu) $(lib_hw_cpu_libcpu_dependencies) $(lib_hw_cpu_libcpusse) $(lib_hw_cpu_libcpusse_dependencies)
+ifeq ($(target_subdir_is_linux),1)
+	$(CC) $(LDFLAGS) -o $@ $^
+else
+	@echo option quiet system $(WLINK_SYSTEM) $(WLINKFLAGS) $(WLINK_SEGMENTS) $(foreach x,$(filter %$(obj_suffix),$^),file "$(x)") $(lib_windows_winfcon_wlink) $(lib_hw_cpu_libcpu_wlink) $(lib_hw_cpu_libcpusse_wlink) option map=$(abs_obj_dir)/test1.map name $@ >$(abs_obj_dir)/test1.cmd
+	$(WLINK) @$(abs_obj_dir)/test1.cmd
+endif
+
 
 $(abs_top_srcdir)/build/traplog/dos/dos16r/086c/exe/tfl8086p.com:
 	$(MAKE) -C $(abs_top_srcdir)/traplog/dos
