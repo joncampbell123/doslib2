@@ -1,0 +1,49 @@
+# This is a separate makefile because GNU automake interferes with GNU make conditionals
+ifdef target_subdir
+
+all-targets-abs-dirs: $(abs_exe_dir) $(abs_lib_dir) $(abs_obj_dir)
+
+all_programs  = $(abs_exe_dir)/qdel.com
+all_programs += $(abs_exe_dir)/tf_null.com
+
+all-programs: $(all_programs)
+
+$(abs_exe_dir)/qdel.com: qdel.asm
+	$(NASM) -o $@ -f bin $(NASMFLAGS) $^
+
+$(abs_exe_dir)/tf_null.com: tf_null.asm
+	$(NASM) -o $@ -f bin $(NASMFLAGS) $^
+
+$(abs_exe_dir)/runtest.bat: runtest.bat
+	cp -v $^ $@
+
+$(abs_exe_dir)/list.txt: LIST
+	cp -v $^ $@
+
+all-txt: $(abs_exe_dir)/list.txt $(abs_exe_dir)/runtest.bat
+
+all-util: $(abs_exe_dir)/tfl8086.com $(abs_exe_dir)/tfl8086p.com $(abs_exe_dir)/tfldump.exe
+
+$(abs_top_srcdir)/build/traplog/dos/dos16r/086c/exe/tfl8086p.com:
+	$(MAKE) -C $(abs_top_srcdir)/traplog/dos
+
+$(abs_top_srcdir)/build/traplog/dos/dos16r/086c/exe/tfldump.exe:
+	$(MAKE) -C $(abs_top_srcdir)/traplog/dos
+
+$(abs_exe_dir)/tfl8086p.com: $(abs_top_srcdir)/build/traplog/dos/dos16r/086c/exe/tfl8086p.com
+	cp -v $^ $@
+
+$(abs_exe_dir)/tfl8086.com: $(abs_top_srcdir)/build/traplog/dos/dos16r/086c/exe/tfl8086.com
+	cp -v $^ $@
+
+$(abs_exe_dir)/tfldump.exe: $(abs_top_srcdir)/build/traplog/dos/dos16r/086c/exe/tfldump.exe
+	cp -v $^ $@
+
+all-targets: all-targets-abs-dirs all-programs all-txt all-util
+	@true
+
+clean-targets:
+	@rm -Rfv $(abs_exe_dir) $(abs_lib_dir) $(abs_obj_dir)
+
+endif
+

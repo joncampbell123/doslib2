@@ -198,6 +198,8 @@ AC_CONFIG_FILES(hw/cpu/lib/Makefile)
 AC_CONFIG_FILES(efi/Makefile)
 AC_CONFIG_FILES(efi/example/Makefile)
 AC_CONFIG_FILES(efi/doslib/Makefile)
+AC_CONFIG_FILES(unittest/Makefile)
+AC_CONFIG_FILES(unittest/cpu/Makefile)
 
 AC_OUTPUT
 
