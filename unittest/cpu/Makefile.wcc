@@ -27,6 +27,9 @@ all-util: $(abs_exe_dir)/tfl8086.com $(abs_exe_dir)/tfl8086p.com $(abs_exe_dir)/
 $(abs_top_srcdir)/build/traplog/dos/dos16r/086c/exe/tfl8086p.com:
 	$(MAKE) -C $(abs_top_srcdir)/traplog/dos
 
+$(abs_top_srcdir)/build/traplog/dos/dos16r/086c/exe/tfl8086.com:
+	$(MAKE) -C $(abs_top_srcdir)/traplog/dos
+
 $(abs_top_srcdir)/build/traplog/dos/dos16r/086c/exe/tfldump.exe:
 	$(MAKE) -C $(abs_top_srcdir)/traplog/dos
 
