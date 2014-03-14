@@ -3,13 +3,9 @@ ifdef target_subdir
 
 all-targets-abs-dirs: $(abs_exe_dir) $(abs_lib_dir) $(abs_obj_dir)
 
-all_programs  = $(abs_exe_dir)/qdel.com
-all_programs += $(abs_exe_dir)/tf_null.com
+all_programs = $(abs_exe_dir)/tf_null.com
 
 all-programs: $(all_programs)
-
-$(abs_exe_dir)/qdel.com: qdel.asm
-	$(NASM) -o $@ -f bin $(NASMFLAGS) $^
 
 $(abs_exe_dir)/tf_null.com: tf_null.asm
 	$(NASM) -o $@ -f bin $(NASMFLAGS) $^
@@ -22,7 +18,7 @@ $(abs_exe_dir)/list.txt: LIST
 
 all-txt: $(abs_exe_dir)/list.txt $(abs_exe_dir)/runtest.bat
 
-all-util: $(abs_exe_dir)/tfl8086.com $(abs_exe_dir)/tfl8086p.com $(abs_exe_dir)/tfldump.exe
+all-util: $(abs_exe_dir)/tfl8086.com $(abs_exe_dir)/tfl8086p.com $(abs_exe_dir)/tfldump.exe $(abs_exe_dir)/qdel.com
 
 $(abs_top_srcdir)/build/traplog/dos/dos16r/086c/exe/tfl8086p.com:
 	$(MAKE) -C $(abs_top_srcdir)/traplog/dos
@@ -33,6 +29,9 @@ $(abs_top_srcdir)/build/traplog/dos/dos16r/086c/exe/tfl8086.com:
 $(abs_top_srcdir)/build/traplog/dos/dos16r/086c/exe/tfldump.exe:
 	$(MAKE) -C $(abs_top_srcdir)/traplog/dos
 
+$(abs_top_srcdir)/build/dos/asmexam/dos16r/086c/exe/qdel.com:
+	$(MAKE) -C $(abs_top_srcdir)/dos/asmexam
+
 $(abs_exe_dir)/tfl8086p.com: $(abs_top_srcdir)/build/traplog/dos/dos16r/086c/exe/tfl8086p.com
 	cp -v $^ $@
 
@@ -40,6 +39,9 @@ $(abs_exe_dir)/tfl8086.com: $(abs_top_srcdir)/build/traplog/dos/dos16r/086c/exe/
 	cp -v $^ $@
 
 $(abs_exe_dir)/tfldump.exe: $(abs_top_srcdir)/build/traplog/dos/dos16r/086c/exe/tfldump.exe
+	cp -v $^ $@
+
+$(abs_exe_dir)/qdel.com: $(abs_top_srcdir)/build/dos/asmexam/dos16r/086c/exe/qdel.com
 	cp -v $^ $@
 
 all-targets: all-targets-abs-dirs all-programs all-txt all-util
