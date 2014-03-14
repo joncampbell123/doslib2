@@ -35,7 +35,7 @@ REM ========================================================================
 
 REM TEST: Trap flag sanity test (execute NOPs)
 REM ..We want to make sure TFL8086 is able to log every instruction properly
-echo TEST: Trap flag sanity test
+echo ============== TEST: Trap flag sanity test ============
 tfl8086p tf_null.com
 qdel tf_null.log
 ren tf8086.log tf_null.log
