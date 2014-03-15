@@ -1,9 +1,13 @@
 List of files and their purpose
 
 tf_null.com                    [TFL8086] Test trap flag by executing NOPs
+tf_prefix.com                  [TFL8086] Test CPU prefixes, tolerance to length, combinations, etc.
 
 List of files by test unit
 
  * Trap flag sanity test (execute NOPs)
    tf_null.com                 [TFL8086] client program with NOPs
+
+ * CPU prefix handling
+   tf_prefix.com               [TFL8086] Test CPU prefixes, tolerance to length, combinations, etc.
 
