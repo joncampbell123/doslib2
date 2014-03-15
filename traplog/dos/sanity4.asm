@@ -24,10 +24,15 @@
 		pop	es
 
 ; execute an invalid opcode.
-; 8086/8088: it will just skip the opcode
+; 8086/8088: it will execute POP CS followed by OR DX,[BX+SI-0x6F70], which is why we PUSH CS first
 ; 286 or higher: INT 6h will trigger
+		push	cs
 		db	0x0F,0x0B	; invalid opcode UD2
 		nop
+		nop
+		nop
+		nop
+		pop	ds	; discard CS
 
 ; load invalop value to make the counter visible
 		mov	ax,word [cs:invalop]
