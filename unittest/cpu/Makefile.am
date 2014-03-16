@@ -27,6 +27,11 @@ clean:
 		fi;\
 	done
 
+disk360:
+	dd if=/dev/zero of=test360.dsk bs=512 count=720
+	mkfs.vfat -r $$((0xE00/32)) test360.dsk
+	for i in ../../build/unittest/cpu/dos16r/086c/exe/*; do mcopy -i test360.dsk $$i ::; done
+
 disk720:
 	dd if=/dev/zero of=test720.dsk bs=512 count=1440
 	mkfs.vfat -r 240 test720.dsk # NOTE! For the disk image to actually work with MS-DOS the root directory count must be <= 240
@@ -37,5 +42,5 @@ disk:
 	mkfs.vfat -r 240 test.dsk
 	for i in ../../build/unittest/cpu/dos16r/086c/exe/*; do mcopy -i test.dsk $$i ::; done
 
-disk-all: disk disk720
+disk-all: disk disk720 disk360
 

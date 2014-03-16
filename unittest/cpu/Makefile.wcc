@@ -28,13 +28,16 @@ $(abs_exe_dir)/tf_null.com: tf_null.asm
 $(abs_exe_dir)/tf_f1.com: tf_f1.asm
 	$(NASM) -l $@.lst -o $@ -f bin $(NASMFLAGS) $^
 
+$(abs_exe_dir)/runtestc.bat: runtestc.bat
+	cp -v $^ $@
+
 $(abs_exe_dir)/runtest.bat: runtest.bat
 	cp -v $^ $@
 
 $(abs_exe_dir)/list.txt: LIST
 	cp -v $^ $@
 
-all-txt: $(abs_exe_dir)/list.txt $(abs_exe_dir)/runtest.bat
+all-txt: $(abs_exe_dir)/list.txt $(abs_exe_dir)/runtest.bat $(abs_exe_dir)/runtestc.bat
 
 all-util: $(abs_exe_dir)/tfl8086.com $(abs_exe_dir)/tfl8086p.com $(abs_exe_dir)/tfldump.exe $(abs_exe_dir)/qdel.com
 

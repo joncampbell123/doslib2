@@ -25,6 +25,8 @@ ECHO Hackipedia.org DOSLIB2 unittest/cpu unit tests (8086 or higher).
 ECHO Please make sure the current drive has as much free space as possible
 ECHO before proceeding. If you do not wish to run these tests type CTRL+C
 ECHO now.
+ECHO WARNING: These tests are kept from the main suite because they can
+ECHO cause certain emulators or hardware to crash or hang.
 PAUSE
 ECHO Okay! Here we go!
 ECHO .
@@ -33,29 +35,9 @@ REM ========================================================================
 REM CPU unit testing script
 REM ========================================================================
 
-REM TEST: Trap flag sanity test (execute NOPs)
-REM ..We want to make sure TFL8086 is able to log every instruction properly
-echo ============== TEST: Trap flag sanity test ============
-tfl8086p tf_null.com
-qdel tf_null.log
-ren tf8086.log tf_null.log
-validate tf_null
-
 REM TEST: POP CS test
-echo ============== TEST: POP CS ===========================
-tfl8086p tf_popcs.com
-qdel tf_popcs.log
-ren tf8086.log tf_popcs.log
-
-REM TEST: Invalid opcode 8086
-echo ============== TEST: Invalid opcode (8086) ============
-tfl8086p tf_invop.com
-qdel tf_invop.log
-ren tf8086.log tf_invop.log
-
-REM TEST: Prefixes
-echo ============== TEST: Prefixes =========================
-tfl8086p tf_prefx.com
-qdel tf_prefx.log
-ren tf8086.log tf_prefx.log
+echo ============== TEST: OPCODE F1 ========================
+tfl8086p tf_f1.com
+qdel tf_f1.log
+ren tf8086.log tf_f1.log
 
