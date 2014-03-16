@@ -275,8 +275,12 @@ nop_lprefix:	mov	word [cs:ret_06h],.fault_seg_long
 		es
 		nop			; ES x 14
 
-		; <- NTS: We stop at 15 ES's and a NOP because Sun/Oracle VirtualBox will "hang" re-executing the
-		;         over-long prefix sequence without advancing.
+		; <- NTS: We stop at 15 ES's and a NOP because of several known scenarios where the
+		;         system hangs:
+		;
+		;      ES x 15 + NOP: Sun/Oracle VirtualBox will "hang" re-executing the over-long prefix sequence without advancing,
+		;                     IF using the virtualization extensions of the CPU. Turning off VT-x/AMD-V allows the same
+		;                     overlong sequence to run. Issue happens with 15 or more ES prefixes.
 
 		stc			; NO FAULT MARKER
 .fault_seg_long:clc			; END OF TEST (CLC used to mark this)
