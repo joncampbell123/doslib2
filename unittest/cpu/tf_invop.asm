@@ -22,12 +22,56 @@
 		mov	word [es:(0x06*4)+2],cs
 		pop	es
 
-; =================== DO IT
+; =================== 0xFF,0xFF
 test1:		mov	word [cs:ret_06h],.pass		; in case of Invalid Opcode, set jump location
 		db	0xFF,0xFF			; invalid opcode 0xFF,0xFF
+		nop
+		nop
+		nop
+		nop
+.pass:
+
+; =================== CS: 0xFF,0xFF
+test2:		mov	word [cs:ret_06h],.pass		; in case of Invalid Opcode, set jump location
+		cs
 		db	0xFF,0xFF			; invalid opcode 0xFF,0xFF
+		nop
+		nop
+		nop
+		nop
+.pass:
+
+; =================== ES: 0xFF,0xFF
+test3:		mov	word [cs:ret_06h],.pass		; in case of Invalid Opcode, set jump location
+		ds
 		db	0xFF,0xFF			; invalid opcode 0xFF,0xFF
+		nop
+		nop
+		nop
+		nop
+.pass:
+
+; =================== REP 0xFF,0xFF
+test4:		mov	word [cs:ret_06h],.pass		; in case of Invalid Opcode, set jump location
+		mov	cx,32				; might affect CX?
+		rep
 		db	0xFF,0xFF			; invalid opcode 0xFF,0xFF
+		nop
+		nop
+		nop
+		nop
+.pass:
+
+; =================== REPZ 0xFF,0xFF
+test5:		mov	word [cs:ret_06h],.pass		; in case of Invalid Opcode, set jump location
+		mov	cx,32				; might affect CX?
+		xor	ax,ax				; clear AX, setting ZF=1
+		repz
+		db	0xFF,0xFF			; invalid opcode 0xFF,0xFF
+		nop
+		nop
+		nop
+		nop
 .pass:
 
 ; restore INT 06h
