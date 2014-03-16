@@ -32,6 +32,8 @@
 		nop
 		nop
 		nop
+		; NTS: If the CPU did not execute it as POP CS, then our code segment
+		;      will still remain on the stack.
 
 ; load invalop value to make the counter visible
 		mov	ax,word [cs:invalop]
