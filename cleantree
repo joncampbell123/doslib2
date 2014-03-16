@@ -24,6 +24,8 @@ rm -Rf build
 find -name nul.err -delete
 find -name \*.cmd -delete
 find -name test.dsk -delete
+find -name test720.dsk -delete
+find -name test360.dsk -delete
 rm -f testiso.iso
 rm -fv dos/asmexam/test*.dsk
 rm -fv config_public.h
