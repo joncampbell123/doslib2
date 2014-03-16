@@ -37,3 +37,11 @@ tfl386.com .......... Tracing utility for 386 or higher processors.
                       detect switching to protected mode and bail
                       out appropriately.
 
+tfl386f.com ......... Tracing utility for 386 or higher processors.
+                      CPU state capture includes 32-bit registers,
+                      segment registers (CS,DS,ES,FS,GS,SS), control
+                      and debug registers as well as FPU floating
+                      point registers and status. Also contains code
+                      to detect switching to protected mode and bail
+                      out appropriately.
+

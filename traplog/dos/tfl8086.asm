@@ -15,6 +15,14 @@
 ;                  utility is only able to trace up to the point where EDIT.COM made the
 ;                  INT 21h call to run QBASIC.EXE.
 ;
+;   - TFL386F (386 level with FPU capture) and VirtualBox 4.3:
+;                 Virtualbox's Trap Flag emulation will NOT advance past a floating point
+;                 instruction if VT-x/AMD-V virtualization extensions are enabled for use
+;                 with the virtual machine. You will get a massive TF log with nothing
+;                 but the same IP and floating point instruction. The only way to resolve
+;                 this issue is to shutdown the VM and reconfigure it NOT to use VT-x/AMD-V
+;                 acceleration, then start it up again.
+;
 ;   - Everything: There's something our EXEC code is not doing right that causes DOS to
 ;                 crash if EXE files are involved (COM files are OK). It's not just this
 ;                 code, the EXEC, EXEC2 and EXECLOAD samples in dos/asmexam are crashing
@@ -48,10 +56,19 @@
 %define CPU386 0
 %endif
 
+%ifndef FPU
+%define FPU 0
+%endif
+
 ; structs
 %if CPU386
+ %if FPU
+REC_CPU_ID	EQU			0x8387
+REC_LENGTH	EQU			212
+ %else
 REC_CPU_ID	EQU			0x8386
 REC_LENGTH	EQU			118
+ %endif
 %elif CPU286
 REC_CPU_ID	EQU			0x8286
 REC_LENGTH	EQU			56
@@ -107,6 +124,23 @@ REC_LENGTH	EQU			40
 			.r_ldtr		resw	1
 			.r_csip_capture	resd	1		; snapshot of the first 4 bytes at CS:IP
 			.r_sssp_capture	resd	1		; snapshot of the first 4 bytes at SS:IP
+ %if FPU
+			.f_cw		resw	1
+			.f_sw		resw	1
+			.f_tagw		resw	1
+			.f_ip		resw	1		; instruction pointer
+			.f_st16		resw	1		; opcode, IP, other bits at offset 16
+			.f_op		resw	1		; operand pointer
+			.f_op2		resw	1		; other half, or selector, etc. at offset 24
+			.f_st0		resw	5		; st(0) 80-bit
+			.f_st1		resw	5		; st(1) 80-bit
+			.f_st2		resw	5		; st(2) 80-bit
+			.f_st3		resw	5		; st(3) 80-bit
+			.f_st4		resw	5		; st(4) 80-bit
+			.f_st5		resw	5		; st(5) 80-bit
+			.f_st6		resw	5		; st(6) 80-bit
+			.f_st7		resw	5		; st(7) 80-bit
+ %endif
 %else
 			.r_recid	resw	1		; record ID. set to REC_CPU_ID
 			.r_reclen	resw	1		; record length
@@ -514,6 +548,14 @@ on_int1_trap:	cli
 		xor	ax,ax							; NTS: SLDT is not recognized in real mode. LDT has no meaning anyway.
 		mov	word [di + cpu_state_record_8086.r_ldtr],ax		;      Someday when this code traces protected mode
 										;      we will make use of this field.
+ %if FPU
+		; NTS: Use the 16-bit format. DOSBox does not execute the 32-bit version from real mode
+		;      no matter how many address/operand 32-bit overrides we try (probably should fix that).
+		fsave	[di + cpu_state_record_8086.f_cw]
+		; NTS: We must FSAVE and then FRSTOR. DOSBox will lose track of FPU state if we don't.
+		;      It's a DOSBox emulation bug I should probably fix soon.
+		frstor	[di + cpu_state_record_8086.f_cw]
+ %endif
 %else
 		mov	ax,[bp+0]
 		mov	word [di + cpu_state_record_8086.r_es],ax
@@ -781,7 +823,11 @@ str_need_param:	db	'Need a program to run'
 crlf:		db	13,10,'$'
 
 %if CPU386
+ %if FPU
+logfilename:	db	'TF387.LOG',0
+ %else
 logfilename:	db	'TF386.LOG',0
+ %endif
 %elif CPU286
 logfilename:	db	'TF286.LOG',0
 %else
