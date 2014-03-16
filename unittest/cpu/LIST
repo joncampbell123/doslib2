@@ -4,6 +4,7 @@ tf_null.com                    [TFL8086] Test trap flag by executing NOPs
 tf_prefix.com                  [TFL8086] Test CPU prefixes, tolerance to length, combinations, etc.
 tf_popcs.com                   [TFL8086] Test POP CS instruction
 tf_f1.com                      [TFL386?] Test opcode F1 (normally INT01 or ICEBP)
+tf_invop.com                   [TFL8086] Test invalid opcode 0xFF 0xFF with and without prefixes
 
 List of files by test unit
 
@@ -15,4 +16,7 @@ List of files by test unit
 
  * POP CS
    tf_popcs.com                [TFL8086] Test POP CS instruction
+
+ * 8086 Invalid opcode tests
+   tf_invop.com                [TFL8086] Test invalid opcode 0xFF 0xFF with and without prefixes
 
