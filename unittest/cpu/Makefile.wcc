@@ -3,9 +3,10 @@ ifdef target_subdir
 
 all-targets-abs-dirs: $(abs_exe_dir) $(abs_lib_dir) $(abs_obj_dir)
 
-all_programs  = $(abs_exe_dir)/tf_null.com
-all_programs += $(abs_exe_dir)/tf_prefx.com
+all_programs  = $(abs_exe_dir)/tf_prefx.com
 all_programs += $(abs_exe_dir)/tf_popcs.com
+all_programs += $(abs_exe_dir)/tf_null.com
+all_programs += $(abs_exe_dir)/tf_f1.com
 
 all_programs += $(abs_exe_dir)/validate$(exe_suffix)
 
@@ -18,6 +19,9 @@ $(abs_exe_dir)/tf_prefx.com: tf_prefx.asm
 	$(NASM) -l $@.lst -o $@ -f bin $(NASMFLAGS) $^
 
 $(abs_exe_dir)/tf_null.com: tf_null.asm
+	$(NASM) -l $@.lst -o $@ -f bin $(NASMFLAGS) $^
+
+$(abs_exe_dir)/tf_f1.com: tf_f1.asm
 	$(NASM) -l $@.lst -o $@ -f bin $(NASMFLAGS) $^
 
 $(abs_exe_dir)/runtest.bat: runtest.bat
