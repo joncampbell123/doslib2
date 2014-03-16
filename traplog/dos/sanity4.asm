@@ -32,7 +32,6 @@
 		nop
 		nop
 		nop
-		pop	ds	; discard CS
 
 ; load invalop value to make the counter visible
 		mov	ax,word [cs:invalop]

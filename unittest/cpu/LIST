@@ -2,6 +2,7 @@ List of files and their purpose
 
 tf_null.com                    [TFL8086] Test trap flag by executing NOPs
 tf_prefix.com                  [TFL8086] Test CPU prefixes, tolerance to length, combinations, etc.
+tf_popcs.com                   [TFL8086] Test POP CS instruction
 
 List of files by test unit
 
@@ -10,4 +11,7 @@ List of files by test unit
 
  * CPU prefix handling
    tf_prefix.com               [TFL8086] Test CPU prefixes, tolerance to length, combinations, etc.
+
+ * POP CS
+   tf_popcs.com                [TFL8086] Test POP CS instruction
 
