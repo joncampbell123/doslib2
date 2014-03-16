@@ -2,7 +2,8 @@
 ; TF_INVOP.COM
 ; Invalid opcode tests. This is meant for 8088/8086 which doesn't have invalid opcodes,
 ; because some people say that it skips bytes quietly, but nobody knows exactly what it
-; does.
+; does. So we execute 0xFF,0xFF (an invalid code) which so far triggers an invalid opcode
+; on modern hardware, but is said to be ignored by the 8086.
 ; Meant to run from within TFL8086.COM to log each instruction.
 ;--------------------------------------------------------------------------------------
 		bits 16			; 16-bit real mode
