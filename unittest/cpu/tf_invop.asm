@@ -74,6 +74,42 @@ test5:		mov	word [cs:ret_06h],.pass		; in case of Invalid Opcode, set jump locat
 		nop
 .pass:
 
+; =================== LOCK 0xFF,0xFF
+test6:		mov	word [cs:ret_06h],.pass		; in case of Invalid Opcode, set jump location
+		db	0xF0				; lock
+		db	0xFF,0xFF			; invalid opcode 0xFF,0xFF
+		nop
+		nop
+		nop
+		nop
+.pass:
+
+; =================== CS: 0xFF,0xFF
+test7:		mov	word [cs:ret_06h],.pass		; in case of Invalid Opcode, set jump location
+		cs
+		ds
+		es
+		ss
+		db	0xFF,0xFF			; invalid opcode 0xFF,0xFF
+		nop
+		nop
+		nop
+		nop
+.pass:
+
+; =================== CS: 0xFF,0xFF
+test8:		mov	word [cs:ret_06h],.pass		; in case of Invalid Opcode, set jump location
+		db	0xF0
+		db	0xF0
+		db	0xF0
+		db	0xF0
+		db	0xFF,0xFF			; invalid opcode 0xFF,0xFF
+		nop
+		nop
+		nop
+		nop
+.pass:
+
 ; restore INT 06h
 		push	es
 		xor	ax,ax
