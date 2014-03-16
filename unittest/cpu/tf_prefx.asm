@@ -44,6 +44,7 @@ nop_prefix:	mov	word [cs:ret_06h],.fault_seg_nop
 ; ---------------------------------------------------------
 		mov	word [cs:ret_06h],.fault_rep_nop
 
+		mov	cx,16		; perhaps REP NOP on some CPUs might change CX?
 		rep
 		nop
 
@@ -52,9 +53,23 @@ nop_prefix:	mov	word [cs:ret_06h],.fault_seg_nop
 ; ---------------------------------------------------------
 		mov	word [cs:ret_06h],.fault_repnz_nop
 
+		mov	cx,16		; perhaps REP NOP on some CPUs might change CX?
+		xor	ax,ax		; clear AX, also setting ZF=1
 		repz
 		nop
 
+		mov	cx,16		; perhaps REP NOP on some CPUs might change CX?
+		or	cx,cx		; set ZF=0
+		repz
+		nop
+
+		mov	cx,16		; perhaps REP NOP on some CPUs might change CX?
+		or	cx,cx		; set ZF=0
+		repnz
+		nop
+
+		mov	cx,16		; perhaps REP NOP on some CPUs might change CX?
+		xor	ax,ax		; clear AX, also setting ZF=1
 		repnz
 		nop
 
