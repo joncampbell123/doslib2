@@ -487,6 +487,12 @@ elsif ($ver eq "4.01") {
 		$target_size = (2*1024*1024);
 	}
 }
+elsif ($ver eq "2.1" || $ver eq "2.2td") {
+	# MS-DOS 2.x doesn't seem to boot properly with images less than 2MB
+	if ($target_size < (2*1024*1024)) {
+		$target_size = (2*1024*1024);
+	}
+}
 else {
 	if ($target_size < (1*1024*1024)) {
 		$target_size = (1*1024*1024);
