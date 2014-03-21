@@ -516,7 +516,9 @@ if ($target_size > 0) {
 
 if ($ver eq "3.2epson" || $ver eq "2.1" || $ver eq "2.2td") {
 	if ($user_chs_override == 0) {
-		$sects = 16;
+		# MS-DOS 2.1, 2.2, and 3.2 do not boot properly in certain emulators
+		# (such as VirtualBox) when there are 16 sectors/track.
+		$sects = 15;
 		$cyls = $target_size / 512 / $heads / $sects;
 		# MS-DOS 3.2 cannot handle >= 1024 cylinders OR > 16 heads. Period.
 		# Geometry hacks familiar to later versions don't work.
@@ -540,8 +542,14 @@ if ($ver eq "3.2epson" || $ver eq "2.1" || $ver eq "2.2td") {
 	if ($user_chs_override == 0) {
 	}
 	elsif ($sects > 52) { # FIXME: What's the upper limit?
-		print "WARNING: 52 or more sectors/track with MS-DOS 3.2 is not reliable\n";
+		print "WARNING: 52 or more sectors/track with MS-DOS 2.x/3.2 is not reliable\n";
 		print "For more information visit: http://www.os2museum.com/wp/?p=685\n";
+		sleep 1;
+	}
+	elsif ($sects > 15) {
+		print "WARNING: 16 or more sectors/track with MS-DOS 2.x/3.2 is not reliable\n";
+		print "         In certain emulators (such as VirtualBox) the image will\n";
+		print "         fail to boot properly while in others (DOSBox) it may work.\n";
 		sleep 1;
 	}
 }
