@@ -18,3 +18,8 @@ for size in 10 15 16 20 24 31 32 48 63 80 120 160 210 240 320 400 480 504 620 80
 	done
 done
 
+for vdi in ../../build/*/*.vdi; do
+	echo "Compressing $vdi..." || exit 1
+	xz -6e "$vdi" || exit 1
+done
+
