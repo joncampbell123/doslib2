@@ -527,6 +527,14 @@ if ($ver eq "3.2epson" || $ver eq "2.1" || $ver eq "2.2td") {
 }
 else {
 	if ($user_chs_override == 0) {
+# try to pick more realistic geometries for small hard disk images
+		$sects = 8;
+		$cyls = int(($target_size / 512 / $heads / $sects) + 0.5);
+		while ($sects < 63 && $cyls > 100) {
+			$sects++;
+			$cyls = int(($target_size / 512 / $heads / $sects) + 0.5);
+		}
+
 # MS-DOS cannot handle >= 1024 cylinders
 		while ($cyls >= 1024 && $heads < 128) {
 			$heads *= 2;
