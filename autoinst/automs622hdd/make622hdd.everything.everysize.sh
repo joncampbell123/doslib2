@@ -6,7 +6,7 @@ for size in 10 15 16 20 24 31 32 48 63 80 120 160 210 240 320 400 480 504 620 80
 	done
 
 	for name in msdos210hdd msdos220tdhdd msdos320epsonhdd msdos330hdd msdos330nechdd msdos401hdd msdos500hdd msdos600hdd msdos620hdd msdos621hdd msdos622hdd msdos70hdd msdos70sp1hdd msdos710osr2hdd msdos710win98hdd msdos710win98sehdd msdos80winmehdd; do
-		mv -vn ../../build/$name "../../build/$name.$size"mb || exit 1
+		rm -v ../../build/$name || exit 1
 		mv -vn ../../build/$name.vdi "../../build/$name.$size"mb.vdi || exit 1
 	done
 done
