@@ -1246,7 +1246,7 @@ system("dd conv=notrunc,nocreat if=mbr.bin of=$diskbase bs=512 count=1") == 0 ||
 # of the disk, which is an utter waste of disk space. Fuck you fdisk.
 my $prt_cyls = $cyls;
 $prt_cyls = 1024 if $prt_cyls > 1024;
-open(BIN,"+<","$diskbase") || die
+open(BIN,"+<","$diskbase") || die;
 binmode(BIN);
 seek(BIN,0x1BE,0);
 print BIN pack("cccccccc",
@@ -1273,4 +1273,12 @@ if ($fat == 32) {
 
 # make VDI for VirtualBox, QEMU, etc
 system("qemu-img convert -f raw -O vdi $diskbase $diskbase.vdi") == 0 || die;
+# ah, but that's not quite enough. qemu-img devs apparently never considered
+# the idea that disk geometry might be something that would matter, it doesn't
+# even have the option! so we have to patch the VDI image header!
+open(VDI,"+<","$diskbase.vdi") || die;
+binmode(VDI);
+seek(VDI,0x15C,0);
+print VDI pack("VVV",$cyls,$heads,$sects);
+close(VDI);
 
