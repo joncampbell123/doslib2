@@ -8,6 +8,9 @@
 
 		push	cs
 		pop	ds
+		push	cs
+		pop	es
+		mov	sp,stack_end-2
 
 ; read the command line, skip leading whitespace
 		mov	si,0x81
