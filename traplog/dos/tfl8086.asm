@@ -179,6 +179,7 @@ REC_LENGTH	EQU			40
 		pop	ds
 		push	cs
 		pop	es
+		mov	sp,stack_end-2
 
 		cld
 		mov	di,ENDOFFILE+1
