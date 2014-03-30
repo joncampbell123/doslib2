@@ -105,6 +105,7 @@
    int2edir.com       Use INT 2Eh to execute DIR        [MS-DOS 2.0+]
    int29str.com       Using INT 29h to print out        [MS-DOS 2.0+]
    ctrlbrk.com        Proof of concept hooking CTRL+C   [MS-DOS 1.0+]
+   ctrlbrkx.com       Hooking CTRL+C, allow exit        [MS-DOS 1.0+]
    createmp.com       Create temporary file             [MS-DOS 3.0+]
    creados3.com       Create a file, lseek, write       [MS-DOS 3.0+]
    creados4.com       Create a file, lseek, write       [MS-DOS 4.0+]
