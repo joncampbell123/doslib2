@@ -1,7 +1,8 @@
 ;--------------------------------------------------------------------------------------
-; PSCB2.COM
+; PSCB7.COM
 ; 
 ; Call to set INT 15h device hook, enable, watch, disable. Print out stack.
+; We do the Intellimouse knock, then tell the BIOS to do 4 bytes per packet.
 ;--------------------------------------------------------------------------------------
 		segment	.code
 
@@ -22,13 +23,40 @@
 		mov	word [out_buf_o],out_buf
 
 		mov	ax,0xC201	; reset (also ensures the PS/2 mouse is taken out of Intellimouse mode)
+		int	15h		; NTS: apparently though this also puts the BIOS into a byte-at-a-time callback mode?
+		call	int15_print_err
+
+		; NTS: The BIOS will correctly serialize 4-byte PS/2 mouse packets, but apparently, only the first three
+		;      are visible on the stack?
+		mov	ax,0xC205	; initialize
+		mov	bh,4		; 4 byte (byte-at-at-time)
 		int	15h
 		call	int15_print_err
 
-		mov	ax,0xC205	; initialize
-		mov	bh,3		; 3 bytes (standard PS/2 mouse packet)
+		mov	ax,0xC202	; set sample rate
+		mov	bh,0x06		; 200
 		int	15h
 		call	int15_print_err
+
+		mov	ax,0xC202	; set sample rate
+		mov	bh,0x05		; 100
+		int	15h
+		call	int15_print_err
+
+		mov	ax,0xC202	; set sample rate
+		mov	bh,0x04		; 80
+		int	15h
+		call	int15_print_err
+
+		mov	ax,0xC204	; get type
+		int	15h
+		call	int15_print_err
+		cmp	bh,0x03		; is it intellimouse?
+		mov	dx,str_is_intellimouse
+		jz	is_ok
+		mov	dx,str_not_intellimouse
+is_ok:		mov	ah,9
+		int	21h
 
 		mov	ax,0xC207	; set device handler addr
 		mov	bx,cs
@@ -200,12 +228,16 @@ putc_hex16:	push	ax
 
 ; print INT 15h error
 int15_print_err:pushf
+		push	ax
+		push	bx
 		jc	failed		; carry set if error
 		or	ah,ah
 		jnz	failed		; AH != 0 if error
 		mov	ah,9
 		mov	dx,str_ok
 		int	21h
+		pop	bx
+		pop	ax
 		popf
 		ret
 failed:		mov	bl,ah		; BX = (AH * 2)
@@ -217,11 +249,15 @@ failed:		mov	bl,ah		; BX = (AH * 2)
 		mov	dx,[strtbl+bx-2]
 		mov	ah,9
 		int	21h
+		pop	bx
+		pop	ax
 		popf
 		ret
 
 		segment	.data
 
+str_is_intellimouse:db	"Mouse responds like Intellimouse. 4 bytes per data packet should appear",13,10,"$"
+str_not_intellimouse:db	"Mouse did not indicate Intellimouse capability",13,10,"$"
 str_hex:	db	"0123456789ABCDEF"
 str_ok:		db	"OK",13,10,"$"
 str_crlf:	db	13,10,"$"

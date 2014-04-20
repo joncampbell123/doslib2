@@ -1,7 +1,9 @@
 ;--------------------------------------------------------------------------------------
-; PSCB2.COM
+; PSCB5.COM
 ; 
 ; Call to set INT 15h device hook, enable, watch, disable. Print out stack.
+; This version tests whether or not you can get the BIOS to return the incoming
+; PS/2 data byte-at-a-time. We don't set any packet size at all.
 ;--------------------------------------------------------------------------------------
 		segment	.code
 
@@ -22,12 +24,7 @@
 		mov	word [out_buf_o],out_buf
 
 		mov	ax,0xC201	; reset (also ensures the PS/2 mouse is taken out of Intellimouse mode)
-		int	15h
-		call	int15_print_err
-
-		mov	ax,0xC205	; initialize
-		mov	bh,3		; 3 bytes (standard PS/2 mouse packet)
-		int	15h
+		int	15h		; NTS: apparently though this also puts the BIOS into a byte-at-a-time callback mode?
 		call	int15_print_err
 
 		mov	ax,0xC207	; set device handler addr

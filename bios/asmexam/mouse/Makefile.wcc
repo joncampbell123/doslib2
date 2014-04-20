@@ -7,6 +7,11 @@ all_programs  = $(abs_exe_dir)/psenable.com
 all_programs += $(abs_exe_dir)/psdisabl.com
 all_programs += $(abs_exe_dir)/pscb1.com
 all_programs += $(abs_exe_dir)/pscb2.com
+all_programs += $(abs_exe_dir)/pscb3.com
+all_programs += $(abs_exe_dir)/pscb4.com
+all_programs += $(abs_exe_dir)/pscb5.com
+all_programs += $(abs_exe_dir)/pscb6.com
+all_programs += $(abs_exe_dir)/pscb7.com
 
 all-programs: $(all_programs)
 
@@ -20,6 +25,21 @@ $(abs_exe_dir)/pscb1.com: pscb1.asm
 	$(NASM) -o $@ -f bin $(NASMFLAGS) $^
 
 $(abs_exe_dir)/pscb2.com: pscb2.asm
+	$(NASM) -o $@ -f bin $(NASMFLAGS) $^
+
+$(abs_exe_dir)/pscb3.com: pscb3.asm
+	$(NASM) -o $@ -f bin $(NASMFLAGS) $^
+
+$(abs_exe_dir)/pscb4.com: pscb4.asm
+	$(NASM) -o $@ -f bin $(NASMFLAGS) $^
+
+$(abs_exe_dir)/pscb5.com: pscb5.asm
+	$(NASM) -o $@ -f bin $(NASMFLAGS) $^
+
+$(abs_exe_dir)/pscb6.com: pscb6.asm
+	$(NASM) -o $@ -f bin $(NASMFLAGS) $^
+
+$(abs_exe_dir)/pscb7.com: pscb7.asm
 	$(NASM) -o $@ -f bin $(NASMFLAGS) $^
 
 all-txt:

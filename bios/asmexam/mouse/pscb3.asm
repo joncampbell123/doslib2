@@ -1,7 +1,9 @@
 ;--------------------------------------------------------------------------------------
-; PSCB2.COM
+; PSCB3.COM
 ; 
 ; Call to set INT 15h device hook, enable, watch, disable. Print out stack.
+; This version tests whether or not you can get the BIOS to return the incoming
+; PS/2 data byte-at-a-time.
 ;--------------------------------------------------------------------------------------
 		segment	.code
 
@@ -26,7 +28,7 @@
 		call	int15_print_err
 
 		mov	ax,0xC205	; initialize
-		mov	bh,3		; 3 bytes (standard PS/2 mouse packet)
+		mov	bh,1		; 1 byte (byte-at-at-time)
 		int	15h
 		call	int15_print_err
 
