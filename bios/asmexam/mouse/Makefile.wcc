@@ -5,6 +5,7 @@ all-targets-abs-dirs: $(abs_exe_dir) $(abs_lib_dir) $(abs_obj_dir)
 
 all_programs  = $(abs_exe_dir)/psenable.com
 all_programs += $(abs_exe_dir)/psdisabl.com
+all_programs  = $(abs_exe_dir)/pscb1.com
 
 all-programs: $(all_programs)
 
@@ -12,6 +13,9 @@ $(abs_exe_dir)/psenable.com: psenable.asm
 	$(NASM) -o $@ -f bin $(NASMFLAGS) $^
 
 $(abs_exe_dir)/psdisabl.com: psdisabl.asm
+	$(NASM) -o $@ -f bin $(NASMFLAGS) $^
+
+$(abs_exe_dir)/pscb1.com: pscb1.asm
 	$(NASM) -o $@ -f bin $(NASMFLAGS) $^
 
 all-txt:

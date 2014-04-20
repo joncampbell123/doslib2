@@ -34,7 +34,7 @@ failed:		mov	bl,ah		; BX = (AH * 2)
 		int	21h
 		ret
 
-str_ok:		db	"OK\r\n$"
+str_ok:		db	"OK",13,10,"$"
 
 str_e01:	db	"invalid function",13,10,"$"
 str_e02:	db	"invalid input",13,10,"$"
