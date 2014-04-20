@@ -1,3 +1,4 @@
 * BIOS INT15h mouse
-   mode0.com          Set 40x25 text mode, mono         [ALL except MDA/Herc]
+   psenable.com       INT 15h enable
+   psdisabl.com       INT 15h disable
 

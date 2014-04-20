@@ -1,6 +1,6 @@
 -include ../config.mak
 
-SUBDIRS = video
+SUBDIRS = video mouse
 ACLOCAL_AMFLAGS = 
 
 library_includedir = $(includedir)/doslib2/test
