@@ -1,0 +1,260 @@
+# This is a separate makefile because GNU automake interferes with GNU make conditionals
+ifdef target_subdir
+
+all-targets-abs-dirs: $(abs_exe_dir) $(abs_lib_dir) $(abs_obj_dir)
+
+all_programs  = $(abs_exe_dir)/mode7.com
+all_programs += $(abs_exe_dir)/mode3.com
+all_programs += $(abs_exe_dir)/mode2.com
+all_programs += $(abs_exe_dir)/mode1.com
+all_programs += $(abs_exe_dir)/mode0.com
+all_programs += $(abs_exe_dir)/80text1.com
+all_programs += $(abs_exe_dir)/cga4a.com
+all_programs += $(abs_exe_dir)/cga2a.com
+all_programs += $(abs_exe_dir)/herc2a.com
+all_programs += $(abs_exe_dir)/herc2a6.com
+all_programs += $(abs_exe_dir)/ega16a.exe
+all_programs += $(abs_exe_dir)/ega16b.exe
+all_programs += $(abs_exe_dir)/ega16bv.exe
+all_programs += $(abs_exe_dir)/ega16c.exe
+all_programs += $(abs_exe_dir)/ega16d.exe
+all_programs += $(abs_exe_dir)/ega16e.exe
+all_programs += $(abs_exe_dir)/ega16f.exe
+all_programs += $(abs_exe_dir)/vga256a.exe
+all_programs += $(abs_exe_dir)/vga256b.exe
+all_programs += $(abs_exe_dir)/vga256c.exe
+all_programs += $(abs_exe_dir)/vga256d.exe
+all_programs += $(abs_exe_dir)/vga256e.exe
+all_programs += $(abs_exe_dir)/vga256f.exe
+all_programs += $(abs_exe_dir)/vga256g.exe
+all_programs += $(abs_exe_dir)/vga256h.exe
+all_programs += $(abs_exe_dir)/vga256i.exe
+all_programs += $(abs_exe_dir)/vgaras1.com
+all_programs += $(abs_exe_dir)/egaras1.com
+
+all-programs: $(all_programs)
+
+$(abs_exe_dir)/egaras1.com: egaras1.asm
+	$(NASM) -o $@ -f bin $(NASMFLAGS) $^
+
+$(abs_exe_dir)/vgaras1.com: vgaras1.asm
+	$(NASM) -o $@ -f bin $(NASMFLAGS) $^
+
+$(abs_exe_dir)/mode7.com: mode7.asm
+	$(NASM) -o $@ -f bin $(NASMFLAGS) $^
+
+$(abs_exe_dir)/mode3.com: mode3.asm
+	$(NASM) -o $@ -f bin $(NASMFLAGS) $^
+
+$(abs_exe_dir)/mode2.com: mode2.asm
+	$(NASM) -o $@ -f bin $(NASMFLAGS) $^
+
+$(abs_exe_dir)/mode1.com: mode1.asm
+	$(NASM) -o $@ -f bin $(NASMFLAGS) $^
+
+$(abs_exe_dir)/mode0.com: mode0.asm
+	$(NASM) -o $@ -f bin $(NASMFLAGS) $^
+
+$(abs_exe_dir)/80text1.com: 80text1.asm
+	$(NASM) -o $@ -f bin $(NASMFLAGS) $^
+
+$(abs_exe_dir)/ega16f.exe: $(abs_obj_dir)/ega16f.obj
+	@echo option quiet system $(WLINK_SYSTEM) $(WLINKFLAGS) $(WLINK_SEGMENTS) $(foreach x,$(filter %$(obj_suffix),$^),file "$(x)") option map=$(abs_obj_dir)/ega16b.map name $@ >$(abs_obj_dir)/ega16f.cmd
+	$(WLINK) @$(abs_obj_dir)/ega16f.cmd
+
+$(abs_obj_dir)/ega16f.obj: ega16f.asm $(abs_exe_dir)/ega35std.350
+	$(NASM) -o $@ -f obj $(NASMFLAGS) $<
+
+$(abs_exe_dir)/ega16e.exe: $(abs_obj_dir)/ega16e.obj
+	@echo option quiet system $(WLINK_SYSTEM) $(WLINKFLAGS) $(WLINK_SEGMENTS) $(foreach x,$(filter %$(obj_suffix),$^),file "$(x)") option map=$(abs_obj_dir)/ega16b.map name $@ >$(abs_obj_dir)/ega16e.cmd
+	$(WLINK) @$(abs_obj_dir)/ega16e.cmd
+
+$(abs_obj_dir)/ega16e.obj: ega16e.asm $(abs_exe_dir)/ega35std.350
+	$(NASM) -o $@ -f obj $(NASMFLAGS) $<
+
+$(abs_exe_dir)/ega16d.exe: $(abs_obj_dir)/ega16d.obj
+	@echo option quiet system $(WLINK_SYSTEM) $(WLINKFLAGS) $(WLINK_SEGMENTS) $(foreach x,$(filter %$(obj_suffix),$^),file "$(x)") option map=$(abs_obj_dir)/ega16b.map name $@ >$(abs_obj_dir)/ega16d.cmd
+	$(WLINK) @$(abs_obj_dir)/ega16d.cmd
+
+$(abs_obj_dir)/ega16d.obj: ega16d.asm $(abs_exe_dir)/ega35std.350
+	$(NASM) -o $@ -f obj $(NASMFLAGS) $<
+
+$(abs_exe_dir)/ega16c.exe: $(abs_obj_dir)/ega16c.obj
+	@echo option quiet system $(WLINK_SYSTEM) $(WLINKFLAGS) $(WLINK_SEGMENTS) $(foreach x,$(filter %$(obj_suffix),$^),file "$(x)") option map=$(abs_obj_dir)/ega16b.map name $@ >$(abs_obj_dir)/ega16c.cmd
+	$(WLINK) @$(abs_obj_dir)/ega16c.cmd
+
+$(abs_obj_dir)/ega16c.obj: ega16c.asm $(abs_exe_dir)/ega35std.350
+	$(NASM) -o $@ -f obj $(NASMFLAGS) $<
+
+$(abs_exe_dir)/ega16bv.exe: $(abs_obj_dir)/ega16bv.obj
+	@echo option quiet system $(WLINK_SYSTEM) $(WLINKFLAGS) $(WLINK_SEGMENTS) $(foreach x,$(filter %$(obj_suffix),$^),file "$(x)") option map=$(abs_obj_dir)/ega16b.map name $@ >$(abs_obj_dir)/ega16bv.cmd
+	$(WLINK) @$(abs_obj_dir)/ega16bv.cmd
+
+$(abs_obj_dir)/ega16bv.obj: ega16bv.asm $(abs_exe_dir)/ega35cus.350
+	$(NASM) -o $@ -f obj $(NASMFLAGS) $<
+
+$(abs_exe_dir)/ega16b.exe: $(abs_obj_dir)/ega16b.obj
+	@echo option quiet system $(WLINK_SYSTEM) $(WLINKFLAGS) $(WLINK_SEGMENTS) $(foreach x,$(filter %$(obj_suffix),$^),file "$(x)") option map=$(abs_obj_dir)/ega16b.map name $@ >$(abs_obj_dir)/ega16b.cmd
+	$(WLINK) @$(abs_obj_dir)/ega16b.cmd
+
+$(abs_obj_dir)/ega16b.obj: ega16b.asm $(abs_exe_dir)/ega35cus.350
+	$(NASM) -o $@ -f obj $(NASMFLAGS) $<
+
+$(abs_exe_dir)/ega16a.exe: $(abs_obj_dir)/ega16a.obj $(abs_exe_dir)/ega35std.350
+	@echo option quiet system $(WLINK_SYSTEM) $(WLINKFLAGS) $(WLINK_SEGMENTS) $(foreach x,$(filter %$(obj_suffix),$^),file "$(x)") option map=$(abs_obj_dir)/ega16a.map name $@ >$(abs_obj_dir)/ega16a.cmd
+	$(WLINK) @$(abs_obj_dir)/ega16a.cmd
+
+$(abs_obj_dir)/vga256a.obj: vga256a.asm $(abs_exe_dir)/vga256p1.200
+	$(NASM) -o $@ -f obj $(NASMFLAGS) $<
+
+$(abs_exe_dir)/vga256a.exe: $(abs_obj_dir)/vga256a.obj $(abs_exe_dir)/vga256p1.200
+	@echo option quiet system $(WLINK_SYSTEM) $(WLINKFLAGS) $(WLINK_SEGMENTS) $(foreach x,$(filter %$(obj_suffix),$^),file "$(x)") option map=$(abs_obj_dir)/ega16a.map name $@ >$(abs_obj_dir)/ega16a.cmd
+	$(WLINK) @$(abs_obj_dir)/ega16a.cmd
+
+$(abs_obj_dir)/vga256b.obj: vga256b.asm $(abs_exe_dir)/vga256p1.400
+	$(NASM) -o $@ -f obj $(NASMFLAGS) $<
+
+$(abs_exe_dir)/vga256b.exe: $(abs_obj_dir)/vga256b.obj $(abs_exe_dir)/vga256p1.400
+	@echo option quiet system $(WLINK_SYSTEM) $(WLINKFLAGS) $(WLINK_SEGMENTS) $(foreach x,$(filter %$(obj_suffix),$^),file "$(x)") option map=$(abs_obj_dir)/ega16a.map name $@ >$(abs_obj_dir)/ega16a.cmd
+	$(WLINK) @$(abs_obj_dir)/ega16a.cmd
+
+$(abs_obj_dir)/vga256c.obj: vga256c.asm $(abs_exe_dir)/vga256p1.200
+	$(NASM) -o $@ -f obj $(NASMFLAGS) $<
+
+$(abs_exe_dir)/vga256c.exe: $(abs_obj_dir)/vga256c.obj $(abs_exe_dir)/vga256p1.200
+	@echo option quiet system $(WLINK_SYSTEM) $(WLINKFLAGS) $(WLINK_SEGMENTS) $(foreach x,$(filter %$(obj_suffix),$^),file "$(x)") option map=$(abs_obj_dir)/ega16a.map name $@ >$(abs_obj_dir)/ega16a.cmd
+	$(WLINK) @$(abs_obj_dir)/ega16a.cmd
+
+$(abs_obj_dir)/vga256d.obj: vga256d.asm $(abs_exe_dir)/vga256p1.400
+	$(NASM) -o $@ -f obj $(NASMFLAGS) $<
+
+$(abs_exe_dir)/vga256d.exe: $(abs_obj_dir)/vga256d.obj $(abs_exe_dir)/vga256p1.400
+	@echo option quiet system $(WLINK_SYSTEM) $(WLINKFLAGS) $(WLINK_SEGMENTS) $(foreach x,$(filter %$(obj_suffix),$^),file "$(x)") option map=$(abs_obj_dir)/ega16a.map name $@ >$(abs_obj_dir)/ega16a.cmd
+	$(WLINK) @$(abs_obj_dir)/ega16a.cmd
+
+$(abs_obj_dir)/vga256e.obj: vga256e.asm $(abs_exe_dir)/vga256p1.200
+	$(NASM) -o $@ -f obj $(NASMFLAGS) $<
+
+$(abs_exe_dir)/vga256e.exe: $(abs_obj_dir)/vga256e.obj $(abs_exe_dir)/vga256p1.200
+	@echo option quiet system $(WLINK_SYSTEM) $(WLINKFLAGS) $(WLINK_SEGMENTS) $(foreach x,$(filter %$(obj_suffix),$^),file "$(x)") option map=$(abs_obj_dir)/ega16a.map name $@ >$(abs_obj_dir)/ega16a.cmd
+	$(WLINK) @$(abs_obj_dir)/ega16a.cmd
+
+$(abs_obj_dir)/vga256f.obj: vga256f.asm $(abs_exe_dir)/vga256p1.400
+	$(NASM) -o $@ -f obj $(NASMFLAGS) $<
+
+$(abs_exe_dir)/vga256f.exe: $(abs_obj_dir)/vga256f.obj $(abs_exe_dir)/vga256p1.400
+	@echo option quiet system $(WLINK_SYSTEM) $(WLINKFLAGS) $(WLINK_SEGMENTS) $(foreach x,$(filter %$(obj_suffix),$^),file "$(x)") option map=$(abs_obj_dir)/ega16a.map name $@ >$(abs_obj_dir)/ega16a.cmd
+	$(WLINK) @$(abs_obj_dir)/ega16a.cmd
+
+$(abs_obj_dir)/vga256g.obj: vga256g.asm $(abs_exe_dir)/vga256p1.240
+	$(NASM) -o $@ -f obj $(NASMFLAGS) $<
+
+$(abs_exe_dir)/vga256g.exe: $(abs_obj_dir)/vga256g.obj $(abs_exe_dir)/vga256p1.240
+	@echo option quiet system $(WLINK_SYSTEM) $(WLINKFLAGS) $(WLINK_SEGMENTS) $(foreach x,$(filter %$(obj_suffix),$^),file "$(x)") option map=$(abs_obj_dir)/ega16a.map name $@ >$(abs_obj_dir)/ega16a.cmd
+	$(WLINK) @$(abs_obj_dir)/ega16a.cmd
+
+$(abs_obj_dir)/vga256h.obj: vga256h.asm $(abs_exe_dir)/vga256p1.480
+	$(NASM) -o $@ -f obj $(NASMFLAGS) $<
+
+$(abs_exe_dir)/vga256h.exe: $(abs_obj_dir)/vga256h.obj $(abs_exe_dir)/vga256p1.480
+	@echo option quiet system $(WLINK_SYSTEM) $(WLINKFLAGS) $(WLINK_SEGMENTS) $(foreach x,$(filter %$(obj_suffix),$^),file "$(x)") option map=$(abs_obj_dir)/ega16a.map name $@ >$(abs_obj_dir)/ega16a.cmd
+	$(WLINK) @$(abs_obj_dir)/ega16a.cmd
+
+$(abs_obj_dir)/vga256i.obj: vga256i.asm $(abs_exe_dir)/vga256p1.350
+	$(NASM) -o $@ -f obj $(NASMFLAGS) $<
+
+$(abs_exe_dir)/vga256i.exe: $(abs_obj_dir)/vga256i.obj $(abs_exe_dir)/vga256p1.350
+	@echo option quiet system $(WLINK_SYSTEM) $(WLINKFLAGS) $(WLINK_SEGMENTS) $(foreach x,$(filter %$(obj_suffix),$^),file "$(x)") option map=$(abs_obj_dir)/ega16a.map name $@ >$(abs_obj_dir)/ega16a.cmd
+	$(WLINK) @$(abs_obj_dir)/ega16a.cmd
+
+$(abs_exe_dir)/ega35std.350: ega35std.350
+	cp -v $^ $@
+
+$(abs_exe_dir)/ega35cus.350: ega35cus.350
+	cp -v $^ $@
+
+$(abs_obj_dir)/ega16a.obj: ega16a.asm ega35std.350
+	$(NASM) -o $@ -f obj $(NASMFLAGS) $<
+
+$(abs_exe_dir)/cga4a.com: cga4a.asm parrot-cga-320x186.raw.ppm.cga billgates-cga-320x200.raw.ppm.cga
+	$(NASM) -o $@ -f bin $(NASMFLAGS) $<
+
+$(abs_exe_dir)/cga2a.com: cga2a.asm salvador-watches-cga-640x200.raw.ppm.cga ny-sky-cga-640x200.raw.ppm.cga
+	$(NASM) -o $@ -f bin $(NASMFLAGS) $<
+
+$(abs_exe_dir)/herc2a.com: herc2a.asm castus-herc-720x348.raw.ppm.herc
+	$(NASM) -o $@ -f bin $(NASMFLAGS) $<
+
+$(abs_exe_dir)/herc2a6.com: herc2a6.asm lolcat-hammahtime-640x348.herc.raw.herc
+	$(NASM) -o $@ -f bin $(NASMFLAGS) $<
+
+hotair-ega-640x350x16.cuspal.bmp: hotair-ega-640x350x16.cuspal.bmp.xz
+	xz -c -d $^ >$@
+
+hotair-ega-640x350x16.stdpal.bmp: hotair-ega-640x350x16.stdpal.bmp.xz
+	xz -c -d $^ >$@
+
+lolcat-hammahtime-640x348.herc.raw.herc: lolcat-hammahtime-640x348.herc.raw.ppm.xz
+	xz -c -d $^ | ./ppm2cga2.pl >$@
+
+castus-herc-720x348.raw.ppm.herc: castus-herc-720x348.raw.ppm.xz
+	xz -c -d $^ | ./ppm2cga2.pl >$@
+
+ny-sky-cga-640x200.raw.ppm.cga: ny-sky-cga-640x200.raw.ppm.xz
+	xz -c -d $^ | ./ppm2cga2.pl >$@
+
+salvador-watches-cga-640x200.raw.ppm.cga: salvador-watches-cga-640x200.raw.ppm.xz
+	xz -c -d $^ | ./ppm2cga2.pl >$@
+
+billgates-cga-320x200.raw.ppm.cga: billgates-cga-320x200.raw.ppm.xz
+	xz -c -d $^ | ./ppm2cga.pl >$@
+
+parrot-cga-320x186.raw.ppm.cga: parrot-cga-320x186.raw.ppm.xz
+	xz -c -d $^ | ./ppm2cga.pl >$@
+
+temple-320x350x256.bmp: temple-320x350x256.bmp.xz
+	xz -c -d $^ >$@
+
+temple-320x480x256.bmp: temple-320x480x256.bmp.xz
+	xz -c -d $^ >$@
+
+temple-320x240x256.bmp: temple-320x240x256.bmp.xz
+	xz -c -d $^ >$@
+
+sunset-320x200x256.bmp: sunset-320x200x256.bmp.xz
+	xz -c -d $^ >$@
+
+dandelion-320x400x256.bmp: dandelion-320x400x256.bmp.xz
+	xz -c -d $^ >$@
+
+$(abs_exe_dir)/vga256p1.200: sunset-320x200x256.bmp
+	cp -v $^ $@
+
+$(abs_exe_dir)/vga256p1.240: temple-320x240x256.bmp
+	cp -v $^ $@
+
+$(abs_exe_dir)/vga256p1.400: dandelion-320x400x256.bmp
+	cp -v $^ $@
+
+$(abs_exe_dir)/vga256p1.480: temple-320x480x256.bmp
+	cp -v $^ $@
+
+$(abs_exe_dir)/vga256p1.350: temple-320x350x256.bmp
+	cp -v $^ $@
+
+ega35std.350: hotair-ega-640x350x16.stdpal.bmp
+	cp -v $^ $@
+
+ega35cus.350: hotair-ega-640x350x16.cuspal.bmp
+	cp -v $^ $@
+
+all-txt:
+
+all-targets: all-targets-abs-dirs all-programs all-txt
+	@true
+
+clean-targets:
+	@rm -Rfv $(abs_exe_dir) $(abs_lib_dir) $(abs_obj_dir) parrot-cga-320x186.raw.ppm.cga salvador-watches-cga-640x200.raw.ppm.cga ny-sky-cga-640x200.raw.ppm.cga billgates-cga-320x200.raw.ppm.cga lolcat-hammahtime-640x348.herc.raw.herc castus-herc-720x348.raw.ppm.herc hotair-ega-640x350x16.stdpal.bmp hotair-ega-640x350x16.cuspal.bmp *.350 *.200 *.240 *.480 *.350 sunset-320x200x256.bmp dandelion-320x400x256.bmp temple-320x480x256.bmp temple-320x240x256.bmp temple-320x340x256.bmp temple-320x350x256.bmp
+
+endif
+
