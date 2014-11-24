@@ -87,6 +87,16 @@ int prompt_open_serial() {
 		if (tty_fd >= 0) {
 			ok = 1;
 			printf("Port open.\n");
+
+			{
+				struct termios x;
+
+				/* please do it RAW */
+				if (tcgetattr(tty_fd,&x) == 0) {
+					cfmakeraw(&x);
+					tcsetattr(tty_fd,TCSANOW,&x);
+				}
+			}
 		}
 		else {
 			printf("Failed to open serial port, %s\n",strerror(errno));
@@ -142,7 +152,7 @@ int main() {
 		tcgetattr(0,&ttyios_old);
 		ttyios_cur = ttyios_old;
 		ttyios_cur.c_lflag |= ICANON;
-		tcsetattr(0,TCIFLUSH,&ttyios_cur);
+		tcsetattr(0,TCSANOW,&ttyios_cur);
 	}
 
 	signal(SIGINT,sigma);
@@ -159,8 +169,8 @@ int main() {
 	/* now raw */
 	ttyios_stdin = isatty(0);
 	if (ttyios_stdin) {
-		ttyios_cur.c_lflag &= ~ICANON;
-		tcsetattr(0,TCIFLUSH,&ttyios_cur);
+		ttyios_cur.c_lflag &= ~(ICANON|ECHO|ECHOK|ECHOKE);
+		tcsetattr(0,TCSANOW,&ttyios_cur);
 	}
 #endif
 
@@ -176,6 +186,7 @@ int main() {
 			memmove(in_line,in_line+1,40);
 			if (c < 32) c = '.';
 			in_line[39] = c;
+			redraw = 1;
 		}
 
 		FD_ZERO(&stdin_fdset);
@@ -193,6 +204,16 @@ int main() {
 					int mc = TIOCM_RTS;
 					if (ioctl(tty_fd,!(mctl&mc) ? TIOCMBIS : TIOCMBIC,&mc) < 0)
 						fprintf(stderr,"ioctl fail, %s\n",strerror(errno));
+				}
+				else {
+					/* meh, send it down the wire */
+					do {
+						int d = write(tty_fd,&c,1);
+						if (d == 1) break;
+						else if (c < 0 && !(errno == EAGAIN || errno == EWOULDBLOCK)) {
+							printf("\nSend error, %s\n",strerror(errno));
+						}
+					} while (1);
 				}
 			}
 		}
@@ -237,7 +258,7 @@ int main() {
 
 #if defined(TARGET_LINUX)
 	if (ttyios_stdin) {
-		tcsetattr(0,TCIFLUSH,&ttyios_old);
+		tcsetattr(0,TCSANOW,&ttyios_old);
 	}
 #endif
 
