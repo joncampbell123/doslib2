@@ -1,0 +1,64 @@
+DB-9 (most serial ports on PC)
+
+    1 2 3 4 5
+  -------------
+  \ o o o o o /
+   \ o o o o /
+    ---------
+     6 7 8 9
+
+Direction <- points to computer, -> from computer.
+
+ Pin    Name    Direction       Name
+-----------------------------------------------
+  1     CD         <-           Carrier Detect
+  2     RXD        <-           Receive Data
+  3     TXD 	   ->           Transmit Data
+  4     DTR        ->           Data Terminal Ready
+  5     GND        --           System Ground
+  6     DSR        <-           Data Set Ready
+  7     RTS        ->           Request to Send
+  8     CTS        <-           Clear to Send
+  9     RI         <-           Ring Indicator
+
+DB-25
+
+                      1 1 1 1
+    1 2 3 4 5 6 7 8 9 0 1 2 3
+  -----------------------------
+  \ o o o o o o o o o o o o o /
+   \ o o o o o o o o o o o o /
+    -------------------------
+     1 1 1 1 1 1 2 2 2 2 2 2
+     4 5 6 7 8 9 0 1 2 3 4 5
+
+Direction <- points to computer, -> from computer.
+
+ Pin    Name    Direction       Name
+-----------------------------------------------
+  1     SHIELD     --           Shield Ground
+  2     TXD        ->           Transmit Data
+  3     RXD        <-           Receive Data
+  4     RTS        ->           Request to Send
+  5     CTS        <-           Clear to Send
+  6     DSR        <-           Data Set Ready
+  7     GND        --           System Ground
+  8     CD         <-           Carrier Detect
+  9     n/c        --           -- 
+  10    n/c        --           -- 
+  11    n/c        --           -- 
+  12    n/c        --           -- 
+  13    n/c        --           -- 
+  14    n/c        --           -- 
+  15    n/c        --           -- 
+  16    n/c        --           -- 
+  17    n/c        --           -- 
+  18    n/c        --           -- 	 
+  19    n/c        --           --	 
+  20    DTR        ->           Data Terminal Ready
+  21    n/c        --           --
+  22    RI         <-           Ring Indicator
+  23    n/c        --           --
+  24    n/c        --           --	 
+  25    n/c        --           --
+
