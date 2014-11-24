@@ -174,6 +174,14 @@ int main() {
 	}
 #endif
 
+	printf("       1 2 3 4 5   male end\n");
+	printf("    ------------- \n");
+	printf("    \\ o o o o o / \n");
+	printf("     \\ o o o o / \n");
+	printf("      --------- \n");
+	printf("        6 7 8 9\n");
+	printf("\n");
+
 	printf("Inbound characters will appear on this line.\n");
 	printf("D=toggle DTR  R=toggle RTS  CTRL+C to exit.\n");
 
