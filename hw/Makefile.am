@@ -1,6 +1,6 @@
 -include ../config.mak
 
-SUBDIRS = cpu
+SUBDIRS = cpu serial
 ACLOCAL_AMFLAGS = 
 
 library_includedir = $(includedir)/doslib2/test
