@@ -193,14 +193,14 @@ int main() {
 
 			printf("\x0D");
 #if defined(TARGET_LINUX)
-			printf("LE=%u DTR=%u RTS=%u CTS=%u CD=%u RI=%u DSR=%u ",
+			printf("IN:LE=%u CTS=%u CD=%u RI=%u DSR=%u OUT:DTR=%u RTS=%u ",
 					(mctl&TIOCM_LE)?1:0,
-					(mctl&TIOCM_DTR)?1:0,
-					(mctl&TIOCM_RTS)?1:0,
 					(mctl&TIOCM_CTS)?1:0,
 					(mctl&TIOCM_CD)?1:0,
 					(mctl&TIOCM_RI)?1:0,
 					(mctl&TIOCM_DSR)?1:0,
+					(mctl&TIOCM_DTR)?1:0,
+					(mctl&TIOCM_RTS)?1:0,
 					mctl);
 #endif
 			printf("%s",in_line);
