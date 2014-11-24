@@ -126,7 +126,9 @@ int main() {
 	char in_line[41],c=0;
 	int redraw = 0;
 #if defined(TARGET_LINUX)
-	int mctl = -1;
+	struct timeval stdin_tv;
+	fd_set stdin_fdset;
+	int mctl = -1,i;
 #endif
 
 	printf("Serial status + control line toy\n");
@@ -162,6 +164,9 @@ int main() {
 	}
 #endif
 
+	printf("Inbound characters will appear on this line.\n");
+	printf("D=toggle DTR  R=toggle RTS  CTRL+C to exit.\n");
+
 	memset(in_line,' ',40);
 	in_line[40] = 0;
 	redraw = 1;
@@ -171,6 +176,25 @@ int main() {
 			memmove(in_line,in_line+1,40);
 			if (c < 32) c = '.';
 			in_line[39] = c;
+		}
+
+		FD_ZERO(&stdin_fdset);
+		FD_SET(0,&stdin_fdset);
+		stdin_tv.tv_sec = 0;
+		stdin_tv.tv_usec = 0;
+		if (select(0+1,&stdin_fdset,NULL,NULL,&stdin_tv) > 0) {
+			if (read(0/*STDIN*/,&c,1) > 0) { /* FIXME: does not consider Linux VT100 escapes */
+				if (c == 'd' || c == 'D') {
+					int mc = TIOCM_DTR;
+					if (ioctl(tty_fd,!(mctl&mc) ? TIOCMBIS : TIOCMBIC,&mc) < 0)
+						fprintf(stderr,"ioctl fail, %s\n",strerror(errno));
+				}
+				else if (c == 'r' || c == 'R') {
+					int mc = TIOCM_RTS;
+					if (ioctl(tty_fd,!(mctl&mc) ? TIOCMBIS : TIOCMBIC,&mc) < 0)
+						fprintf(stderr,"ioctl fail, %s\n",strerror(errno));
+				}
+			}
 		}
 #else
 		c = 1;
