@@ -28,6 +28,9 @@ fi
 
 # we need to find the Open Watcom installation
 # TODO: Can we also allow the user to install WINE and Windows binaries of Open Watcom?
+if test x"$OPENWATCOM" = x; then if [[ -d "$HOME/src/open-watcom-2.0/rel2" ]]; then OPENWATCOM="$HOME/src/open-watcom-2.0/rel2"; fi; fi
+if test x"$OPENWATCOM" = x; then if [[ -d "$HOME/src/open-watcom-v2/rel" ]]; then OPENWATCOM="$HOME/src/open-watcom-v2/rel"; fi; fi
+if test x"$OPENWATCOM" = x; then if [[ -d /usr/src/openwatcom-2.0/rel2 ]]; then OPENWATCOM=/usr/src/openwatcom-2.0/rel2; fi; fi
 if test x"$OPENWATCOM" = x; then if [[ -d /usr/src/openwatcom-1.9/rel2 ]]; then OPENWATCOM=/usr/src/openwatcom-1.9/rel2; fi; fi
 if test x"$OPENWATCOM" = x; then if [[ -d /usr/watcom-2.0 ]]; then OPENWATCOM=/usr/watcom-2.0; fi; fi
 if test x"$OPENWATCOM" = x; then if [[ -d /usr/watcom-1.9 ]]; then OPENWATCOM=/usr/watcom-1.9; fi; fi
