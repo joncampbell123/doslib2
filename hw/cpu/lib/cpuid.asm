@@ -6,11 +6,12 @@
  %define cdecl_ofs (retnative_stack_size+pusha_stack_size+2)	; RETF + PUSHA + DS
 %endif
 %if TARGET_BITS == 32
- %define cdecl_ofs (retnative_stack_size+pusha_stack_size)	; RETF + PUSHA
+ %define cdecl_ofs (retnative_stack_size+pusha_stack_size)	; RET + PUSHA
 %endif
 
 CODE_SEGMENT
 
+%ifdef cdecl_ofs
 ;=====================================================================
 ;=====================================================================
 EXTERN_C_FUNCTION do_cpuid ; void _cdecl do_cpuid(uint32_t regid,cpuid_info *s)
@@ -32,4 +33,5 @@ EXTERN_C_FUNCTION do_cpuid ; void _cdecl do_cpuid(uint32_t regid,cpuid_info *s)
 	popan
 	pop_if_far_argv(ds)
 	retnative
+%endif
 

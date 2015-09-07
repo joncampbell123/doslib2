@@ -5,10 +5,19 @@
 CODE_SEGMENT
 
 %if TARGET_BITS == 16
- %ifdef TARGET_WINDOWS_WIN16
-  extern GETWINFLAGS
+ %define DOIT
+%else
+ %if TARGET_BITS == 32
+  %define DOIT
  %endif
 %endif
+
+%ifdef DOIT
+ %if TARGET_BITS == 16
+  %ifdef TARGET_WINDOWS_WIN16
+   extern GETWINFLAGS
+  %endif
+ %endif
 
 ;=====================================================================
 ;unsigned int _cdecl _probe_basic_fpu_287_387();
@@ -98,4 +107,7 @@ EXTERN_C_FUNCTION probe_basic_has_fpu
 	pop		stackbase
 	pop		nbx
 	retnative
+
+;======================END 16/32-bit================
+%endif ; /DOIT
 

@@ -5,6 +5,15 @@
 
 CODE_SEGMENT
 
+%if TARGET_BITS == 16
+ %define DOIT
+%else
+ %if TARGET_BITS == 32
+  %define DOIT
+ %endif
+%endif
+
+%ifdef DOIT
 ;=====================================================================
 ;unsigned int _cdecl _probe_basic_cpu_345_86();
 ;=====================================================================
@@ -75,4 +84,7 @@ EXTERN_C_FUNCTION probe_basic_cpu_345_86
 .done:	popfd
 	pop		ebx
 	retnative
+
+;======================END 16/32-bit================
+%endif ; /DOIT
 

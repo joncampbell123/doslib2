@@ -12,6 +12,18 @@
 #include <misc/useful.h>
 #include <hw/cpu/lib/cpu.h>
 
+#if TARGET_BITS == 64
+# include <cpuid.h> /* GCC header */
+
+/* don't want to bother with inline asm */
+void do_cpuid(const uint32_t select,struct cpu_cpuid_generic_block *b) {
+	unsigned int aa,ab,ac,ad;
+
+	__get_cpuid((unsigned int)select,&aa,&ab,&ac,&ad);
+	b->a = aa; b->b = ab; b->c = ac; b->d = ad;
+}
+#endif
+
 struct cpu_info_t cpu_info = {
 	-1,		/* cpu basic level */
 	-1,		/* cpu basic FPU level */
@@ -159,6 +171,7 @@ static void probe_fpu() {
 		}
 	}
 
+#if TARGET_BITS == 16 || TARGET_BITS == 32
 	if (probe_basic_has_fpu()) {
 		cpu_info.cpu_basic_fpu_level = cpu_info.cpu_basic_level;
 		cpu_info.cpu_flags |= CPU_FLAG_FPU;
@@ -167,13 +180,21 @@ static void probe_fpu() {
 		if (cpu_info.cpu_basic_level == 3)
 			cpu_info.cpu_basic_fpu_level = probe_basic_fpu_287_387();
 	}
+#else
+	/* all modern x86_64 processors offer FPU instructions. is there one that doesn't? */
+	cpu_info.cpu_basic_fpu_level = cpu_info.cpu_basic_level;
+	cpu_info.cpu_flags |= CPU_FLAG_FPU;
+#endif
 }
 
 static void probe_basic_cpu_level() {
 	unsigned char level,flags;
 	unsigned int dtmp;
 
-#if TARGET_BITS == 32 /* 32-bit DOS, Linux i386, Win32, etc... */
+#if TARGET_BITS == 64 /* 64-bit Linux */
+	level = 6;
+	flags = CPU_FLAG_FPU | CPU_FLAG_CPUID | CPU_FLAG_PROTMODE;
+#elif TARGET_BITS == 32 /* 32-bit DOS, Linux i386, Win32, etc... */
 	dtmp = probe_basic_cpu_345_86();
 	level = dtmp & 0xFF;
 	flags = (dtmp >> 8U) | CPU_FLAG_PROTMODE;

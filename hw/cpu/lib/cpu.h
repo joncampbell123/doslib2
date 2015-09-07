@@ -284,7 +284,13 @@ static void _sse_disable();
 	"mov cr4,eax"
 
 /* CPUID function. To avoid redundant asm blocks */
-#if TARGET_BITS == 32
+#if TARGET_BITS == 64
+# if defined(__GNUC__)
+void do_cpuid(const uint32_t select,struct cpu_cpuid_generic_block *b);
+# else
+void _cdecl do_cpuid(const uint32_t select,struct cpu_cpuid_generic_block *b);
+# endif
+#elif TARGET_BITS == 32
 # if defined(__GNUC__)
 void do_cpuid(const uint32_t select,struct cpu_cpuid_generic_block *b);
 # else
@@ -295,16 +301,20 @@ void _cdecl do_cpuid(const uint32_t select,struct cpu_cpuid_generic_block FAR *b
 #endif
 
 #if defined(__GNUC__)
+# if TARGET_BITS == 16 || TARGET_BITS == 32
 unsigned int probe_basic_fpu_287_387();
 unsigned int probe_basic_cpu_345_86();
 unsigned int probe_basic_has_fpu();
+# endif
 #else
 # if TARGET_BITS == 16
 unsigned int _cdecl probe_basic_cpu_0123_86();
 # endif
+# if TARGET_BITS == 16 || TARGET_BITS == 32
 unsigned int _cdecl probe_basic_fpu_287_387();
 unsigned int _cdecl probe_basic_cpu_345_86();
 unsigned int _cdecl probe_basic_has_fpu();
+# endif
 #endif
 
 void cpu_copy_id_string(char *tmp/*must be CPU_ID_STRING_LENGTH or more*/,struct cpu_cpuid_00000000_id_info *i);
@@ -316,6 +326,9 @@ void probe_cpu();
 # define cpu_meets_compile_target() (1)
 # define cpu_err_out_requirements() { }
 #elif TARGET_BITS == 32 && TARGET_CPU == 3
+# define cpu_meets_compile_target() (1)
+# define cpu_err_out_requirements() { }
+#elif TARGET_BITS == 64 && TARGET_CPU == 6
 # define cpu_meets_compile_target() (1)
 # define cpu_err_out_requirements() { }
 #else

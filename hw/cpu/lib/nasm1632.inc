@@ -47,6 +47,18 @@
  %define pusha_stack_size 32
  %define stack_argv_ptr_size 4
 %endif
+%if TARGET_BITS == 64
+ %define retnative ret
+ %define TARGET16_DEF_NEARCALL 1
+ %define retnative_stack_size 8
+ %define nsi rsi
+ %define nbp rbp
+ %define nsp rsp
+ %define nbx rbx
+ %define stackbase rbp
+ %define stackpointer rsp
+ %define stack_argv_ptr_size 8
+%endif
 
 %if TARGET_BITS == 16
  %ifidni MMODE,l
@@ -79,5 +91,9 @@
  %define push_if_far_argv(x)
  %define pop_if_far_argv(x)
  %define stack_argv_ptr_load(srg,a,b)   mov a,[b]
+%endif
+%if TARGET_BITS == 64
+ %define push_if_far_argv(x)
+ %define pop_if_far_argv(x)
 %endif
 

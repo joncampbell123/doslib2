@@ -34,6 +34,30 @@ bits 32
  %endif
 %endif
 
+%if TARGET_BITS == 64
+ %ifdef TARGET_LINUX
+  %macro CODE_SEGMENT 0
+section .text
+bits 64
+  %endmacro
+
+  %macro DATA_SEGMENT 0
+section .data
+bits 64
+  %endmacro
+ %else
+  %macro CODE_SEGMENT 0
+section .text class=CODE use64
+bits 64
+  %endmacro
+
+  %macro DATA_SEGMENT 0
+section .data class=DATA use64
+bits 64
+  %endmacro
+ %endif
+%endif
+
 %ifdef TARGET_LINUX
  %macro EXTERN_C_FUNCTION 1
 global %1
