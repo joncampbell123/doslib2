@@ -33,4 +33,6 @@ rm -v .web.dl.nfo
 rm -Rfv web.cache
 rm -v build-test.iso
 true
+# libmspack
+(cd ext/libmspack && (git clean -dfx; git reset --hard))
 
