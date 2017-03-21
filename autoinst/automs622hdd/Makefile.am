@@ -27,7 +27,8 @@ clean:
 			$(MAKE) --no-print-directory -$(MAKEFLAGS) clean-targets target_subdir=$$i || break;\
 		fi;\
 	done
-	rm -v expand
+	rm -fv expand
+	rm -Rfv dos.tmp
 
 disk:
 
