@@ -7,6 +7,7 @@ noinst_PROGRAMS = expand
 LIBMSPACK = ../../ext/libmspack/libmspack/./.libs/libmspack.a
 
 expand_SOURCES = expand.c
+expand_CFLAGS = -I../../ext/libmspack/libmspack/mspack
 expand_LDFLAGS = $(LIBMSPACK)
 expand_DEPENDENCIES = $(LIBMSPACK)
 
