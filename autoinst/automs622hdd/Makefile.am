@@ -27,6 +27,7 @@ clean:
 			$(MAKE) --no-print-directory -$(MAKEFLAGS) clean-targets target_subdir=$$i || break;\
 		fi;\
 	done
+	rm -v expand
 
 disk:
 
