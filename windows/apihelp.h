@@ -10,7 +10,9 @@
  *          will be defined as FAR regardless, and therefore the runtime will
  *          call it wrong and crash on shutdown for small/compact memory model
  *          builds */
-# if defined(__SMALL__) || defined(__COMPACT__) || defined(TARGET_WINDOWS_WIN386) || defined(__386__)/*Watcom's internal way of saying "flat memory"*/
+# if TARGET_BITS == 32
+#  define WINMAINPROC __pascal
+# elif defined(__SMALL__) || defined(__COMPACT__) || defined(TARGET_WINDOWS_WIN386) || defined(__386__)/*Watcom's internal way of saying "flat memory"*/
 #  define WINMAINPROC __pascal near
 # else
 #  define WINMAINPROC __pascal far
