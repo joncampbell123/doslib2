@@ -14,7 +14,7 @@ all_programs += $(abs_exe_dir)/get4g_2m.com
 all_programs += $(abs_exe_dir)/get4g_4m.com
 all_programs += $(abs_exe_dir)/get4g_8m.com
 
-all_programs  = $(abs_exe_dir)/pc98_1m.com
+all_programs += $(abs_exe_dir)/pc98_1m.com
 all_programs += $(abs_exe_dir)/pc98_16m.com
 all_programs += $(abs_exe_dir)/pc98_64m.com
 all_programs += $(abs_exe_dir)/pc98_4g1.com

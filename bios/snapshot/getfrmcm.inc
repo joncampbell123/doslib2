@@ -152,7 +152,42 @@ ensure_flatreal:cli
 		sti
 		ret
 
-; enable A20 by whatever means necessary
+%ifdef PC98
+; enable A20 by whatever means necessary (NEC PC-98)
+enable_a20:
+; According to Undocumented 9801/9821 Volume 2, the A20 gate is controlled
+; through I/O ports 0xF0, 0xF2, and 0xF6 somehow.
+;
+; In PC-98, the A20 gate status is considered "masked" vs "unlocked" rather
+; than IBM PC "enabled". We can read port 0xF2 bit 0 to check A20 gating.
+; If bit 0 is set, the A20 line is masked. If bit 0 is clear, A20 is "unlocked".
+; We want A20 unlocked.
+;
+; Writing port 0xF2 will always "cancel" the A20 mask.
+; You have to write port 0xF6 to mask A20.
+; On the PC-98 laptop I test on, this results in an instant reboot into the BIOS,
+; which may mean that crucial parts of the BIOS are affected somehow or that
+; Windows 95 has key parts of the kernel in the HMA and that crashes it right away.
+; If HIMEM.SYS is allowed to run, and A20 is enabled, port 0xF2 will read 0x3E.
+; If you make Windows 95 boot without HIMEM.SYS, the A20 gate remains masked and
+; port 0xF2 will read 0x3D. Just as documented, writing port 0xF2 (whatever value)
+; "cancels" the A20 mask and the port reads 0x3E again.
+;
+; So: Read port 0xF2. If bit 0 is set, write the value back to the port and read
+; it again. If bit 0 is clear, we succeeded.
+        in  al,0F2h             ; bit 0 set = A20 masked
+        test al,1
+        jz a20notmasked         ; if not set, then skip this code
+        out 0F2h,al             ; write the value back. regardless of value, this "cancels" the A20 mask
+        nop
+        in  al,0F2h             ; bit 0 should be clear
+a20notmasked:
+
+; end
+        clc
+        ret
+%else
+; enable A20 by whatever means necessary (IBM PC)
 enable_a20:	mov	ax,0x2401	; enable A20 via INT 15h
 		int	15h
 		cmp	ah,0x86		; AH=0x86 if not supported
@@ -205,8 +240,12 @@ enable_a20:	mov	ax,0x2401	; enable A20 via INT 15h
 ; end
 .finish:	clc
 		ret
+%endif
 
-%include "comm8042.inc"
+%ifdef PC98
+%else
+ %include "comm8042.inc"
+%endif
 
 error_str:	db	'An error occured',13,10,'$'
 
