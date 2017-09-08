@@ -100,7 +100,11 @@ prompt_if_no_room:
 ; ensure the CPU is in flat real mode. that means switching to protected mode,
 ; loading segments with 4GB limits, then jumping back to real mode deliberately
 ; NOT reloading the segment register limits.
-ensure_flatreal:cli
+ensure_flatreal:
+        call    enable_a20
+
+        cli
+
 		mov	ax,cs
 		mov	ds,ax
 
