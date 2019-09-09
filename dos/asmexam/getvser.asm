@@ -72,6 +72,26 @@ print_info:
 		mov	dx,crlf
 		int	21h
 
+        ; -- filesystem type
+        cld
+        mov si,info+11h
+        mov di,tmp
+        mov cx,8
+        rep movsb
+        mov byte [tmp+8],'$'
+
+        mov ah,0x09
+        mov dx,fs_type_is
+        int 21h
+
+        mov ah,0x09
+        mov dx,tmp
+        int 21h
+
+		mov	ah,0x09
+		mov	dx,crlf
+		int	21h
+
 done:		xor	ah,ah
 		int	21h
 
@@ -120,6 +140,7 @@ puthex16:   push    ax
 
 hexes:		db	'0123456789ABCDEF'
 no_info_str:db  'Unable to get info',13,10,'$'
+fs_type_is: db  'Filesystem type is: $'
 vol_label_is:db 'Volume label is: $'
 vol_is:     db  'Volume serial is: $'
 crlf:		db	13,10,'$'
