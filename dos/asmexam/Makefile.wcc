@@ -135,8 +135,12 @@ all_programs += $(abs_exe_dir)/drvdis.com
 all_programs += $(abs_exe_dir)/indos.com
 all_programs += $(abs_exe_dir)/drven.com
 all_programs += $(abs_exe_dir)/qdel.com
+all_programs += $(abs_exe_dir)/getvser.com
 
 all-programs: $(all_programs)
+
+$(abs_exe_dir)/getvser.com: getvser.asm
+	$(NASM) -o $@ -f bin $(NASMFLAGS) $^
 
 $(abs_exe_dir)/exit_ret.com: exit_ret.asm
 	$(NASM) -o $@ -f bin $(NASMFLAGS) $^
