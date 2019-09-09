@@ -36,6 +36,7 @@
 
 ; print what was returned
 print_info:
+        ; -- serial
         mov ah,0x09
         mov dx,vol_is
         int 21h
@@ -46,6 +47,26 @@ print_info:
         call putc
         mov ax,word [info+2]
         call puthex16
+
+		mov	ah,0x09
+		mov	dx,crlf
+		int	21h
+
+        ; -- volume label
+        cld
+        mov si,info+6
+        mov di,tmp
+        mov cx,11
+        rep movsb
+        mov byte [tmp+11],'$'
+
+        mov ah,0x09
+        mov dx,vol_label_is
+        int 21h
+
+        mov ah,0x09
+        mov dx,tmp
+        int 21h
 
 		mov	ah,0x09
 		mov	dx,crlf
@@ -99,10 +120,12 @@ puthex16:   push    ax
 
 hexes:		db	'0123456789ABCDEF'
 no_info_str:db  'Unable to get info',13,10,'$'
+vol_label_is:db 'Volume label is: $'
 vol_is:     db  'Volume serial is: $'
 crlf:		db	13,10,'$'
 
 		segment .bss
 
 info:       resb    0x20
+tmp:        resb    0x20
 
