@@ -40,7 +40,12 @@ print_info:
         mov dx,vol_is
         int 21h
 
-        ; TODO
+        mov ax,word [info+2+2]
+        call puthex16
+        mov al,'-'
+        call putc
+        mov ax,word [info+2]
+        call puthex16
 
 		mov	ah,0x09
 		mov	dx,crlf
@@ -49,8 +54,50 @@ print_info:
 done:		xor	ah,ah
 		int	21h
 
+;------------------------------------
+putc:		push	ax
+		push	bx
+		push	cx
+		push	dx
+		mov	ah,0x02
+		mov	dl,al
+		int	21h
+		pop	dx
+		pop	cx
+		pop	bx
+		pop	ax
+		ret
+
+;------------------------------------
+puthex8:	push	ax
+		push	bx
+		xor	bh,bh
+		mov	bl,al
+		shr	bl,4
+		push	ax
+		mov	al,[bx+hexes]
+		call	putc
+		pop	ax
+		mov	bl,al
+		and	bl,0xF
+		mov	al,[bx+hexes];
+		call	putc
+		pop	bx
+		pop	ax
+		ret
+
+;-------------------------------------
+puthex16:   push    ax
+        xchg al,ah
+        call puthex8
+        xchg al,ah
+        call puthex8
+        pop ax
+        ret
+
 		segment .data
 
+hexes:		db	'0123456789ABCDEF'
 no_info_str:db  'Unable to get info',13,10,'$'
 vol_is:     db  'Volume serial is: $'
 crlf:		db	13,10,'$'
