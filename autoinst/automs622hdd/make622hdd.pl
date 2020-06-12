@@ -768,6 +768,44 @@ system("mformat -m 0xF8 ".
 	($fat == 32 ? "-F " : "").
 	"-t $cyls -h $heads -s $sects -d 2 -i $diskbase\@\@$part_offset") == 0 || die;
 
+# mtools fills in Windows 95 fields like creation time, which needs to be zeroed out.
+# Older versions of MS-DOS leave a copy of the root directory at 0000:0500 which
+# includes IO.SYS. GWBASIC/BASIC/BASICA uses byte 0000:050F as a "am I running" flag
+# which if nonzero means yes. If we do not zero the bytes, the image in memory has
+# a nonzero byte at 0000:050F and GWBASIC will ALWAYS say "you cannot SHELL to basic".
+# 
+# To do this, we need to locate the root directory.
+#
+# Note that by Windows 95/98/ME, Microsoft doesn't keep the root directory there anymore
+# and leaves 0000:0500-0000:051F alone (presumably to zero) presumably to avoid this
+# problem, so we don't need to do it for those versions. To keep things simple, skip
+# this zeroing out for FAT32 (which makes the root directory an allocation chain anyway).
+my $rootdirstart = 0;
+my $rootdircount = 0;
+
+if ($fat < 32) {
+	# only for FAT12/FAT16
+	open(BIN,"<","$diskbase") || die
+	binmode(BIN);
+
+	my $bpb;
+	seek(BIN,$part_offset+11,0);
+	read(BIN,$bpb,25); # only care for the BPB
+
+	my $bypersec = unpack("v",substr($bpb,0,2));
+	my $rsrvsec = unpack("v",substr($bpb,3,2));
+	my $numfat = unpack("C",substr($bpb,5,1));
+	my $rdirent = unpack("v",substr($bpb,6,2));
+	my $fatsz = unpack("v",substr($bpb,11,2));
+
+	if ($numfat >= 1 && $fatsz >= 1 && $numfat <= 2 && $rsrvsec >= 1 && $rsrvsec <= 16 && $rdirent > 0 && $rdirent < 2048) {
+		$rootdircount = $rdirent;
+		$rootdirstart = ($bypersec * ($rsrvsec + ($numfat * $fatsz))) + $part_offset;
+	}
+
+	close(BIN);
+}
+
 print "Unpacking disk 1:\n";
 system("xz -c -d $rel/web.cache/$disk1 >tmp.dsk") == 0 || die;
 
@@ -1266,6 +1304,37 @@ if ($ver =~ m/^[45]\./ || $ver eq "3.3nec" || $ver eq "3.3" || $ver eq "3.2epson
 # and the default CONFIG.SYS and AUTOEXEC.BAT files
 system("mcopy -i $diskbase\@\@$part_offset $config_sys_file ::CONFIG.SYS") == 0 || die;
 system("mcopy -i $diskbase\@\@$part_offset $autoexec_bat_file ::AUTOEXEC.BAT") == 0 || die;
+
+# make sure root directory entries have zeroed out creation time
+if ($rootdircount > 0 && $rootdirstart > 0) {
+	open(BIN,"+<","$diskbase") || die
+	binmode(BIN);
+
+	my $dirent;
+
+	for ($i=0;$i < $rootdircount;$i++) {
+		seek(BIN,$rootdirstart+($i*32),0);
+		read(BIN,$dirent,32);
+
+		last if (substr($dirent,0,1) eq chr(0));
+
+		# +0x0E = Windows 95 file creation time
+		# +0x10 = Windows 95 file creation date
+		# +0x12 = Windows 95 file last access date
+		# +0x14 = FAT32 high cluster value (this is FAT12/FAT16!)
+		# -------------------------------------------------------
+		# +0x16 = Last modified time
+		# +0x18 = Last modified date
+		# +0x1A = First cluster (low 16 bits on FAT32!)
+		# +0x1C = file size
+		substr($dirent,14,8) = (chr(0) x 8);
+
+		seek(BIN,$rootdirstart+($i*32),0);
+		print BIN $dirent;
+	}
+
+	close(BIN);
+}
 
 # make a zero track and cat them together to make a full disk image
 system("dd conv=notrunc,nocreat if=mbr.bin of=$diskbase bs=512 count=1") == 0 || die;
