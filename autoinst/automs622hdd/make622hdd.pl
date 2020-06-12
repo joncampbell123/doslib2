@@ -783,8 +783,8 @@ system("mformat -m 0xF8 ".
 my $rootdirstart = 0;
 my $rootdircount = 0;
 
-if ($fat < 32) {
-	# only for FAT12/FAT16
+if ($fat < 32 && $ver !~ m/^[78]\./) {
+	# only for FAT12/FAT16, and not Windows 95/98/ME
 	open(BIN,"<","$diskbase") || die
 	binmode(BIN);
 
