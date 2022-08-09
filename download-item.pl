@@ -109,6 +109,10 @@ my $cmd;
 print "Downloading: $web_root/$url\n";
 $cmd = 'curl --show-error -f --globoff --insecure --progress-bar -o '.shellesc("$web_cache/$as").'.part ';
 if ($user ne '') {
+	# 2022/08/08: Curl you dumbass, why isn't this the default?
+	#             Failure to authenticate to my local network storage because you assumed "basic"
+	#             authentication when you should have been using "digest" authentication.
+	$cmd .= '--anyauth ';
 	$cmd .= '--user '.shellesc($user);
 	$cmd .= ':'.shellesc($pass) if $pass ne '';
 	$cmd .= ' ';
